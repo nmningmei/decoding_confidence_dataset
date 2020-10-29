@@ -22,9 +22,9 @@ from tensorflow.keras.utils import to_categorical
 import numpy  as np
 import pandas as pd
 
-from utils import preprocess,make_CallBackList
+from utils import make_CallBackList
 
-from sklearn.model_selection import LeaveOneGroupOut
+from sklearn.model_selection import LeaveOneGroupOut,StratifiedShuffleSplit
 from sklearn.utils           import shuffle as util_shuffle
 from sklearn.metrics         import roc_auc_score
 
@@ -40,9 +40,10 @@ time_steps          = 7
 confidence_range    = 4
 n_jobs              = -1
 verbose             = 0
+debug               = True
 
 
-df_def          = pd.read_csv(working_df_name,)
+df_def              = pd.read_csv(working_df_name,)
 
 
 # pick one of the csv files
@@ -68,7 +69,7 @@ if not os.path.exists(saving_dir):
     os.mkdir(saving_dir)
 print(csv_name)
 
-if not os.path.exists(csv_name):
+if not os.path.exists(csv_name) or debug:
     results             = dict(
                                fold         = [],
                                score        = [],
@@ -97,7 +98,8 @@ for fold,(train_,test) in enumerate(cv.split(features,targets,groups=groups)):
     X_,y_ = util_shuffle(X_,y_)
     
     # the for-loop does not mean any thing, we only take the last step/output of the for-loop
-    for train,valid in cv.split(features[train_],targets[train_],groups=groups[train_]):
+    for train,valid in StratifiedShuffleSplit(test_size = 0.2,
+                                              random_state = 12345).split(features[train_],targets[train_],groups=groups[train_]):
         X_train,y_train = X_[train],y_[train]
         X_valid,y_valid = X_[valid],y_[valid]
     
@@ -109,7 +111,7 @@ for fold,(train_,test) in enumerate(cv.split(features,targets,groups=groups)):
         tf.random.set_seed(12345) # tf 2.0
         
     # build a 3-layer RNN model
-    inputs                  = layers.Input(shape     = (time_steps,1),# time steps by features 
+    inputs                  = layers.Input(shape     = (time_steps,4),# time steps by features 
                                            name      = 'inputs')
     # the recurrent layer
     lstm,state_h,state_c    = layers.LSTM(units             = 1,
@@ -117,22 +119,23 @@ for fold,(train_,test) in enumerate(cv.split(features,targets,groups=groups)):
                                           return_state      = True,
                                           name              = "lstm")(inputs)
     # from the LSTM layer, we will have an output with time steps by features, but 
-    dimension_squeeze       = layers.Lambda(lambda x:tf.keras.backend.squeeze(x,2))(lstm)
+    dimension_squeeze       = layers.Lambda(lambda x:tf.keras.backend.squeeze(x,2),
+                                            name            = 'squeeze')(lstm)
     outputs                 = layers.Dense(4,
                                            name             = "output",
                                            activation       = "softmax")(dimension_squeeze)
     model                   = Model(inputs,
                                     outputs)
     
-    X_train = X_train.reshape(-1,time_steps,1)#features_norm = to_categorical(features - 1)
-    X_valid = X_valid.reshape(-1,time_steps,1)
-    X_test  = X_test.reshape( -1,time_steps,1)
+    X_train = to_categorical(X_train - 1, num_classes = confidence_range)
+    X_valid = to_categorical(X_valid - 1, num_classes = confidence_range)
+    X_test  = to_categorical(X_test  - 1, num_classes = confidence_range)
     
     y_train = to_categorical(y_train - 1, num_classes = confidence_range)
     y_valid = to_categorical(y_valid - 1, num_classes = confidence_range)
     y_test  = to_categorical(y_test  - 1, num_classes = confidence_range)
     
-    model.compile(optimizer     = optimizers.RMSprop(lr = 1e-4),
+    model.compile(optimizer     = optimizers.SGD(lr = 1e-3),
                   loss          = losses.binary_crossentropy,
                   metrics       = ['mse'])
     # early stopping
@@ -143,7 +146,8 @@ for fold,(train_,test) in enumerate(cv.split(features,targets,groups=groups)):
                                   min_delta     = 1e-4,
                                   patience      = 5,
                                   frequency     = 1,)
-    if not os.path.exists(model_name):
+    
+    if not os.path.exists(model_name) or debug:
         try:
             os.makedirs(os.path.join(*model_name.split('/')[:-1]))
         except:
@@ -172,7 +176,7 @@ for fold,(train_,test) in enumerate(cv.split(features,targets,groups=groups)):
     preds_valid = model.predict(X_valid.astype('float32'),batch_size=batch_size)
     preds_test  = model.predict(X_test.astype('float32'), batch_size=batch_size)
     print('get hidden states')
-    hidden_state_valid,h_state_valid,c_state_valid = hidden_model.predict(X_valid.reshape(-1,time_steps,1),
+    hidden_state_valid,h_state_valid,c_state_valid = hidden_model.predict(X_valid,
                                                                   batch_size = batch_size,
                                                                   verbose = 1)
     print('on train')
@@ -200,7 +204,7 @@ for fold,(train_,test) in enumerate(cv.split(features,targets,groups=groups)):
             score_test.append(roc_auc_score(np.concatenate([y_test[:,ii],[0,1]]),
                                             np.concatenate([preds_test[:,ii],[0.5,0.5]])
                                             ))
-    hidden_state_test,h_state_test,c_state_test = hidden_model.predict(X_test.reshape(-1,time_steps,1),
+    hidden_state_test,h_state_test,c_state_test = hidden_model.predict(X_test,
                                                                        batch_size = batch_size,
                                                                        verbose = 1)
     print('{:.3f}_{:.3f}_{:.3f}_{:.3f}_{:.3f}_{:.3f}_{:.3f}_'.format(*list(hidden_state_test.mean(0).reshape(7,))))

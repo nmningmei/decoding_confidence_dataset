@@ -21,7 +21,7 @@ df_def              = pd.read_csv(working_df_name,)
 node                = 1
 core                = 16
 mem                 = 5 * core * node
-cput                = 24 * core * node
+cput                = 30 * core * node
 
 add = """from shutil import copyfile
 copyfile('../utils.py','utils.py')

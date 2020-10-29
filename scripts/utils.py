@@ -149,7 +149,7 @@ def add_adequacy(working_data,
     df_temp = df.dropna()
     ###################### parallelize the for-loop to multiple CPUs ############################
     def detect(row):
-        values = np.array([item for item in row[2:]])
+        values = row[2:].values
         return np.logical_and(values < 5, values > 0)
     
     idx_within_range = Parallel(n_jobs = n_jobs,verbose = verbose)(delayed(detect)(**{'row':row})for ii,row in df_temp.iterrows())

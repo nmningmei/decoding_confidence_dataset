@@ -2,7 +2,7 @@
 #PBS -q bcbl
 #PBS -l nodes=1:ppn=16
 #PBS -l mem=80gb
-#PBS -l cput=384:00:00
+#PBS -l cput=480:00:00
 #PBS -N LOSO_RNN14
 #PBS -o outputs/out_RNN_14.txt
 #PBS -e outputs/err_RNN_14.txt
