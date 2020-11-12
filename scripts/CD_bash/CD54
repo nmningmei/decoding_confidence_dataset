@@ -1,0 +1,19 @@
+#!/bin/bash
+#PBS -q bcbl
+#PBS -l nodes=1:ppn=16
+#PBS -l mem=32gb
+#PBS -l cput=192:00:00
+#PBS -N CDRF54
+#PBS -o outputs/out_54.txt
+#PBS -e outputs/err_54.txt
+
+cd $PBS_O_WORKDIR
+export PATH="/scratch/ningmei/anaconda3/bin:/scratch/ningmei/anaconda3/condabin:$PATH"
+source activate keras-2.1.6_tensorflow-2.0.0
+pwd
+echo fold-53
+
+python "simple_RNN_cross_domain_RF_54.py"
+python "simple_RNN_cross_domain_train_RNN_54.py"
+python "simple_RNN_cross_domain_hidden_54.py"
+    
