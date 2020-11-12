@@ -14,8 +14,6 @@ from glob import glob
 from sklearn.model_selection import GroupShuffleSplit
 from sklearn.utils           import shuffle as util_shuffle
 
-
-
 templates           = ['simple_RNN_cross_domain_RF.py',
                        'simple_RNN_cross_domain_train_RNN.py',
                        'simple_RNN_cross_domain_hidden.py']
@@ -25,11 +23,11 @@ source_dir          = '../data/4-point'
 target_dir          = '../data/targets/*/'
 source_data         = glob(os.path.join(source_dir, "*.csv"))
 target_data         = glob(os.path.join(target_dir, "*.csv"))
-source_df_name      = os.path.join(data_dir,'cross_domain_with_dprime','source.csv')
-target_df_name      = os.path.join(data_dir,'cross_domain_with_dprime','target.csv')
-node                = 2
+source_df_name      = os.path.join(data_dir,'cross_domain','source.csv')
+target_df_name      = os.path.join(data_dir,'cross_domain','target.csv')
+node                = 1
 core                = 16
-mem                 = 1 * core * node
+mem                 = 2 * core * node
 cput                = 12 * core * node
 n_splits            = 100
 level               = 'high'
@@ -126,7 +124,7 @@ with open(f'{bash_folder}/qsub_jobs.py','a') as f:
         if ii == 0:
             f.write(f'\nos.system("qsub {experiment}{ii+1}")\n')
         else:
-            f.write(f'time.sleep(3)\nos.system("qsub {experiment}{ii+1}")\n')
+            f.write(f'time.sleep(1)\nos.system("qsub {experiment}{ii+1}")\n')
     f.close()
     
 

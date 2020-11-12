@@ -15,7 +15,9 @@ print(f'{multiprocessing.cpu_count()} cpus available')
 import numpy  as np
 import pandas as pd
 
-# add here
+from shutil import copyfile
+copyfile('../utils.py','utils.py')
+
 from utils import build_RF,scoring_func,get_RF_feature_importance
 
 from tensorflow.keras.utils  import to_categorical
@@ -24,12 +26,12 @@ from sklearn.model_selection import GroupShuffleSplit
 from sklearn.utils           import shuffle as util_shuffle
 
 experiment          = 'cross_domain'
-data_dir            = '../data/'
-model_dir           = '../models/RNN_CD'
-source_dir          = '../data/4-point'
-target_dir          = '../data/targets/*/'
-result_dir          = '../results/RF_CD'
-hidden_dir          = '../results/RF_CD_FI'
+data_dir            = '../../data/'
+model_dir           = '../../models/RNN_CD'
+source_dir          = '../../data/4-point'
+target_dir          = '../../data/targets/*/'
+result_dir          = '../../results/RF_CD'
+hidden_dir          = '../../results/RF_CD_FI'
 source_df_name      = os.path.join(data_dir,f'{experiment}','source.csv')
 target_df_name      = os.path.join(data_dir,f'{experiment}','target.csv')
 batch_size          = 32
@@ -73,7 +75,7 @@ cv                      = GroupShuffleSplit(n_splits        = n_splits,
 for fold,(train,valid) in enumerate(cv.split(features,targets,groups = groups)):
     X_train,y_train = features[train],targets[train]
     X_valid,y_valid = features[valid],targets[valid]
-    if fold >= 0: # batch_change
+    if fold >= 76: # batch_change
         break
 
 csv_saving_name     = f'RF cross validation results (fold {fold + 1}).csv'
