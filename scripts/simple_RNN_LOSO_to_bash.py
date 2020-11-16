@@ -78,7 +78,7 @@ with open(f'{bash_folder}/qsub_jobs.py','a') as f:
         if ii == 0:
             f.write(f'\nos.system("qsub LOO{ii+1}")\n')
         else:
-            f.write(f'time.sleep(3)\nos.system("qsub LOO{ii+1}")\n')
+            f.write(f'time.sleep(.3)\nos.system("qsub LOO{ii+1}")\n')
     f.close()
         
 
