@@ -18,13 +18,14 @@ templates           = ['simple_RNN_cross_domain_RF.py',
                        'simple_RNN_cross_domain_train_RNN.py',
                        'simple_RNN_cross_domain_hidden.py']
 experiment          = 'CD'
+experiment_folder   = 'cross_domain_confidence'
 data_dir            = '../data'
 source_dir          = '../data/4-point'
 target_dir          = '../data/targets/*/'
 source_data         = glob(os.path.join(source_dir, "*.csv"))
 target_data         = glob(os.path.join(target_dir, "*.csv"))
-source_df_name      = os.path.join(data_dir,'cross_domain','source.csv')
-target_df_name      = os.path.join(data_dir,'cross_domain','target.csv')
+source_df_name      = os.path.join(data_dir,experiment_folder,'source.csv')
+target_df_name      = os.path.join(data_dir,experiment_folder,'target.csv')
 node                = 1
 core                = 16
 mem                 = 2 * core * node

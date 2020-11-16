@@ -30,7 +30,7 @@ from matplotlib              import pyplot as plt
 sns.set_style('white')
 sns.set_context('talk')
 
-experiment          = 'cross_domain'
+experiment          = 'cross_domain_confidence'
 data_dir            = '../data/'
 model_dir           = '../models/RNN_CD'
 source_dir          = '../data/4-point'

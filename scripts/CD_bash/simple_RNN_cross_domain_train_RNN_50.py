@@ -37,7 +37,7 @@ from sklearn.model_selection import GroupShuffleSplit
 from sklearn.utils           import shuffle as util_shuffle
 #from sklearn.metrics         import roc_auc_score
 
-experiment          = 'cross_domain'
+experiment          = 'cross_domain_confidence'
 data_dir            = '../../data/'
 model_dir           = '../../models/RNN_CD'
 source_dir          = '../../data/4-point'
