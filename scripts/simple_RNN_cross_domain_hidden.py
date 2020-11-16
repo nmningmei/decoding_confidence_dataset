@@ -31,14 +31,13 @@ sns.set_style('white')
 sns.set_context('talk')
 
 experiment          = 'cross_domain_confidence'
+experiment_folder   = 'confidence'
 data_dir            = '../data/'
-model_dir           = '../models/RNN_CD'
+model_dir           = '../models/{experiment_folder}/RNN_CD'
 source_dir          = '../data/4-point'
 target_dir          = '../data/targets/*/'
-result_dir          = '../results/RNN_CD'
-hidden_dir          = '../results/RNN_CD_hidden'
-source_data         = glob(os.path.join(source_dir, "*.csv"))
-target_data         = glob(os.path.join(target_dir, "*.csv"))
+result_dir          = '../results/{experiment_folder}/RNN_CD'
+hidden_dir          = '../results/{experiment_folder}/RNN_CD_hidden'
 source_df_name      = os.path.join(data_dir,f'{experiment}','source.csv')
 target_df_name      = os.path.join(data_dir,f'{experiment}','target.csv')
 batch_size          = 32
@@ -49,14 +48,9 @@ n_jobs              = -1
 split               = False # split the data into high and low dprime-metadrpime
 feature_properties  = 'hidden states' # or hidden states or feature importance
 
-if not os.path.exists(result_dir):
-    os.mkdir(result_dir)
-if not os.path.exists(hidden_dir):
-    os.mkdir(hidden_dir)
-
-for d in [model_dir,result_dir]:
+for d in [model_dir,result_dir,hidden_dir]:
     if not os.path.exists(d):
-        os.mkdir(d)
+        os.makedirs(d)
 
 df_source           = pd.read_csv(source_df_name)
 df_target           = pd.read_csv(target_df_name)
