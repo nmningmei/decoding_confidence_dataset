@@ -33,11 +33,11 @@ sns.set_context('talk')
 experiment          = 'cross_domain_confidence'
 experiment_folder   = 'confidence'
 data_dir            = '../data/'
-model_dir           = '../models/{experiment_folder}/RNN_CD'
+model_dir           = f'../models/{experiment_folder}/RNN_CD'
 source_dir          = '../data/4-point'
 target_dir          = '../data/targets/*/'
-result_dir          = '../results/{experiment_folder}/RNN_CD'
-hidden_dir          = '../results/{experiment_folder}/RNN_CD_hidden'
+result_dir          = f'../results/{experiment_folder}/RNN_CD'
+hidden_dir          = f'../results/{experiment_folder}/RNN_CD_hidden'
 source_df_name      = os.path.join(data_dir,f'{experiment}','source.csv')
 target_df_name      = os.path.join(data_dir,f'{experiment}','target.csv')
 batch_size          = 32
