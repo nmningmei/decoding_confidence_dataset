@@ -29,11 +29,11 @@ from sklearn.metrics         import roc_auc_score
 
 experiment          = 'LOO_confidence'
 data_dir            = '../../data'
-model_dir           = '../../models/{experiment}_RF'
+model_dir           = f'../../models/{experiment}_RF'
 working_dir         = '../../data/4-point'
 working_data        = glob(os.path.join(working_dir, "*.csv"))
 working_df_name     = os.path.join(data_dir,f'{experiment}','all_data.csv')
-saving_dir          = '../../results/{experiment}'
+saving_dir          = f'../../results/{experiment}'
 batch_size          = 32
 time_steps          = 7
 confidence_range    = 4
