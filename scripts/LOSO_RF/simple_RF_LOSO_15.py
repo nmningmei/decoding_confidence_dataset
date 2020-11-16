@@ -27,13 +27,13 @@ from sklearn.model_selection import LeaveOneGroupOut
 from sklearn.utils           import shuffle as util_shuffle
 from sklearn.metrics         import roc_auc_score
 
-experiment          = 'LOO'
+experiment          = 'LOO_confidence'
 data_dir            = '../../data'
-model_dir           = '../../models/LOO_RF'
+model_dir           = '../../models/{experiment}_RF'
 working_dir         = '../../data/4-point'
 working_data        = glob(os.path.join(working_dir, "*.csv"))
-working_df_name     = os.path.join(data_dir,f'{experiment}','all_data_adequacy.csv')
-saving_dir          = '../../results/LOO'
+working_df_name     = os.path.join(data_dir,f'{experiment}','all_data.csv')
+saving_dir          = '../../results/{experiment}'
 batch_size          = 32
 time_steps          = 7
 confidence_range    = 4
@@ -120,14 +120,11 @@ for fold,(train_,test) in enumerate(cv.split(features,targets,groups=groups)):
                                                  np.concatenate([preds_valid[:,ii],[0.5,0.5]])
                                                  ))
         print('getting validation feature importance')
-        feature_importance = get_RF_feature_importance(randomforestclassifier,
+        feature_importance,results,c = get_RF_feature_importance(randomforestclassifier,
                                                        features,
                                                        targets,
-                                                       valid,)
-        if sklearn.__version__ == '0.23.2':
-            [results[f'feature importance T-{time_steps - ii}'].append(feature_importance['importances_mean'][ii]) for ii in range(time_steps)]
-        else:
-            [results[f'feature importance T-{time_steps - ii}'].append(feature_importance[ii]) for ii in range(time_steps)]
+                                                       valid,
+                                                       results,)
         
         results['fold'].append(fold)
         results['score'].append(np.mean(score_train))
@@ -146,17 +143,12 @@ for fold,(train_,test) in enumerate(cv.split(features,targets,groups=groups)):
                 score_test.append(roc_auc_score(np.concatenate([y_test[:,ii],[0,1]]),
                                                 np.concatenate([preds_test[:,ii],[0.5,0.5]])
                                                 ))
-        feature_importance = get_RF_feature_importance(randomforestclassifier,
+        feature_importance,results,c = get_RF_feature_importance(randomforestclassifier,
                                                        features,
                                                        targets,
-                                                       test)
-        if sklearn.__version__ == '0.23.2':
-            [results[f'feature importance T-{time_steps - ii}'].append(feature_importance['importances_mean'][ii]) for ii in range(time_steps)]
-            c = feature_importance['importances_mean']
-        else:
-            [results[f'feature importance T-{time_steps - ii}'].append(feature_importance[ii]) for ii in range(time_steps)]
-            c = feature_importance
-            
+                                                       test,
+                                                       results,)
+        
         print('{:.3f}_{:.3f}_{:.3f}_{:.3f}_{:.3f}_{:.3f}_{:.3f}_'.format(*list(c.reshape(7,))))
         
         results['fold'].append(fold)

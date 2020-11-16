@@ -28,13 +28,13 @@ from sklearn.model_selection import LeaveOneGroupOut,StratifiedShuffleSplit
 from sklearn.utils           import shuffle as util_shuffle
 from sklearn.metrics         import roc_auc_score
 
-experiment          = 'LOO'
+experiment          = 'LOO_confidence'
 data_dir            = '../../data'
-model_dir           = '../../models/LOO'
+model_dir           = '../../models/{experiment}'
 working_dir         = '../../data/4-point'
 working_data        = glob(os.path.join(working_dir, "*.csv"))
-working_df_name     = os.path.join(data_dir,f'{experiment}','all_data_adequacy.csv')
-saving_dir          = '../../results/LOO'
+working_df_name     = os.path.join(data_dir,f'{experiment}','all_data.csv')
+saving_dir          = '../../results/{experiment}'
 batch_size          = 32
 time_steps          = 7
 confidence_range    = 4

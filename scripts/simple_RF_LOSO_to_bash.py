@@ -14,9 +14,9 @@ if not os.path.exists(bash_folder):
     os.mkdir(os.path.join(bash_folder,'outputs'))
 
 template            = 'simple_RF_LOSO.py'
-experiment          = 'LOO'
+experiment          = 'LOO_confidence'
 data_dir            = '../data'
-working_df_name     = os.path.join(data_dir,f'{experiment}','all_data_adequacy.csv')
+working_df_name     = os.path.join(data_dir,f'{experiment}','all_data.csv')
 df_def              = pd.read_csv(working_df_name,)
 node                = 1
 core                = 16
