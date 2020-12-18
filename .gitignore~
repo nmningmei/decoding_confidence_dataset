@@ -131,7 +131,4 @@ dmypy.json
 .pyre/
 
 # models
-*.h5
-
-# reports
-*.txt
+.h5
