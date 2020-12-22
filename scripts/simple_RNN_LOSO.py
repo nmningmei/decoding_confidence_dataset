@@ -122,7 +122,7 @@ for fold,(train_,test) in enumerate(cv.split(features,targets,groups=groups)):
     y_valid = to_categorical(y_valid - 1, num_classes = confidence_range)
     y_test  = to_categorical(y_test  - 1, num_classes = confidence_range)
     
-    model.compile(optimizer     = optimizers.SGD(lr = 1e-3),
+    model.compile(optimizer     = optimizers.SGD(lr = 1e-2),
                   loss          = losses.binary_crossentropy,
                   metrics       = ['mse'])
     # early stopping
