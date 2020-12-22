@@ -104,7 +104,7 @@ for fold,(train_,test) in enumerate(cv.split(features,targets,groups=groups)):
         print('fitting...')
         randomforestclassifier.fit(X_train,y_train)
         preds_valid = randomforestclassifier.predict_proba(X_valid)
-        preds_valid = softmax(np.array(preds_valid)[:,:,-1].T,axis = 0)
+        preds_valid = softmax(np.array(preds_valid)[:,:,-1].T,axis = 1)
         print('done fitting')
         
         score_train = scoring_func(y_valid,preds_valid,confidence_range = confidence_range)
@@ -124,7 +124,7 @@ for fold,(train_,test) in enumerate(cv.split(features,targets,groups=groups)):
         results['sub_name'].append('train')
         
         preds_test = randomforestclassifier.predict_proba(X_test)
-        preds_test = softmax(np.array(preds_test)[:,:,-1].T,axis = 0)
+        preds_test = softmax(np.array(preds_test)[:,:,-1].T,axis = 1)
         score_test = scoring_func(y_test,preds_test,confidence_range = confidence_range)
         print('getting test feature importance')
         _targets = to_categorical(targets - 1, num_classes = confidence_range)
