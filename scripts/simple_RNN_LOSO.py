@@ -17,7 +17,7 @@ from tensorflow.keras.utils import to_categorical
 import numpy  as np
 import pandas as pd
 
-from utils import make_CallBackList,check_column_type
+from utils import make_CallBackList,check_column_type,scoring_func
 
 from sklearn.model_selection import LeaveOneGroupOut,StratifiedShuffleSplit
 from sklearn.utils           import shuffle as util_shuffle
@@ -35,6 +35,7 @@ time_steps          = 7
 confidence_range    = 4
 n_jobs              = -1
 verbose             = 1
+debug               = True
 
 df_def          = pd.read_csv(working_df_name,)
 
@@ -133,11 +134,9 @@ for fold,(train_,test) in enumerate(cv.split(features,targets,groups=groups)):
                                   patience      = 5,
                                   frequency     = 1,)
     
+    if not os.path.exists(os.path.join(*model_name.split('/')[:-1])):
+        os.makedirs(os.path.join(*model_name.split('/')[:-1]))
     if not os.path.exists(model_name) or debug:
-        try:
-            os.makedirs(os.path.join(*model_name.split('/')[:-1]))
-        except:
-            pass
         print('trained model not found, start training ...')
         model.fit(X_train,
                   y_train,
@@ -166,14 +165,7 @@ for fold,(train_,test) in enumerate(cv.split(features,targets,groups=groups)):
                                                                   batch_size = batch_size,
                                                                   verbose = 1)
     print('on train')
-    score_train = []
-    for ii in range(4):
-        try:
-            score_train.append(roc_auc_score(y_valid[:,ii],preds_valid[:,ii]))
-        except:
-            score_train.append(roc_auc_score(np.concatenate([y_valid[:,ii],[0,1]]),
-                                             np.concatenate([preds_valid[:,ii],[0.5,0.5]])
-                                             ))
+    score_train = scoring_func(y_valid,preds_valid,confidence_range = confidence_range)
     results['fold'].append(fold)
     results['score'].append(np.mean(score_train))
     [results[f'score{ii + 1}'].append(score_train[ii]) for ii in range(confidence_range)]
@@ -182,14 +174,7 @@ for fold,(train_,test) in enumerate(cv.split(features,targets,groups=groups)):
     results['sub_name'].append('train')
     [results[f'hidden state T-{time_steps - ii}'].append(hidden_state_valid.mean(0)[ii,0]) for ii in range(time_steps)]
     print('on test')
-    score_test = []
-    for ii in range(4):
-        try:
-            score_test.append(roc_auc_score(y_test[:,ii],preds_test[:,ii]))
-        except:
-            score_test.append(roc_auc_score(np.concatenate([y_test[:,ii],[0,1]]),
-                                            np.concatenate([preds_test[:,ii],[0.5,0.5]])
-                                            ))
+    score_test = scoring_func(y_test,preds_test,confidence_range = confidence_range)
     hidden_state_test,h_state_test,c_state_test = hidden_model.predict(X_test,
                                                                        batch_size = batch_size,
                                                                        verbose = 1)
