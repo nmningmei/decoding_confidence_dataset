@@ -14,9 +14,9 @@ if not os.path.exists(bash_folder):
     os.mkdir(os.path.join(bash_folder,'outputs'))
 
 template            = 'simple_RNN_LOSO.py'
-experiment          = 'LOO_confidence'
+experiment          = ['confidence','LOO','RNN']
 data_dir            = '../data'
-working_df_name     = os.path.join(data_dir,f'{experiment}','all_data.csv')
+working_df_name     = os.path.join(data_dir,experiment[0],experiment[1],'all_data.csv')
 df_def              = pd.read_csv(working_df_name,)
 node                = 1
 core                = 16

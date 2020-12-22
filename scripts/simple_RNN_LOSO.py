@@ -21,7 +21,6 @@ from utils import make_CallBackList,check_column_type,scoring_func
 
 from sklearn.model_selection import LeaveOneGroupOut,StratifiedShuffleSplit
 from sklearn.utils           import shuffle as util_shuffle
-from sklearn.metrics         import roc_auc_score
 
 experiment          = ['confidence','LOO','RNN']
 data_dir            = '../data'
