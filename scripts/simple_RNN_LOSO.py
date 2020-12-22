@@ -6,7 +6,6 @@ Created on Tue Nov 19 15:35:17 2019
 @author: nmei
 """
 import os
-import re
 import gc
 gc.collect() # clean garbage memory
 from glob import glob
@@ -18,51 +17,42 @@ from tensorflow.keras.utils import to_categorical
 import numpy  as np
 import pandas as pd
 
-from utils import make_CallBackList
+from utils import make_CallBackList,check_column_type
 
 from sklearn.model_selection import LeaveOneGroupOut,StratifiedShuffleSplit
 from sklearn.utils           import shuffle as util_shuffle
 from sklearn.metrics         import roc_auc_score
 
-experiment          = 'LOO_confidence'
+experiment          = ['confidence','LOO','RNN']
 data_dir            = '../data'
-model_dir           = f'../models/{experiment}'
+model_dir           = f'../models/{experiment[1]}_{experiment[2]}'
 working_dir         = '../data/4-point'
 working_data        = glob(os.path.join(working_dir, "*.csv"))
-working_df_name     = os.path.join(data_dir,f'{experiment}','all_data.csv')
-saving_dir          = f'../results/{experiment}'
+working_df_name     = os.path.join(data_dir,experiment[0],experiment[1],'all_data.csv')
+saving_dir          = f'../results/{experiment[0]}/{experiment[1]}'
 batch_size          = 32
 time_steps          = 7
 confidence_range    = 4
 n_jobs              = -1
 verbose             = 1
-debug               = True
 
-
-df_def              = pd.read_csv(working_df_name,)
+df_def          = pd.read_csv(working_df_name,)
 
 
 # pick one of the csv files
 filename = '../data/4-point/data_Bang_2019_Exp1.csv'
 df_sub = df_def[df_def['filename'] == filename]
-for name in df_sub.columns:
-    if name == 'filename':
-        pass
-    else:
-        try:
-            df_sub[name] = df_sub[name].apply(lambda x:int(re.findall('\d+',x)[0]))
-        except:
-            print(f'column {name} contains strings')
+df_sub = check_column_type(df_sub)
 
 #for (filename),df_sub in df_def.groupby(["filename"]):
-features    = df_sub[[f"feature{ii + 1}" for ii in range(7)]].values
+features    = df_sub[[f"feature{ii + 1}" for ii in range(time_steps)]].values
 targets     = df_sub["targets"].values.astype(int)
 groups      = df_sub["sub"].values
 kk          = filename.split('/')[-1].split(".csv")[0]
 cv          = LeaveOneGroupOut()
-csv_name    = os.path.join(saving_dir,f'RNN cross validation results LOO ({kk}).csv')
+csv_name    = os.path.join(saving_dir,f'{experiment[2]} cross validation results LOO ({kk}).csv')
 if not os.path.exists(saving_dir):
-    os.mkdir(saving_dir)
+    os.makedirs(saving_dir)
 print(csv_name)
 
 if not os.path.exists(csv_name) or debug:

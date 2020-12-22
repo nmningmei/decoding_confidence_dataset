@@ -95,6 +95,14 @@ def meta_adequacy(x):
     else:
         return 5 - x['Confidence']
 
+def check_column_type(df_sub):
+    for name in df_sub.columns:
+        if name == 'filename':
+            pass
+        else:
+            df_sub[name] = df_sub[name].astype(int)
+    return df_sub
+
 def add_adequacy(working_data,
                  time_steps = 7,
                  n_jobs = 8,

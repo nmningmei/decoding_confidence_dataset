@@ -23,16 +23,15 @@ from tensorflow.keras.utils  import to_categorical
 from sklearn.model_selection import GroupShuffleSplit
 from sklearn.utils           import shuffle as util_shuffle
 
-experiment          = 'cross_domain_confidence'
-experiment_folder   = 'confidence'
+experiment          = ['cross_domain','confidence']
 data_dir            = '../data/'
-model_dir           = f'../models/{experiment_folder}/RNN_CD'
+model_dir           = f'../models/{experiment[1]}/RNN_CD'
 source_dir          = '../data/4-point'
 target_dir          = '../data/targets/*/'
-result_dir          = f'../results/{experiment_folder}/RF_CD'
-hidden_dir          = f'../results/{experiment_folder}/RF_CD_FI'
-source_df_name      = os.path.join(data_dir,f'{experiment}','source.csv')
-target_df_name      = os.path.join(data_dir,f'{experiment}','target.csv')
+result_dir          = f'../results/{experiment[1]}/RF_CD'
+hidden_dir          = f'../results/{experiment[1]}/RF_CD_FI'
+source_df_name      = os.path.join(data_dir,experiment[1],experiment[0],'source.csv')
+target_df_name      = os.path.join(data_dir,experiment[1],experiment[0],'target.csv')
 batch_size          = 32
 time_steps          = 7
 confidence_range    = 4
