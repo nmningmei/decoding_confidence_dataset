@@ -24,7 +24,7 @@ from sklearn.utils           import shuffle as util_shuffle
 
 experiment          = ['confidence','LOO','RNN']
 data_dir            = '../data'
-model_dir           = f'../models/{experiment[1]}_{experiment[2]}'
+model_dir           = f'../models/{experiment[0]}/{experiment[1]}_{experiment[2]}'
 working_dir         = '../data/4-point'
 working_data        = glob(os.path.join(working_dir, "*.csv"))
 working_df_name     = os.path.join(data_dir,experiment[0],experiment[1],'all_data.csv')

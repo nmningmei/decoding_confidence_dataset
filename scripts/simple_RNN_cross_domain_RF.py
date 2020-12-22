@@ -23,13 +23,16 @@ from tensorflow.keras.utils  import to_categorical
 from sklearn.model_selection import GroupShuffleSplit
 from sklearn.utils           import shuffle as util_shuffle
 
-experiment          = ['cross_domain','confidence']
+from scipy.special           import softmax
+
+experiment          = ['cross_domain','confidence','RF']
+feature_properties  = 'feature importance' # or hidden states or feature importance
 data_dir            = '../data/'
-model_dir           = f'../models/{experiment[1]}/RNN_CD'
+model_dir           = f'../models/{experiment[1]}/{experiment[2]}_CD'
 source_dir          = '../data/4-point'
 target_dir          = '../data/targets/*/'
-result_dir          = f'../results/{experiment[1]}/RF_CD'
-hidden_dir          = f'../results/{experiment[1]}/RF_CD_FI'
+result_dir          = f'../results/{experiment[1]}/{experiment[2]}_CD'
+hidden_dir          = f'../results/{experiment[1]}/{experiment[2]}_CD_{"".join(feature_properties.split(" "))}'
 source_df_name      = os.path.join(data_dir,experiment[1],experiment[0],'source.csv')
 target_df_name      = os.path.join(data_dir,experiment[1],experiment[0],'target.csv')
 batch_size          = 32
@@ -38,7 +41,7 @@ confidence_range    = 4
 n_splits            = 100
 n_jobs              = -1
 split               = False # split the data into high and low dprime-metadrpime
-feature_properties  = 'feature importance' # or hidden states or feature importance
+
 
 for d in [model_dir,result_dir,hidden_dir]:
     if not os.path.exists(d):
@@ -87,13 +90,13 @@ randomforestclassifier = build_RF(n_jobs = n_jobs,
 print('fitting...')
 randomforestclassifier.fit(X_train,y_train)
 preds_valid = randomforestclassifier.predict_proba(X_valid)
-preds_valid = np.array(preds_valid)[:,:,-1].T
+preds_valid = softmax(np.array(preds_valid)[:,:,-1].T,axis = 1)
 print('done fitting')
 score_train = scoring_func(y_valid,preds_valid,confidence_range = confidence_range)
-
+_targets = to_categorical(targets - 1, num_classes = confidence_range)
 feature_importance,results,_ = get_RF_feature_importance(randomforestclassifier,
                                                          features,
-                                                         targets,
+                                                         _targets,
                                                          valid,
                                                          results,
                                                          feature_properties,
@@ -116,6 +119,7 @@ for (sub_name,target_domain),df_sub in df_target.groupby(['sub','domain']):
     y_test          = to_categorical(y_test - 1, num_classes = confidence_range,)
     
     preds_test  = randomforestclassifier.predict_proba(X_test)
+    preds_test  = softmax(np.array(preds_test)[:,:,-1].T,axis = 1)
     score_test  = scoring_func(y_test,preds_test,confidence_range = confidence_range)
     
     print(f'training score = {np.mean(score_train):.4f} with {len(train)} instances, testing score = {np.mean(score_test):.4f} with {len(y_test)} instances')

@@ -10,11 +10,11 @@ This script is to train multiple RNN models on the subset of the source data
 To estimate the model perform will be in another script
 
 """
-import re
+
 import os
 import gc
 gc.collect() # clean garbage memory
-from glob import glob
+
 
 # add here
 import tensorflow as tf
@@ -30,23 +30,22 @@ from sklearn.model_selection import GroupShuffleSplit
 from sklearn.utils           import shuffle as util_shuffle
 #from sklearn.metrics         import roc_auc_score
 
-experiment          = 'cross_domain_confidence'
-experiment_folder   = 'confidence'
+experiment          = ['cross_domain','confidence','RNN']
+feature_properties  = 'hidden states' # or hidden states or feature importance
 data_dir            = '../data/'
-model_dir           = f'../models/{experiment_folder}/RNN_CD'
+model_dir           = f'../models/{experiment[1]}/{experiment[2]}_CD'
 source_dir          = '../data/4-point'
 target_dir          = '../data/targets/*/'
-result_dir          = f'../results/{experiment_folder}/RNN_CD'
-hidden_dir          = f'../results/{experiment_folder}/RNN_CD_hidden'
-source_df_name      = os.path.join(data_dir,f'{experiment}','source.csv')
-target_df_name      = os.path.join(data_dir,f'{experiment}','target.csv')
+result_dir          = f'../results/{experiment[1]}/{experiment[2]}_CD'
+hidden_dir          = f'../results/{experiment[1]}/{experiment[2]}_CD_{"".join(feature_properties.split(" "))}'
+source_df_name      = os.path.join(data_dir,experiment[1],experiment[0],'source.csv')
+target_df_name      = os.path.join(data_dir,experiment[1],experiment[0],'target.csv')
 batch_size          = 32
 time_steps          = 7
 confidence_range    = 4
 n_splits            = 100
 n_jobs              = -1
 split               = False # split the data into high and low dprime-metadrpime
-feature_properties  = 'hidden states' # or hidden states or feature importance
 
 for d in [model_dir,result_dir,hidden_dir]:
     if not os.path.exists(d):
@@ -106,11 +105,11 @@ X_valid = to_categorical(X_valid - 1, num_classes = confidence_range)
 y_train = to_categorical(y_train - 1, num_classes = confidence_range)
 y_valid = to_categorical(y_valid - 1, num_classes = confidence_range)
 
-model.compile(optimizer     = optimizers.SGD(lr = 1e-3),
+model.compile(optimizer     = optimizers.SGD(lr = 1e-2),
               loss          = losses.binary_crossentropy,
               metrics       = ['mse'])
 # early stopping
-model_name     = os.path.join(model_dir,f'{experiment}_{fold + 1}.h5')
+model_name     = os.path.join(model_dir,f'{"_".join(experiment)}_{fold + 1}.h5')
 print(model_name)
 # early stopping
 callbacks = make_CallBackList(model_name    = model_name,
