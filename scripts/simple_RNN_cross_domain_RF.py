@@ -76,18 +76,20 @@ for fold,(train,valid) in enumerate(cv.split(features,targets,groups = groups)):
     X_valid,y_valid = features[valid],targets[valid]
     if fold >= 0: # batch_change
         break
+y_train = to_categorical(y_train - 1, num_classes = confidence_range)
+y_valid = to_categorical(y_valid - 1, num_classes = confidence_range)
 
 csv_saving_name     = f'RF cross validation results (fold {fold + 1}).csv'
 
 randomforestclassifier = build_RF(n_jobs = n_jobs,
                                   n_estimators = 500,
-                                  sklearnlib = False,
+                                  sklearnlib = True,
                                   )
 print('fitting...')
 randomforestclassifier.fit(X_train,y_train)
 preds_valid = randomforestclassifier.predict_proba(X_valid)
+preds_valid = np.array(preds_valid)[:,:,-1].T
 print('done fitting')
-y_valid = to_categorical(y_valid - 1, num_classes = confidence_range)
 score_train = scoring_func(y_valid,preds_valid,confidence_range = confidence_range)
 
 feature_importance,results,_ = get_RF_feature_importance(randomforestclassifier,
@@ -109,7 +111,7 @@ results['sub_name'].append('train')
 # cross domain testing
 for (sub_name,target_domain),df_sub in df_target.groupby(['sub','domain']):
     features_       = df_sub[[f"feature{ii + 1}" for ii in range(7)]].values
-    targets_    = df_sub["targets"].values.astype(int)
+    targets_        = df_sub["targets"].values.astype(int)
     groups_         = df_sub["sub"].values
     X_test,y_test   = features_.copy(),targets_.copy()
     y_test          = to_categorical(y_test - 1, num_classes = confidence_range,)

@@ -16,20 +16,19 @@ from tensorflow.keras.utils  import to_categorical
 import numpy  as np
 import pandas as pd
 
-from utils import preprocess,build_RF,get_RF_feature_importance
+from utils import build_RF,get_RF_feature_importance,scoring_func
 
-import sklearn
 from sklearn.model_selection import LeaveOneGroupOut
 from sklearn.utils           import shuffle as util_shuffle
 from sklearn.metrics         import roc_auc_score
 
-experiment          = 'LOO_confidence'
+experiment          = ['confidence','LOO',]
 data_dir            = '../data'
-model_dir           = f'../models/{experiment}_RF'
+model_dir           = f'../models/{experiment[1]}_RF'
 working_dir         = '../data/4-point'
 working_data        = glob(os.path.join(working_dir, "*.csv"))
-working_df_name     = os.path.join(data_dir,f'{experiment}','all_data.csv')
-saving_dir          = f'../results/{experiment}'
+working_df_name     = os.path.join(data_dir,experiment[0],experiment[1],'all_data.csv')
+saving_dir          = f'../results/{experiment[0]}/{experiment[1]}'
 batch_size          = 32
 time_steps          = 7
 confidence_range    = 4
@@ -49,7 +48,7 @@ for name in df_sub.columns:
         try:
             df_sub[name] = df_sub[name].apply(lambda x:int(re.findall('\d+',x)[0]))
         except:
-            print(f'column {name} contains strings')
+            print(f'column {name} contains no strings')
 
 #for (filename),df_sub in df_def.groupby(["filename"]):
 features    = df_sub[[f"feature{ii + 1}" for ii in range(7)]].values
@@ -95,30 +94,31 @@ for fold,(train_,test) in enumerate(cv.split(features,targets,groups=groups)):
             X_train,y_train = X_[train],y_[train]
             X_valid,y_valid = X_[valid],y_[valid]
         
+#        X_train = to_categorical(X_train - 1, num_classes = confidence_range)
+#        X_valid = to_categorical(X_valid - 1, num_classes = confidence_range)
+#        X_test  = to_categorical(X_test  - 1, num_classes = confidence_range)
         
+        y_train = to_categorical(y_train - 1, num_classes = confidence_range)
+        y_valid = to_categorical(y_valid - 1, num_classes = confidence_range)
+        y_test  = to_categorical(y_test  - 1, num_classes = confidence_range)
         
         randomforestclassifier = build_RF(n_jobs = n_jobs,
-                                          n_estimators = 100,
+                                          n_estimators = 500,
+                                          sklearnlib = True,
                                           )
         
         print('fitting...')
         randomforestclassifier.fit(X_train,y_train)
         preds_valid = randomforestclassifier.predict_proba(X_valid)
+        preds_valid = np.array(preds_valid)[:,:,-1].T
         print('done fitting')
-        y_valid = to_categorical(y_valid - 1, num_classes = confidence_range)
         
-        score_train = []
-        for ii in range(4):
-            try:
-                score_train.append(roc_auc_score(y_valid[:,ii],preds_valid[:,ii]))
-            except:
-                score_train.append(roc_auc_score(np.concatenate([y_valid[:,ii],[0,1]]),
-                                                 np.concatenate([preds_valid[:,ii],[0.5,0.5]])
-                                                 ))
+        score_train = scoring_func(y_valid,preds_valid,confidence_range = confidence_range)
         print('getting validation feature importance')
+        _targets = to_categorical(targets - 1, num_classes = confidence_range)
         feature_importance,results,c = get_RF_feature_importance(randomforestclassifier,
                                                        features,
-                                                       targets,
+                                                       _targets,
                                                        valid,
                                                        results,)
         
@@ -129,19 +129,14 @@ for fold,(train_,test) in enumerate(cv.split(features,targets,groups=groups)):
         results['source'].append('train')
         results['sub_name'].append('train')
         
-        y_test = to_categorical(y_test - 1, num_classes = confidence_range)
         preds_test = randomforestclassifier.predict_proba(X_test)
-        score_test = []
-        for ii in range(4):
-            try:
-                score_test.append(roc_auc_score(y_test[:,ii],preds_test[:,ii]))
-            except:
-                score_test.append(roc_auc_score(np.concatenate([y_test[:,ii],[0,1]]),
-                                                np.concatenate([preds_test[:,ii],[0.5,0.5]])
-                                                ))
+        preds_test = np.array(preds_test)[:,:,-1].T
+        score_test = scoring_func(y_test,preds_test,confidence_range = confidence_range)
+        print('getting test feature importance')
+        _targets = to_categorical(targets - 1, num_classes = confidence_range)
         feature_importance,results,c = get_RF_feature_importance(randomforestclassifier,
                                                        features,
-                                                       targets,
+                                                       _targets,
                                                        test,
                                                        results,)
         

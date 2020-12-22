@@ -17,11 +17,12 @@ import seaborn as sns
 sns.set_style('whitegrid')
 sns.set_context('poster')
 
-working_dir = '../results/R*CD/'
-figure_dir = '../figures/CD'
+experiment = 'adequacy' # confidence or adequacy
+working_dir = f'../results/{experiment}/R*CD/'
+figure_dir = f'../figures/{experiment}/CD'
 if not os.path.exists(figure_dir):
     os.mkdir(figure_dir)
-working_data = glob(os.path.join(working_dir,"*.csv"))
+working_data = np.sort(glob(os.path.join(working_dir,"*.csv")))
 
 df = []
 for f in working_data:
@@ -48,6 +49,7 @@ fig,ax = plt.subplots(figsize = (16,16))
 ax = sns.barplot(x = 'source',
                  y = 'score',
                  hue = 'model',
+                 hue_order = ['RF','RNN'],
                  data = df_plot,
                  ax = ax,
                  )
@@ -66,6 +68,7 @@ g = sns.catplot(x = 'Time',
                 y = 'hidden states/feature importance',
                 hue = 'model',
                 row = 'source',
+                hue_order = ['RF','RNN'],
                 data = df_plot,
                 kind = 'bar',
                 aspect = 2,

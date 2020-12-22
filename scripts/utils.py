@@ -230,6 +230,7 @@ def build_RF(n_jobs             = 1,
                                     criterion       = 'entropy',
                                     n_jobs          = n_jobs,
                                     class_weight    = 'balanced',
+                                    random_state    = 12345,
                                     )
         return rf
     else:

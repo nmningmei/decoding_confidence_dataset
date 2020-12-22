@@ -9,17 +9,19 @@ Created on Mon Dec 16 14:39:57 2019
 import os
 from glob import glob
 import pandas as pd
+import numpy as np
 from sklearn.preprocessing import MinMaxScaler as scaler
 import seaborn as sns
 from matplotlib import pyplot as plt
 sns.set_style('whitegrid')
 sns.set_context('poster')
 
-working_dir = '../results/LOO/'
-figure_dir = '../figures/LOO_compare_RNN_RF/'
+experiment = 'adequacy' # confidence or adequacy
+working_dir = f'../results/{experiment}/LOO/'
+figure_dir = f'../figures/{experiment}/LOO_compare_RNN_RF/'
 if not os.path.exists(figure_dir):
     os.mkdir(figure_dir)
-working_data = glob(os.path.join(working_dir,'*.csv'))
+working_data = np.sort(glob(os.path.join(working_dir,'*.csv')))
 
 df = []
 for f in working_data:
