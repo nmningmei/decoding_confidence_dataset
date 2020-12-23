@@ -17,19 +17,18 @@ from sklearn.utils           import shuffle as util_shuffle
 templates           = ['simple_RNN_cross_domain_RF.py',
                        'simple_RNN_cross_domain_train_RNN.py',
                        'simple_RNN_cross_domain_hidden.py']
-experiment          = 'CD'
-experiment_folder   = 'cross_domain_confidence'
+experiment          = ['cross_domain','confidence','RF','RNN']
 data_dir            = '../data'
 source_dir          = '../data/4-point'
 target_dir          = '../data/targets/*/'
 source_data         = glob(os.path.join(source_dir, "*.csv"))
 target_data         = glob(os.path.join(target_dir, "*.csv"))
-source_df_name      = os.path.join(data_dir,experiment_folder,'source.csv')
-target_df_name      = os.path.join(data_dir,experiment_folder,'target.csv')
+source_df_name      = os.path.join(data_dir,experiment[1],experiment[0],'source.csv')
+target_df_name      = os.path.join(data_dir,experiment[1],experiment[0],'target.csv')
 node                = 1
 core                = 16
 mem                 = 2 * core * node
-cput                = 12 * core * node
+cput                = 24 * core * node
 n_splits            = 100
 level               = 'high'
 
@@ -40,7 +39,7 @@ add = """from shutil import copyfile
 copyfile('../utils.py','utils.py')
 
 """
-bash_folder = f'{experiment}_bash'
+bash_folder = f'{"_".join(experiment)}_bash'
 if not os.path.exists(bash_folder):
     os.mkdir(bash_folder)
     os.mkdir(os.path.join(bash_folder,'outputs'))
@@ -50,8 +49,8 @@ copyfile('../utils.py','utils.py')
 
 """
 
-if not os.path.exists(f'{experiment}_bash/outputs'):
-    os.mkdir(f'{experiment}_bash/outputs')
+if not os.path.exists(f'{bash_folder}/outputs'):
+    os.mkdir(f'{bash_folder}/outputs')
 
 features    = df_source[[f"feature{ii + 1}" for ii in range(7)]].values
 targets     = df_source["targets"].values.astype(int)
@@ -92,13 +91,13 @@ collection = np.array(collection).reshape(3,-1).T
 
 for ii,row in enumerate(collection):
     rf,train,hidden = row
-    new_batch_script_name = os.path.join(bash_folder,f'{experiment}{ii+1}')
+    new_batch_script_name = os.path.join(bash_folder,f'{"_".join(experiment)}{ii+1}')
     content = f"""#!/bin/bash
 #PBS -q bcbl
 #PBS -l nodes={node}:ppn={core}
 #PBS -l mem={mem}gb
 #PBS -l cput={cput}:00:00
-#PBS -N {experiment}RF{ii+1}
+#PBS -N {"_".join(experiment)}_{ii+1}
 #PBS -o outputs/out_{ii+1}.txt
 #PBS -e outputs/err_{ii+1}.txt
 
@@ -123,9 +122,9 @@ with open(f'{bash_folder}/qsub_jobs.py','w') as f:
 with open(f'{bash_folder}/qsub_jobs.py','a') as f:
     for ii in range(n_splits):
         if ii == 0:
-            f.write(f'\nos.system("qsub {experiment}{ii+1}")\n')
+            f.write(f'\nos.system("qsub {"_".join(experiment)}{ii+1}")\n')
         else:
-            f.write(f'time.sleep(1)\nos.system("qsub {experiment}{ii+1}")\n')
+            f.write(f'time.sleep(1)\nos.system("qsub {"_".join(experiment)}{ii+1}")\n')
     f.close()
     
 

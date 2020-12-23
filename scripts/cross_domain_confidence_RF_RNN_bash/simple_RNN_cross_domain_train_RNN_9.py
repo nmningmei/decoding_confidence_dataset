@@ -16,7 +16,9 @@ import gc
 gc.collect() # clean garbage memory
 
 
-# add here
+from shutil import copyfile
+copyfile('../utils.py','utils.py')
+
 import tensorflow as tf
 from tensorflow.keras       import layers, Model, optimizers, losses
 from tensorflow.keras.utils import to_categorical
@@ -32,12 +34,12 @@ from sklearn.utils           import shuffle as util_shuffle
 
 experiment          = ['cross_domain','confidence','RNN']
 feature_properties  = 'hidden states' # or hidden states or feature importance
-data_dir            = '../data/'
-model_dir           = f'../models/{experiment[1]}/{experiment[2]}_CD'
-source_dir          = '../data/4-point'
-target_dir          = '../data/targets/*/'
-result_dir          = f'../results/{experiment[1]}/{experiment[2]}_CD'
-hidden_dir          = f'../results/{experiment[1]}/{experiment[2]}_CD_{"".join(feature_properties.split(" "))}'
+data_dir            = '../../data/'
+model_dir           = f'../../models/{experiment[1]}/{experiment[2]}_CD'
+source_dir          = '../../data/4-point'
+target_dir          = '../../data/targets/*/'
+result_dir          = f'../../results/{experiment[1]}/{experiment[2]}_CD'
+hidden_dir          = f'../../results/{experiment[1]}/{experiment[2]}_CD_{"".join(feature_properties.split(" "))}'
 source_df_name      = os.path.join(data_dir,experiment[1],experiment[0],'source.csv')
 target_df_name      = os.path.join(data_dir,experiment[1],experiment[0],'target.csv')
 batch_size          = 32
@@ -73,7 +75,7 @@ for fold,(_train,test) in enumerate(cv.split(features,targets,groups = groups)):
     for train,valid in cv.split(training_features,training_targets,groups = training_groups):
         X_train,y_train = training_features[train],training_targets[train]
         X_valid,y_valid = training_features[valid],training_targets[valid]
-    if fold >= 0: # batch_change
+    if fold >= 8: # batch_change
         break
     
 # reset the GPU memory
