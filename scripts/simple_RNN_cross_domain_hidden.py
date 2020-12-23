@@ -85,7 +85,7 @@ for fold,(train,valid) in enumerate(cv.split(features,targets,groups = groups)):
 
 
 csv_saving_name     = f'RNN cross validation results (fold {fold + 1}).csv'
-model_name     = os.path.join(model_dir,f'{experiment}_{fold + 1}.h5')
+model_name     = os.path.join(model_dir,f'{"_".join(experiment)}_{fold + 1}.h5')
 csv_saving_name = os.path.join(result_dir,csv_saving_name)
 print(model_name)
 # reset the GPU memory
@@ -163,7 +163,7 @@ for (sub_name,target_domain),df_sub in df_target.groupby(['sub','domain']):
     hidden_state_test,h_state_test,c_state_test = hidden_model.predict(X_test,
                                                                        batch_size = batch_size,
                                                                        verbose = 1)
-    print('{:.3f}_{:.3f}_{:.3f}_{:.3f}_{:.3f}_{:.3f}_{:.3f}_'.format(*list(hidden_state_test.mean(0).reshape(7,))))
+    print('{:.3f}_{:.3f}_{:.3f}_{:.3f}_{:.3f}_{:.3f}_{:.3f}'.format(*list(hidden_state_test.mean(0).reshape(7,))))
     
     results['fold'].append(fold)
     results['score'].append(np.mean(score_test))
@@ -171,7 +171,7 @@ for (sub_name,target_domain),df_sub in df_target.groupby(['sub','domain']):
     results['n_sample'].append(X_test.shape[0])
     results['source'].append(target_domain)
     results['sub_name'].append(sub_name)
-    [results[f'{feature_properties} T-{time_steps - ii}'].append(hidden_state_test.mean(0)[ii,0]) for ii in range(time_steps)]
+    [results[f'{feature_properties} T-{time_steps - ii}'].append(np.abs(hidden_state_test.mean(0)[ii,0])) for ii in range(time_steps)]
     
     results_to_save = pd.DataFrame(results)
     results_to_save.to_csv(csv_saving_name,index = False)
