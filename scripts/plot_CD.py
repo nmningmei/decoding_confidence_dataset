@@ -17,7 +17,7 @@ import seaborn as sns
 sns.set_style('whitegrid')
 sns.set_context('poster')
 
-experiment = 'adequacy' # confidence or adequacy
+experiment = 'confidence' # confidence or adequacy
 working_dir = f'../results/{experiment}/R*CD/'
 figure_dir = f'../figures/{experiment}/CD'
 if not os.path.exists(figure_dir):
@@ -37,7 +37,7 @@ for f in working_data:
     # normalize with each decoding
     temp_array = temp[[item for item in temp.columns if ('T-' in item)]].values
     if decoder == 'RNN':
-        temp_array = - temp_array
+        temp_array = np.abs(temp_array)
     temp_array = scaler().fit_transform(temp_array.T)
     temp[[item for item in temp.columns if ('T-' in item)]] = temp_array.T
     df.append(temp)

@@ -16,7 +16,7 @@ from matplotlib import pyplot as plt
 sns.set_style('whitegrid')
 sns.set_context('poster')
 
-experiment = 'adequacy' # confidence or adequacy
+experiment = 'confidence' # confidence or adequacy
 working_dir = f'../results/{experiment}/LOO/'
 figure_dir = f'../figures/{experiment}/LOO_compare_RNN_RF/'
 if not os.path.exists(figure_dir):
@@ -36,7 +36,7 @@ for f in working_data:
     # normalize with each decoding
     temp_array = temp[[item for item in temp.columns if ('T-' in item)]].values
     if decoder == 'RNN':
-        temp_array = - temp_array
+        temp_array = np.abs(temp_array)
     temp_array = scaler().fit_transform(temp_array.T)
     temp[[item for item in temp.columns if ('T-' in item)]] = temp_array.T
     df.append(temp)
@@ -48,6 +48,7 @@ fig,ax = plt.subplots(figsize = (16,16))
 ax = sns.barplot(y = 'experiment',
                  x = 'score',
                  hue = 'model',
+                 hue_order = ['RF','RNN'],
                  data = df_plot,
                  ax = ax,
                  )
@@ -55,6 +56,7 @@ fig.savefig(os.path.join(figure_dir,
                          'RNN vs RF LOO.jpeg'),
 #            dpi = 400,
             bbox_inches = 'tight')
+
 unique_experiment = pd.unique(df_plot['experiment'])
 fig,axes = plt.subplots(figsize = (28,28),
                         nrows = 4,
@@ -67,6 +69,7 @@ for ax,experiment in zip(axes.flatten(),unique_experiment):
     ax = sns.barplot(x = 'variable',
                      y = 'value',
                      hue = 'model',
+                     hue_order = ['RF','RNN'],
                      data = df_sub_plot,
                      ax = ax,
                      )
