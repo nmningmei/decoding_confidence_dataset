@@ -14,7 +14,7 @@ if not os.path.exists(bash_folder):
     os.mkdir(os.path.join(bash_folder,'outputs'))
 
 template            = 'simple_RF_LOSO.py'
-experiment          = ['confidence','LOO','RF']
+experiment          = ['adequacy','LOO','RF']
 data_dir            = '../data'
 working_df_name     = os.path.join(data_dir,experiment[0],experiment[1],'all_data.csv')
 df_def              = pd.read_csv(working_df_name,)
@@ -42,6 +42,8 @@ for ii,((filename),df_sub) in enumerate(df_def.groupby(["filename"])):
                     line = line + '\n' + add
                 elif "verbose             =" in line:
                     line = "verbose             = 0\n"
+                elif "experiment          = " in line:
+                    line = line.replace("confidence",experiment[0])
                 new_file.write(line)
             old_file.close()
         new_file.close()
