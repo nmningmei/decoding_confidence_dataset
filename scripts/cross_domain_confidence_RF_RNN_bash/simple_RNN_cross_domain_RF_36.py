@@ -128,7 +128,7 @@ for (sub_name,target_domain),df_sub in df_target.groupby(['sub','domain']):
     print('get feature importance')
     feature_importance,results,c = get_RF_feature_importance(randomforestclassifier,
                                                              features_,
-                                                             targets_,
+                                                             y_test,
                                                              np.arange(features_.shape[0]),
                                                              results,
                                                              feature_properties,
