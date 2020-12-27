@@ -17,7 +17,7 @@ from sklearn.utils           import shuffle as util_shuffle
 templates           = ['simple_RNN_cross_domain_RF.py',
                        'simple_RNN_cross_domain_train_RNN.py',
                        'simple_RNN_cross_domain_hidden.py']
-experiment          = ['cross_domain','confidence','RF','RNN']
+experiment          = ['cross_domain','adequacy','RF','RNN']
 data_dir            = '../data'
 source_dir          = '../data/4-point'
 target_dir          = '../data/targets/*/'
@@ -81,6 +81,12 @@ for template in templates:
                         line = f"n_splits            = {n_splits}\n"
                     elif "dprime_level" in line:
                         line = line.replace('low',level)
+                    elif "experiment          = " in line:
+                        if template.split('_')[-1].split('.')[0] == 'RF':
+                            _temp = 'RF'
+                        else:
+                            _temp = 'RNN'
+                        line = f"experiment          = ['cross_domain','{experiment[1]}','{_temp}']\n"
                     new_file.write(line)
                 old_file.close()
             new_file.close()
