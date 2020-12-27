@@ -25,7 +25,7 @@ from sklearn.utils           import shuffle as util_shuffle
 
 from scipy.special           import softmax
 
-experiment          = ['cross_domain','confidence','RF']
+experiment          = ['cross_domain','adequacy','RF']
 feature_properties  = 'feature importance' # or hidden states or feature importance
 data_dir            = '../data/'
 model_dir           = f'../models/{experiment[1]}/{experiment[2]}_CD'
