@@ -16,7 +16,7 @@ from matplotlib import pyplot as plt
 sns.set_style('whitegrid')
 sns.set_context('poster')
 
-experiment = 'confidence' # confidence or adequacy
+experiment = 'adequacy' # confidence or adequacy
 working_dir = f'../results/{experiment}/LOO/'
 figure_dir = f'../figures/{experiment}/LOO_compare_RNN_RF/'
 if not os.path.exists(figure_dir):
