@@ -17,7 +17,7 @@ import seaborn as sns
 sns.set_style('whitegrid')
 sns.set_context('poster')
 
-experiment = 'confidence' # confidence or adequacy
+experiment = 'adequacy' # confidence or adequacy
 working_dir = f'../results/{experiment}/R*CD/'
 figure_dir = f'../figures/{experiment}/CD'
 if not os.path.exists(figure_dir):
