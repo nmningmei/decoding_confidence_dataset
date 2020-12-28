@@ -16,7 +16,7 @@ from matplotlib import pyplot as plt
 sns.set_style('whitegrid')
 sns.set_context('poster')
 
-experiment = 'adequacy' # confidence or adequacy
+experiment = 'confidence' # confidence or adequacy
 working_dir = f'../results/{experiment}/LOO/'
 figure_dir = f'../figures/{experiment}/LOO_compare_RNN_RF/'
 if not os.path.exists(figure_dir):
@@ -52,6 +52,7 @@ ax = sns.barplot(y = 'experiment',
                  data = df_plot,
                  ax = ax,
                  )
+ax.set(xlim = (0.15,0.85))
 fig.savefig(os.path.join(figure_dir,
                          'RNN vs RF LOO.jpeg'),
 #            dpi = 400,

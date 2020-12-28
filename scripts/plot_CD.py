@@ -53,6 +53,7 @@ ax = sns.barplot(x = 'source',
                  data = df_plot,
                  ax = ax,
                  )
+ax.set(ylim = (0.15,0.85))
 ax.set(xlabel = 'Target data',ylabel = 'ROC AUC',)
 fig.savefig(os.path.join(figure_dir,'cross domain decoding scores.jpeg',
                          ),
@@ -71,7 +72,7 @@ g = sns.catplot(x = 'Time',
                 hue_order = ['RF','RNN'],
                 data = df_plot,
                 kind = 'bar',
-                aspect = 2,
+                aspect = 2.5,
                 )
 (g.set_axis_labels('Time Steps','Weights')
   .set_titles('{row_name}'))
