@@ -18,4 +18,27 @@
 ![lstm](https://github.com/nmningmei/decoding_confidence_dataset/blob/main/figures/external-content.duckduckgo.com.jpg)
 
 # Decode confidence
-## 
+## Decoding scores (within domain)
+![confidence_w_score](https://github.com/nmningmei/decoding_confidence_dataset/blob/main/figures/confidence/LOO_compare_RNN_RF/RNN%20vs%20RF%20LOO.jpeg)
+
+## Feature contributions (within domain)
+![confidence_w_feature](https://github.com/nmningmei/decoding_confidence_dataset/blob/main/figures/confidence/LOO_compare_RNN_RF/RNN%20vs%20RF%20features.jpeg)
+
+## Decoding scores (cross domain)
+![confidence_c_score](https://github.com/nmningmei/decoding_confidence_dataset/blob/main/figures/confidence/CD/cross%20domain%20decoding%20scores.jpeg)
+
+## Feature contributions (cross domain)
+![confidence_c_feature](https://github.com/nmningmei/decoding_confidence_dataset/blob/main/figures/confidence/CD/hidden%20states%20of%20time%20steps.jpeg)
+
+# Decode adequacy
+## Decoding scores (within domain)
+![adequacy_w_score](https://github.com/nmningmei/decoding_confidence_dataset/blob/main/figures/adequacy/LOO_compare_RNN_RF/RNN%20vs%20RF%20LOO.jpeg)
+
+## Feature contributions (within domain)
+![adequacy_w_feature](https://github.com/nmningmei/decoding_confidence_dataset/blob/main/figures/adequacy/LOO_compare_RNN_RF/RNN%20vs%20RF%20features.jpeg)
+
+## Decoding scores (cross domain)
+![adequacy_c_score](https://github.com/nmningmei/decoding_confidence_dataset/blob/main/figures/adequacy/CD/cross%20domain%20decoding%20scores.jpeg)
+
+## Feature contributions (cross domain)
+![adequacy_c_feature](https://github.com/nmningmei/decoding_confidence_dataset/blob/main/figures/adequacy/CD/hidden%20states%20of%20time%20steps.jpeg)
