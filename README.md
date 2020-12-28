@@ -12,10 +12,10 @@
 - tensorflow:    2.0.0
 
 # RNN model
-![rnn](https://github.com/nmningmei/decoding_confidence_dataset/blob/main/figures/RNN%20model%20confidence%20database.jpg)
+RNN model                  |  LSTM cell
+:-------------------------:|:-------------------------:
+![rnn](https://github.com/nmningmei/decoding_confidence_dataset/blob/main/figures/RNN%20model%20confidence%20database.jpg)  |  ![lstm](https://github.com/nmningmei/decoding_confidence_dataset/blob/main/figures/external-content.duckduckgo.com.jpg)
 
-## LSTM cell
-![lstm](https://github.com/nmningmei/decoding_confidence_dataset/blob/main/figures/external-content.duckduckgo.com.jpg)
 
 # Decode confidence
 ## Decoding scores (within domain)
