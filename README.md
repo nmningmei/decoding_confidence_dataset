@@ -31,9 +31,9 @@ Confidence             |  Adequacy
 ## Decoding scores (cross domain)
 Confidence             |  Adequacy
 :-------------------------:|:-------------------------:
-![cws](https://github.com/nmningmei/decoding_confidence_dataset/blob/main/figures/confidence/CD/RNN%20vs%20RF%20LOO.jpeg)  |  ![aws](https://github.com/nmningmei/decoding_confidence_dataset/blob/main/figures/adequacy/CD/RNN%20vs%20RF%20LOO.jpeg)
+![ccs](https://github.com/nmningmei/decoding_confidence_dataset/blob/main/figures/confidence/CD/cross%20domain%20decoding%20scores.jpeg)  |  ![acs](https://github.com/nmningmei/decoding_confidence_dataset/blob/main/figures/adequacy/CD/cross%20domain%20decoding%20scores.jpeg)
 
 ## Feature attribution (cross domain)
 Confidence             |  Adequacy
 :-------------------------:|:-------------------------:
-![cwf](https://github.com/nmningmei/decoding_confidence_dataset/blob/main/figures/confidence/CD/RNN%20vs%20RF%20features.jpeg)  |  ![awf](https://github.com/nmningmei/decoding_confidence_dataset/blob/main/figures/adequacy/CD/RNN%20vs%20RF%20features.jpeg)
+![ccf](https://github.com/nmningmei/decoding_confidence_dataset/blob/main/figures/confidence/CD/hidden%20states%20of%20time%20steps.jpeg)  |  ![acf](https://github.com/nmningmei/decoding_confidence_dataset/blob/main/figures/adequacy/CD/hidden%20states%20of%20time%20steps.jpeg)
