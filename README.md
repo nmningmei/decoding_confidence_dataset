@@ -22,3 +22,8 @@
 Confidence             |  Adequacy
 :-------------------------:|:-------------------------:
 ![cws](https://github.com/nmningmei/decoding_confidence_dataset/blob/main/figures/confidence/LOO_compare_RNN_RF/RNN%20vs%20RF%20LOO.jpeg)  |  ![aws](https://github.com/nmningmei/decoding_confidence_dataset/blob/main/figures/adequacy/LOO_compare_RNN_RF/RNN%20vs%20RF%20LOO.jpeg)
+
+## Feature attribution (within domain)
+Confidence             |  Adequacy
+:-------------------------:|:-------------------------:
+![cwf](https://github.com/nmningmei/decoding_confidence_dataset/blob/main/figures/confidence/LOO_compare_RNN_RF/RNN%20vs%20RF%20features.jpeg)  |  ![awf](https://github.com/nmningmei/decoding_confidence_dataset/blob/main/figures/adequacy/LOO_compare_RNN_RF/RNN%20vs%20RF%20features.jpeg)
