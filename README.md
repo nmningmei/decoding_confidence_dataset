@@ -19,6 +19,6 @@
 
 # Results
 ## Decoding scores (within domain)
-<p float="left">
-  <img src="https://github.com/nmningmei/decoding_confidence_dataset/blob/main/figures/confidence/LOO_compare_RNN_RF/RNN%20vs%20RF%20LOO.jpeg" width="40%" /> <img src="https://github.com/nmningmei/decoding_confidence_dataset/blob/main/figures/adequacy/LOO_compare_RNN_RF/RNN%20vs%20RF%20LOO.jpeg" width="40%" /> 
-</p>
+Confidence             |  Adequacy
+:-------------------------:|:-------------------------:
+![cws](https://github.com/nmningmei/decoding_confidence_dataset/blob/main/figures/confidence/LOO_compare_RNN_RF/RNN%20vs%20RF%20LOO.jpeg)  |  ![aws](https://github.com/nmningmei/decoding_confidence_dataset/blob/main/figures/adequacy/LOO_compare_RNN_RF/RNN%20vs%20RF%20LOO.jpeg)
