@@ -18,7 +18,7 @@ from matplotlib import pyplot as plt
 sns.set_style('whitegrid')
 sns.set_context('poster')
 
-experiment = 'confidence' # confidence or adequacy
+experiment = 'adequacy' # confidence or adequacy
 working_dir = f'../results/{experiment}/LOO/'
 figure_dir = f'../figures/{experiment}/LOO_compare_RNN_RF/'
 if not os.path.exists(figure_dir):
@@ -59,7 +59,7 @@ ax = sns.violinplot(y = 'experiment',
                     data = df_plot,
                     ax = ax,
                     **xargs)
-#ax.set(xlim = (0.15,0.85))
+ax.set(xlim = (0.3,1.))
 ax.axvline(0.5,linestyle = '--',color = 'black',alpha = 0.5,)
 fig.savefig(os.path.join(figure_dir,
                          'RNN vs RF LOO.jpeg'),

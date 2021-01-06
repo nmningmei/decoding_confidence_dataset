@@ -19,7 +19,7 @@ import seaborn as sns
 sns.set_style('whitegrid')
 sns.set_context('poster')
 
-experiment = 'confidence' # confidence or adequacy
+experiment = 'adequacy' # confidence or adequacy
 working_dir = f'../results/{experiment}/R*CD/'
 figure_dir = f'../figures/{experiment}/CD'
 if not os.path.exists(figure_dir):
@@ -53,7 +53,6 @@ xargs = dict(hue = 'model',
              cut = 0,
              scale = 'width',)
 
-#ax.set(xlim = (0.15,0.85))
 
 fig,ax = plt.subplots(figsize = (16,16))
 ax = sns.violinplot(x = 'source',
@@ -62,7 +61,7 @@ ax = sns.violinplot(x = 'source',
                     ax = ax,
                     **xargs,
                     )
-#ax.set(ylim = (0.15,0.85))
+ax.set(ylim = (0.15,0.85))
 ax.axhline(0.5,linestyle = '--',color = 'black',alpha = 0.5,)
 ax.set(xlabel = 'Target data',ylabel = 'ROC AUC',)
 fig.savefig(os.path.join(figure_dir,'cross domain decoding scores.jpeg',
