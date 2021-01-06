@@ -51,7 +51,8 @@ xargs = dict(hue = 'model',
              split = True,
              inner = 'quartile',
              cut = 0,
-             scale = 'width',)
+             scale = 'width',
+             bw = .35,)
 
 
 fig,ax = plt.subplots(figsize = (16,16))
@@ -61,7 +62,7 @@ ax = sns.violinplot(x = 'source',
                     ax = ax,
                     **xargs,
                     )
-ax.set(ylim = (0.15,0.85))
+ax.set(ylim = (0.15,1.))
 ax.axhline(0.5,linestyle = '--',color = 'black',alpha = 0.5,)
 ax.set(xlabel = 'Target data',ylabel = 'ROC AUC',)
 fig.savefig(os.path.join(figure_dir,'cross domain decoding scores.jpeg',

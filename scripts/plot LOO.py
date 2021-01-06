@@ -59,7 +59,7 @@ ax = sns.violinplot(y = 'experiment',
                     data = df_plot,
                     ax = ax,
                     **xargs)
-ax.set(xlim = (0.3,1.))
+ax.set(xlim = (0.3,1.),xlabel = 'ROC AUC',ylabel = 'Study')
 ax.axvline(0.5,linestyle = '--',color = 'black',alpha = 0.5,)
 fig.savefig(os.path.join(figure_dir,
                          'RNN vs RF LOO.jpeg'),
@@ -70,7 +70,7 @@ unique_experiment = pd.unique(df_plot['experiment'])
 fig,axes = plt.subplots(figsize = (28,28),
                         nrows = 4,
                         ncols = int(unique_experiment.shape[0] / 4),)
-for ax,experiment in zip(axes.flatten(),unique_experiment):
+for ii,(ax,experiment) in enumerate(zip(axes.flatten(),unique_experiment)):
     df_sub = df_plot[df_plot['experiment'] == experiment].sort_values(['model'])
     df_sub_plot = df_sub.melt(
                           id_vars = ['fold','sub_name','model','experiment',],
@@ -101,6 +101,10 @@ for ax,experiment in zip(axes.flatten(),unique_experiment):
     ax.set(xlabel = '',
            ylabel = '',
            title = experiment,)
+    if ii % 4 == 0:
+        ax.set(ylabel = 'A.U.')
+    if ii >=12:
+        ax.set(xlabel = 'Time Steps')
     handles,labels = ax.get_legend_handles_labels()
     ax.get_legend().remove()
 fig.legend(handles[2:],labels[2:],loc = (0.91,0.475),title = '')
