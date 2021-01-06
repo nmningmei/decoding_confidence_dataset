@@ -10,6 +10,8 @@ import os
 from glob import glob
 import pandas as pd
 import numpy as np
+from scipy import stats
+from functools import partial
 from sklearn.preprocessing import MinMaxScaler as scaler
 import seaborn as sns
 from matplotlib import pyplot as plt
@@ -44,15 +46,21 @@ df = pd.concat(df)
 
 df_plot = df[df['source'] != 'train']
 
+xargs = dict(hue = 'model',
+             hue_order = ['RF','RNN'],
+             split = True,
+             inner = 'quartile',
+             cut = 0,
+             scale = 'width',)
+
 fig,ax = plt.subplots(figsize = (16,16))
-ax = sns.barplot(y = 'experiment',
-                 x = 'score',
-                 hue = 'model',
-                 hue_order = ['RF','RNN'],
-                 data = df_plot,
-                 ax = ax,
-                 )
-ax.set(xlim = (0.15,0.85))
+ax = sns.violinplot(y = 'experiment',
+                    x = 'score',
+                    data = df_plot,
+                    ax = ax,
+                    **xargs)
+#ax.set(xlim = (0.15,0.85))
+ax.axvline(0.5,linestyle = '--',color = 'black',alpha = 0.5,)
 fig.savefig(os.path.join(figure_dir,
                          'RNN vs RF LOO.jpeg'),
 #            dpi = 400,
@@ -67,20 +75,40 @@ for ax,experiment in zip(axes.flatten(),unique_experiment):
     df_sub_plot = df_sub.melt(
                           id_vars = ['fold','sub_name','model','experiment',],
                           value_vars = ['T-7', 'T-6', 'T-5', 'T-4', 'T-3', 'T-2', 'T-1'],)
-    ax = sns.barplot(x = 'variable',
-                     y = 'value',
-                     hue = 'model',
-                     hue_order = ['RF','RNN'],
-                     data = df_sub_plot,
-                     ax = ax,
-                     )
+    ax = sns.stripplot(x = 'variable',
+                       y = 'value',
+                       data = df_sub_plot,
+                       ax = ax,
+                       hue = 'model',
+                       hue_order = ['RF','RNN'],
+                       dodge = True,
+                       alpha = 0.1,)
+    temp_func = partial(stats.trim_mean,**dict(proportiontocut=0.05))
+    ax = sns.pointplot(x = 'variable',
+                       y = 'value',
+                       data = df_sub_plot,
+                       ax = ax,
+                       hue = 'model',
+                       hue_order = ['RF','RNN'],
+                       dodge = 0.5,
+                       palette = 'dark',
+                       estimator = temp_func,
+                       markers = 'd',
+                       join = False,
+                       ci = None,
+                       scale = 0.5,
+                       )
     ax.set(xlabel = '',
            ylabel = '',
            title = experiment,)
+    handles,labels = ax.get_legend_handles_labels()
+    ax.get_legend().remove()
+fig.legend(handles[2:],labels[2:],loc = (0.91,0.475),title = '')
 fig.savefig(os.path.join(figure_dir,
                          'RNN vs RF features.jpeg'),
 #            dpi = 400,
-            bbox_inches = 'tight')
+#            bbox_inches = 'tight',
+            )
 
 
 
