@@ -18,8 +18,9 @@ from matplotlib import pyplot as plt
 sns.set_style('whitegrid')
 sns.set_context('poster')
 
-experiment = 'adequacy' # confidence or adequacy
+experiment = 'confidence' # confidence or adequacy
 working_dir = f'../results/{experiment}/LOO/'
+stats_dir = f'../stats/{experiment}/LOO_compare_RNN_RF/'
 figure_dir = f'../figures/{experiment}/LOO_compare_RNN_RF/'
 if not os.path.exists(figure_dir):
     os.mkdir(figure_dir)
@@ -45,6 +46,9 @@ for f in working_data:
 df = pd.concat(df)
 
 df_plot = df[df['source'] != 'train']
+df_plot = df_plot.sort_values(['experiment','model'])
+df_stat_score = pd.read_csv(os.path.join(stats_dir,'scores.csv'))
+df_stat_features = pd.read_csv(os.path.join(stats_dir,'features.csv'))
 
 xargs = dict(hue = 'model',
              hue_order = ['RF','RNN'],
@@ -59,8 +63,22 @@ ax = sns.violinplot(y = 'experiment',
                     data = df_plot,
                     ax = ax,
                     **xargs)
-ax.set(xlim = (0.3,1.),xlabel = 'ROC AUC',ylabel = 'Study')
+ytick_order = list(ax.yaxis.get_majorticklabels())
+
+for ii,text_obj in enumerate(ytick_order):
+    position = text_obj.get_position()
+    ytick_label = text_obj.get_text()
+    df_sub_stats = df_stat_score[df_stat_score['experiment'] == ytick_label].sort_values(['model'])
+    for (jj,temp_row),adjustment in zip(df_sub_stats.iterrows(),[-0.225,0.225]):
+        if '*' in temp_row['stars']:
+            ax.annotate(temp_row['stars'],
+                        rotation = 90,
+                        xy = (1.01,position[1] + adjustment,),
+                        verticalalignment = 'center',
+                        fontsize = 16)
+ax.set(xlim = (0.3,1.05),xlabel = 'ROC AUC',ylabel = 'Study')
 ax.axvline(0.5,linestyle = '--',color = 'black',alpha = 0.5,)
+ax.legend(loc = 'upper left')
 fig.savefig(os.path.join(figure_dir,
                          'RNN vs RF LOO.jpeg'),
 #            dpi = 400,
@@ -75,6 +93,7 @@ for ii,(ax,experiment) in enumerate(zip(axes.flatten(),unique_experiment)):
     df_sub_plot = df_sub.melt(
                           id_vars = ['fold','sub_name','model','experiment',],
                           value_vars = ['T-7', 'T-6', 'T-5', 'T-4', 'T-3', 'T-2', 'T-1'],)
+    df_sub_stats = df_stat_features[df_stat_features['experiment'] == experiment]
     ax = sns.stripplot(x = 'variable',
                        y = 'value',
                        data = df_sub_plot,
@@ -98,6 +117,27 @@ for ii,(ax,experiment) in enumerate(zip(axes.flatten(),unique_experiment)):
                        ci = None,
                        scale = 0.5,
                        )
+    ########################################################################
+    df_sub_plot['x'] = df_sub_plot['variable'].map({f'T-{7-ii}':ii for ii in range(7)})
+    rf_x = df_sub_plot[df_sub_plot['model'] == 'RF']['x'].values
+    rn_x = df_sub_plot[df_sub_plot['model'] == 'RNN']['x'].values
+    df_stat_features_sub = df_stat_features[df_stat_features['experiment'] == experiment]
+    rf = df_stat_features_sub[df_stat_features_sub['model'] == 'RF']
+    rn = df_stat_features_sub[df_stat_features_sub['model'] == 'RNN']
+    for temp,col in zip([rf,rn],['orange','blue']):
+        
+        y_mean = np.array([item for item in temp['y_mean'].values[0].replace('[','').replace(']','').replace('\n','').replace('  ',' ').split(' ') if len(item) > 0],
+                           dtype = 'float32')
+        y_std = np.array([item for item in temp['y_std'].values[0].replace('[','').replace(']','').replace('\n','').replace('  ',' ').split(' ') if len(item) > 0],
+                          dtype = 'float32')
+        xxx = np.linspace(0,6,y_mean.shape[0])
+        ax.plot(xxx,y_mean,linestyle = '--',color = col,alpha = 0.7)
+        ax.fill_between(xxx,
+                        y_mean + y_std,
+                        y_mean - y_std,
+                        color = col,
+                        alpha = 0.1)
+    ########################################################################
     ax.set(xlabel = '',
            ylabel = '',
            title = experiment,)
