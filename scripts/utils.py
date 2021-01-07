@@ -366,7 +366,7 @@ def resample_ttest(x,
         else:
             return ((np.sum(np.abs(t_null) >= np.abs(t_experiment))) + 1) / (size[1] + 1) /2
     if n_ps == 1:
-        ps = t_statistics(null, size)
+        ps = t_statistics(null, (size,int(n_permutation)))
     else:
         ps = Parallel(n_jobs = n_jobs,verbose = verbose)(delayed(t_statistics)(**{
                         'null':null,
