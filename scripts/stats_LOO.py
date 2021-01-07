@@ -15,6 +15,7 @@ import pandas as pd
 
 from glob import glob
 from sklearn.preprocessing import MinMaxScaler as scaler
+from sklearn.preprocessing import RobustScaler
 from sklearn import linear_model
 from sklearn.pipeline import make_pipeline
 from sklearn.model_selection import (LeaveOneOut,
@@ -22,7 +23,7 @@ from sklearn.model_selection import (LeaveOneOut,
                                      cross_validate)
 
 
-experiment = 'confidence' # confidence or adequacy
+experiment = 'adequacy' # confidence or adequacy
 working_dir = f'../results/{experiment}/LOO/'
 stats_dir = f'../stats/{experiment}/LOO_compare_RNN_RF/'
 if not os.path.exists(stats_dir):
@@ -67,6 +68,9 @@ res_features = dict(experiment = [],
                     y_mean = [],
                     y_std = [],
                     )
+res_slopes = dict(experiment = [],
+                  model = [],
+                  slope = [],)
 for (experiment,model),df_sub in df_plot.groupby(['experiment','model']):
     # on the scores: compare against to theorectial chance level
     scores = df_sub['score'].values
@@ -90,11 +94,11 @@ for (experiment,model),df_sub in df_plot.groupby(['experiment','model']):
     xx = np.vstack([np.arange(7) for _ in range(features.shape[0])])
     cv = LeaveOneOut()
     # a regularized linear regression
-    pipeline = linear_model.RidgeCV(alphas = np.logspace(-9,9,19),
-                                    scoring = 'neg_mean_squared_error',
-                                    cv = None,# set to None for efficient LOO algorithm
-                                    )
-    pipeline = linear_model.BayesianRidge(alpha_init = 1., lambda_init = 1e-3)
+#    pipeline = linear_model.RidgeCV(alphas = np.logspace(-9,9,19),
+#                                    scoring = 'neg_mean_squared_error',
+#                                    cv = None,# set to None for efficient LOO algorithm
+#                                    )
+    pipeline = linear_model.BayesianRidge(fit_intercept = True)
     # permutation test to get p values
     _score,_,pval = permutation_test_score(pipeline,xx.reshape(-1,1),features.reshape(-1,1).ravel(),
                                            cv = cv,
@@ -115,9 +119,14 @@ for (experiment,model),df_sub in df_plot.groupby(['experiment','model']):
                           )
     gc.collect()
     coefficients = np.array([est.coef_[0] for est in _res['estimator']])
+    # save for 2 sample t tests
+    for item in coefficients:
+        res_slopes['experiment'].append(experiment)
+        res_slopes['model'].append(model)
+        res_slopes['slope'].append(item)
     intercepts = np.array([est.intercept_ for est in _res['estimator']])
-    xx = np.linspace(0,6,1000)
-    temp = np.array([est.predict(xx.reshape(-1,1),return_std = True) for est in _res['estimator']])
+    xxx = np.linspace(0,6,1000)
+    temp = np.array([est.predict(xxx.reshape(-1,1),return_std = True) for est in _res['estimator']])
     y_mean = temp[:,0,:]
     y_std = temp[:,0,:]
     res_features['experiment'].append(experiment)
@@ -132,6 +141,7 @@ for (experiment,model),df_sub in df_plot.groupby(['experiment','model']):
     res_features['y_std'].append(y_std.mean(0))
 res_scores = pd.DataFrame(res_scores)
 res_features = pd.DataFrame(res_features)
+res_slopes = pd.DataFrame(res_slopes)
 
 temp = []
 for model,df_sub in res_scores.groupby(['model']):
@@ -153,13 +163,38 @@ for model,df_sub in res_features.groupby(['model']):
     temp.append(df_sub)
 res_features = pd.concat(temp)
 
+feature_comparison = dict(experiment = [],
+                          pval = [],
+                          slope_rf_mean = [],
+                          slope_rf_std = [],
+                          slope_rnn_mean = [],
+                          slope_rnn_std = [],
+                          )
+for (experiment),df_sub in res_slopes.groupby(['experiment']):
+    rf = df_sub[df_sub['model'] == 'RF']['slope'].values
+    rn = df_sub[df_sub['model'] == 'RNN']['slope'].values
+    ps = utils.resample_ttest_2sample(rf,rn,
+                                      one_tail = False,
+                                      match_sample_size = False,
+                                      n_jobs = -1,
+                                      n_ps = 2,
+                                      n_permutation = int(1e5),
+                                      verbose = 1)
+    feature_comparison['experiment'].append(experiment)
+    feature_comparison['pval'].append(np.mean(ps))
+    feature_comparison['slope_rf_mean'].append(rf.mean())
+    feature_comparison['slope_rf_std'].append(rf.std())
+    feature_comparison['slope_rnn_mean'].append(rn.mean())
+    feature_comparison['slope_rnn_std'].append(rn.std())
+feature_comparison = pd.DataFrame(feature_comparison)
+
 res_scores['stars'] = res_scores['p_corrected'].apply(utils.stars)
 res_scores.to_csv(os.path.join(stats_dir,'scores.csv'),index = False)
 
 res_features['stars'] = res_features['p_corrected'].apply(utils.stars)
 res_features.to_csv(os.path.join(stats_dir,'features.csv'),index = False)
 
-
+feature_comparison.to_csv(os.path.join(stats_dir,'slope_comparison.csv'),index = False)
 
 
 

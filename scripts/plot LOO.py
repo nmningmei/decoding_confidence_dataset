@@ -18,7 +18,7 @@ from matplotlib import pyplot as plt
 sns.set_style('whitegrid')
 sns.set_context('poster')
 
-experiment = 'confidence' # confidence or adequacy
+experiment = 'adequacy' # confidence or adequacy
 working_dir = f'../results/{experiment}/LOO/'
 stats_dir = f'../stats/{experiment}/LOO_compare_RNN_RF/'
 figure_dir = f'../figures/{experiment}/LOO_compare_RNN_RF/'
@@ -71,9 +71,10 @@ for ii,text_obj in enumerate(ytick_order):
     df_sub_stats = df_stat_score[df_stat_score['experiment'] == ytick_label].sort_values(['model'])
     for (jj,temp_row),adjustment in zip(df_sub_stats.iterrows(),[-0.225,0.225]):
         if '*' in temp_row['stars']:
+            print(temp_row['stars'])
             ax.annotate(temp_row['stars'],
                         rotation = 90,
-                        xy = (1.01,position[1] + adjustment,),
+                        xy = (1.01,ii + adjustment,),
                         verticalalignment = 'center',
                         fontsize = 16)
 ax.set(xlim = (0.3,1.05),xlabel = 'ROC AUC',ylabel = 'Study')
@@ -87,7 +88,8 @@ fig.savefig(os.path.join(figure_dir,
 unique_experiment = pd.unique(df_plot['experiment'])
 fig,axes = plt.subplots(figsize = (28,28),
                         nrows = 4,
-                        ncols = int(unique_experiment.shape[0] / 4),)
+                        ncols = int(unique_experiment.shape[0] / 4),
+                        sharey = True,)
 for ii,(ax,experiment) in enumerate(zip(axes.flatten(),unique_experiment)):
     df_sub = df_plot[df_plot['experiment'] == experiment].sort_values(['model'])
     df_sub_plot = df_sub.melt(
@@ -124,7 +126,7 @@ for ii,(ax,experiment) in enumerate(zip(axes.flatten(),unique_experiment)):
     df_stat_features_sub = df_stat_features[df_stat_features['experiment'] == experiment]
     rf = df_stat_features_sub[df_stat_features_sub['model'] == 'RF']
     rn = df_stat_features_sub[df_stat_features_sub['model'] == 'RNN']
-    for temp,col in zip([rf,rn],['orange','blue']):
+    for temp,col in zip([rf,rn],['blue','orange']):
         
         y_mean = np.array([item for item in temp['y_mean'].values[0].replace('[','').replace(']','').replace('\n','').replace('  ',' ').split(' ') if len(item) > 0],
                            dtype = 'float32')
@@ -136,17 +138,18 @@ for ii,(ax,experiment) in enumerate(zip(axes.flatten(),unique_experiment)):
                         y_mean + y_std,
                         y_mean - y_std,
                         color = col,
-                        alpha = 0.1)
+                        alpha = 0.05)
     ########################################################################
     ax.set(xlabel = '',
            ylabel = '',
-           title = experiment,)
+           title = f'{experiment}\nn_sample={int(df_sub_plot.shape[0] / 2)}',)
     if ii % 4 == 0:
         ax.set(ylabel = 'A.U.')
     if ii >=12:
         ax.set(xlabel = 'Time Steps')
     handles,labels = ax.get_legend_handles_labels()
     ax.get_legend().remove()
+plt.subplots_adjust(top = 1.1)
 fig.legend(handles[2:],labels[2:],loc = (0.91,0.475),title = '')
 fig.savefig(os.path.join(figure_dir,
                          'RNN vs RF features.jpeg'),
