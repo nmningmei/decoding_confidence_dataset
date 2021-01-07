@@ -18,7 +18,7 @@ from matplotlib import pyplot as plt
 sns.set_style('whitegrid')
 sns.set_context('poster')
 
-experiment = 'confidence' # confidence or adequacy
+experiment = 'adequacy' # confidence or adequacy
 working_dir = f'../results/{experiment}/LOO/'
 stats_dir = f'../stats/{experiment}/LOO_compare_RNN_RF/'
 figure_dir = f'../figures/{experiment}/LOO_compare_RNN_RF/'
@@ -140,9 +140,10 @@ for ii,(ax,experiment) in enumerate(zip(axes.flatten(),unique_experiment)):
                         color = col,
                         alpha = 0.05)
     ########################################################################
+    
     ax.set(xlabel = '',
            ylabel = '',
-           title = f'{experiment}\nn_sample={int(df_sub_plot.shape[0] / 2)}',
+           title = f'{experiment}\nn_sample={int(rf_x.shape[0])}',
            xticklabels = [],)
     if ii % 4 == 0:
         ax.set(ylabel = 'A.U.')
