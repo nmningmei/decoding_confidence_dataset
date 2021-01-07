@@ -18,7 +18,7 @@ from matplotlib import pyplot as plt
 sns.set_style('whitegrid')
 sns.set_context('poster')
 
-experiment = 'adequacy' # confidence or adequacy
+experiment = 'confidence' # confidence or adequacy
 working_dir = f'../results/{experiment}/LOO/'
 stats_dir = f'../stats/{experiment}/LOO_compare_RNN_RF/'
 figure_dir = f'../figures/{experiment}/LOO_compare_RNN_RF/'
@@ -86,7 +86,7 @@ fig.savefig(os.path.join(figure_dir,
             bbox_inches = 'tight')
 
 unique_experiment = pd.unique(df_plot['experiment'])
-fig,axes = plt.subplots(figsize = (28,28),
+fig,axes = plt.subplots(figsize = (28,36),
                         nrows = 4,
                         ncols = int(unique_experiment.shape[0] / 4),
                         sharey = True,)
@@ -142,14 +142,15 @@ for ii,(ax,experiment) in enumerate(zip(axes.flatten(),unique_experiment)):
     ########################################################################
     ax.set(xlabel = '',
            ylabel = '',
-           title = f'{experiment}\nn_sample={int(df_sub_plot.shape[0] / 2)}',)
+           title = f'{experiment}\nn_sample={int(df_sub_plot.shape[0] / 2)}',
+           xticklabels = [],)
     if ii % 4 == 0:
         ax.set(ylabel = 'A.U.')
     if ii >=12:
-        ax.set(xlabel = 'Time Steps')
+        ax.set(xlabel = 'Time Steps',xticklabels = [f'T-{7-ii}' for ii in range(7)])
     handles,labels = ax.get_legend_handles_labels()
     ax.get_legend().remove()
-plt.subplots_adjust(top = 1.1)
+#plt.subplots_adjust(top = 1.1)
 fig.legend(handles[2:],labels[2:],loc = (0.91,0.475),title = '')
 fig.savefig(os.path.join(figure_dir,
                          'RNN vs RF features.jpeg'),
