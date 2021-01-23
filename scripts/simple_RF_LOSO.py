@@ -71,12 +71,13 @@ if not os.path.exists(csv_name):
         results[f'feature importance T-{time_steps - ii}'] = []
 else:
     results = pd.read_csv(csv_name)
+    get_folds = pd.unique(results['fold'])
     results = {col_name:list(results[col_name].values) for col_name in results.columns}
-
+    
 for fold,(train_,test) in enumerate(cv.split(features,targets,groups=groups)):
     model_name  = os.path.join(model_dir,f'RF_{kk}_fold{fold + 1}.h5')
     print(model_name)
-    if not os.path.exists(model_name):
+    if fold not in get_folds:
         # leave out test data
         X_,y_           = features[train_],targets[train_]
         X_test, y_test  = features[test]  ,targets[test]
@@ -160,46 +161,4 @@ for fold,(train_,test) in enumerate(cv.split(features,targets,groups=groups)):
         
         results_to_save = pd.DataFrame(results)
         results_to_save.to_csv(csv_name,index = False)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 

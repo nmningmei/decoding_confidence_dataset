@@ -51,10 +51,10 @@ def preprocess(working_data,
         df_temp['accuracy'] = np.array(df_temp['Stimulus'] == df_temp['Response']).astype(int)
         df_temp['filename'] = f
         if target_columns[0] == 'metaAdequacy':
-            t.set_description(f'add metaAdequacy,concatinating')
+            t.set_description('add metaAdequacy,concatinating')
             df_temp['metaAdequacy'] = df_temp.apply(meta_adequacy,axis = 1)
         else:
-            t.set_description(f'add confidence,concatinating')
+            t.set_description('add confidence,concatinating')
         df_temp = df_temp[np.concatenate([['Subj_idx','filename','accuracy'],target_columns])]
         df_for_concat.append(df_temp)
     df_concat = pd.concat(df_for_concat)
