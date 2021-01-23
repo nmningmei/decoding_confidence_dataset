@@ -219,7 +219,10 @@ def get_RF_feature_importance(randomforestclassifier,
                               time_steps = 7,):
     
     print('permutation feature importance...')
-    from sklearn.inspection import permutation_importance
+    try:
+        from sklearn.inspection import permutation_importance
+    except:
+        print('why, IT?')
     feature_importance = permutation_importance(randomforestclassifier,
                                                 features[idx],
                                                 targets[idx],

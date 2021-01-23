@@ -48,6 +48,7 @@ df_sub = check_column_type(df_sub)
 features    = df_sub[[f"feature{ii + 1}" for ii in range(time_steps)]].values
 targets     = df_sub["targets"].values.astype(int)
 groups      = df_sub["sub"].values
+accuraies   = df_sub['accuracy'].values
 kk          = filename.split('/')[-1].split(".csv")[0]
 cv          = LeaveOneGroupOut()
 csv_name    = os.path.join(saving_dir,f'{experiment[2]} cross validation results LOO ({kk}).csv')
@@ -62,6 +63,7 @@ if not os.path.exists(csv_name):
                                n_sample     = [],
                                source       = [],
                                sub_name     = [],
+                               accuracy     = [],
                                )
     for ii in range(confidence_range):
         results[f'score{ii + 1}'] = []
@@ -78,6 +80,8 @@ for fold,(train_,test) in enumerate(cv.split(features,targets,groups=groups)):
         # leave out test data
         X_,y_           = features[train_],targets[train_]
         X_test, y_test  = features[test]  ,targets[test]
+        acc_test        = accuraies[test]
+        acc_train_      = accuraies[train_]
         
         # split into train and validation data
         np.random.seed(12345)
@@ -87,6 +91,7 @@ for fold,(train_,test) in enumerate(cv.split(features,targets,groups=groups)):
         for train,valid in cv.split(features[train_],targets[train_],groups=groups[train_]):
             X_train,y_train = X_[train],y_[train]
             X_valid,y_valid = X_[valid],y_[valid]
+            acc_valid       = acc_train_[valid]
         
 #        X_train = to_categorical(X_train - 1, num_classes = confidence_range)
 #        X_valid = to_categorical(X_valid - 1, num_classes = confidence_range)
@@ -107,41 +112,46 @@ for fold,(train_,test) in enumerate(cv.split(features,targets,groups=groups)):
         preds_valid = softmax(np.array(preds_valid)[:,:,-1].T,axis = 1)
         print('done fitting')
         
-        score_train = scoring_func(y_valid,preds_valid,confidence_range = confidence_range)
-        print('getting validation feature importance')
-        _targets = to_categorical(targets - 1, num_classes = confidence_range)
-        feature_importance,results,c = get_RF_feature_importance(randomforestclassifier,
-                                                       features,
-                                                       _targets,
-                                                       valid,
-                                                       results,)
-        
-        results['fold'].append(fold)
-        results['score'].append(np.mean(score_train))
-        [results[f'score{ii + 1}'].append(score_train[ii]) for ii in range(confidence_range)]
-        results['n_sample'].append(X_valid.shape[0])
-        results['source'].append('train')
-        results['sub_name'].append('train')
+        for acc_ in [0,1]:
+            _idx = np.where(acc_valid == acc_)
+            score_train = scoring_func(y_valid[_idx],preds_valid[_idx],confidence_range = confidence_range)
+            print('getting validation feature importance')
+            _targets = to_categorical(targets - 1, num_classes = confidence_range)
+            feature_importance,results,c = get_RF_feature_importance(randomforestclassifier,
+                                                           features,
+                                                           _targets,
+                                                           valid[_idx],
+                                                           results,)
+            
+            results['fold'].append(fold)
+            results['score'].append(np.mean(score_train))
+            [results[f'score{ii + 1}'].append(score_train[ii]) for ii in range(confidence_range)]
+            results['n_sample'].append(X_valid[_idx].shape[0])
+            results['source'].append('train')
+            results['sub_name'].append('train')
+            results['accuracy'].append(acc_)
         
         preds_test = randomforestclassifier.predict_proba(X_test)
         preds_test = softmax(np.array(preds_test)[:,:,-1].T,axis = 1)
-        score_test = scoring_func(y_test,preds_test,confidence_range = confidence_range)
-        print('getting test feature importance')
-        _targets = to_categorical(targets - 1, num_classes = confidence_range)
-        feature_importance,results,c = get_RF_feature_importance(randomforestclassifier,
-                                                       features,
-                                                       _targets,
-                                                       test,
-                                                       results,)
-        
-        print('{:.3f}_{:.3f}_{:.3f}_{:.3f}_{:.3f}_{:.3f}_{:.3f}_'.format(*list(c.reshape(7,))))
-        
-        results['fold'].append(fold)
-        results['score'].append(np.mean(score_test))
-        [results[f'score{ii + 1}'].append(score_test[ii]) for ii in range(confidence_range)]
-        results['n_sample'].append(X_test.shape[0])
-        results['source'].append('same')
-        results['sub_name'].append(np.unique(groups[test])[0])
+        for acc_ in [0,1]:
+            _idx = np.where(acc_test == acc_)
+            score_test = scoring_func(y_test[_idx],preds_test[_idx],confidence_range = confidence_range)
+            print('getting test feature importance')
+            _targets = to_categorical(targets - 1, num_classes = confidence_range)
+            feature_importance,results,c = get_RF_feature_importance(randomforestclassifier,
+                                                           features,
+                                                           _targets,
+                                                           test[_idx],
+                                                           results,)
+            
+            print('{:.3f}_{:.3f}_{:.3f}_{:.3f}_{:.3f}_{:.3f}_{:.3f}_'.format(*list(c.reshape(7,))))
+            
+            results['fold'].append(fold)
+            results['score'].append(np.mean(score_test))
+            [results[f'score{ii + 1}'].append(score_test[ii]) for ii in range(confidence_range)]
+            results['n_sample'].append(X_test[_idx].shape[0])
+            results['source'].append('same')
+            results['sub_name'].append(np.unique(groups[test])[0])
         
         gc.collect()
         
