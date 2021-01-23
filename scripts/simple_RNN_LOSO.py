@@ -169,34 +169,36 @@ for fold,(train_,test) in enumerate(cv.split(features,targets,groups=groups)):
     
     print('on train')
     for acc_ in [0,1]:
-        _idx = np.where(acc_valid == acc_)
-        score_valid = scoring_func(y_valid[_idx],preds_valid[_idx],confidence_range = confidence_range)
-        results['fold'].append(fold)
-        results['score'].append(np.mean(score_valid))
-        [results[f'score{ii + 1}'].append(score_valid[ii]) for ii in range(confidence_range)]
-        results['n_sample'].append(X_valid[_idx].shape[0])
-        results['source'].append('train')
-        results['sub_name'].append('train')
-        [results[f'hidden state T-{time_steps - ii}'].append(hidden_state_valid.mean(0)[ii,0]) for ii in range(time_steps)]
-        results['accuracy'].append(acc_)
+        _idx, = np.where(acc_valid == acc_)
+        if len(_idx) > 1:
+            score_valid = scoring_func(y_valid[_idx],preds_valid[_idx],confidence_range = confidence_range)
+            results['fold'].append(fold)
+            results['score'].append(np.mean(score_valid))
+            [results[f'score{ii + 1}'].append(score_valid[ii]) for ii in range(confidence_range)]
+            results['n_sample'].append(X_valid[_idx].shape[0])
+            results['source'].append('train')
+            results['sub_name'].append('train')
+            [results[f'hidden state T-{time_steps - ii}'].append(hidden_state_valid.mean(0)[ii,0]) for ii in range(time_steps)]
+            results['accuracy'].append(acc_)
     
     print('on test')
     for acc_ in [0,1]:
-        _idx = np.where(acc_test == acc_)
-        score_test = scoring_func(y_test[_idx],preds_test[_idx],confidence_range = confidence_range)
-        hidden_state_test,h_state_test,c_state_test = hidden_model.predict(X_test[_idx],
-                                                                           batch_size = batch_size,
-                                                                           verbose = 1)
-        print('{:.3f}_{:.3f}_{:.3f}_{:.3f}_{:.3f}_{:.3f}_{:.3f}_'.format(*list(hidden_state_test.mean(0).reshape(7,))))
-        
-        results['fold'].append(fold)
-        results['score'].append(np.mean(score_test))
-        [results[f'score{ii + 1}'].append(score_test[ii]) for ii in range(confidence_range)]
-        results['n_sample'].append(X_test[_idx].shape[0])
-        results['source'].append('same')
-        results['sub_name'].append(np.unique(groups[test])[0])
-        [results[f'hidden state T-{time_steps - ii}'].append(hidden_state_test.mean(0)[ii,0]) for ii in range(time_steps)]
-        
+        _idx, = np.where(acc_test == acc_)
+        if len(_idx) > 1:
+            score_test = scoring_func(y_test[_idx],preds_test[_idx],confidence_range = confidence_range)
+            hidden_state_test,h_state_test,c_state_test = hidden_model.predict(X_test[_idx],
+                                                                               batch_size = batch_size,
+                                                                               verbose = 1)
+            print('{:.3f}_{:.3f}_{:.3f}_{:.3f}_{:.3f}_{:.3f}_{:.3f}_'.format(*list(hidden_state_test.mean(0).reshape(7,))))
+            
+            results['fold'].append(fold)
+            results['score'].append(np.mean(score_test))
+            [results[f'score{ii + 1}'].append(score_test[ii]) for ii in range(confidence_range)]
+            results['n_sample'].append(X_test[_idx].shape[0])
+            results['source'].append('same')
+            results['sub_name'].append(np.unique(groups[test])[0])
+            [results[f'hidden state T-{time_steps - ii}'].append(hidden_state_test.mean(0)[ii,0]) for ii in range(time_steps)]
+            
     gc.collect()
     
     results_to_save = pd.DataFrame(results)
