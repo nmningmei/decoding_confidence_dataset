@@ -62,6 +62,7 @@ if not os.path.exists(csv_name) or debug:
                                n_sample     = [],
                                source       = [],
                                sub_name     = [],
+                               accuracy     = [],
                                )
     for ii in range(confidence_range):
         results[f'score{ii + 1}'] = []
@@ -162,7 +163,8 @@ for fold,(train_,test) in enumerate(cv.split(features,targets,groups=groups)):
                                                                   batch_size = batch_size,
                                                                   verbose = 1)
     print('on train')
-    
+    for acc_,df_sub_acc in df_sub.iloc[train_].groupby(['accuracy']):
+        df_sub_acc
     score_train = scoring_func(y_valid,preds_valid,confidence_range = confidence_range)
     results['fold'].append(fold)
     results['score'].append(np.mean(score_train))

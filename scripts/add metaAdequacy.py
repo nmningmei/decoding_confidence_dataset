@@ -14,12 +14,12 @@ import os
 from glob import glob
 from utils import preprocess
 
-experiment          = 'LOO'
+experiment          = 'adequacy'
 data_dir            = '../data'
 model_dir           = '../models/{experiment}'
 working_dir         = '../data/4-point'
 working_data        = glob(os.path.join(working_dir, "*.csv"))
-working_df_name     = os.path.join(data_dir,f'{experiment}','all_data_adequacy.csv')
+working_df_name     = os.path.join(data_dir,f'{experiment}','LOO','all_data_adequacy.csv')
 saving_dir          = '../results/{experiment}'
 batch_size          = 32
 time_steps          = 7

@@ -11,12 +11,12 @@ from glob import glob
 
 from utils import preprocess
 
-experiment          = 'LOO_confidence'
+experiment          = 'confidence'
 data_dir            = '../data'
 model_dir           = '../models/{experiment}'
 working_dir         = '../data/4-point'
 working_data        = glob(os.path.join(working_dir, "*.csv"))
-working_df_name     = os.path.join(data_dir,f'{experiment}','all_data.csv')
+working_df_name     = os.path.join(data_dir,f'{experiment}','LOO','all_data.csv')
 saving_dir          = '../results/{experiment}'
 batch_size          = 32
 time_steps          = 7
@@ -27,5 +27,5 @@ verbose             = 1
 
 df_def          = preprocess(working_data,target_columns = target_columns,n_jobs = n_jobs)
 if not os.path.exists(os.path.join(data_dir,f'{experiment}')):
-    os.mkdir(os.path.join(data_dir,f'{experiment}'))
+    os.makedirs(os.path.join(data_dir,f'{experiment}'))
 df_def.to_csv(working_df_name,index=False)
