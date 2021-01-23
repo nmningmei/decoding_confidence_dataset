@@ -7,11 +7,13 @@ Created on Fri Nov 22 14:26:17 2019
 """
 import os
 import pandas as pd
+from shutil import copyfile
 
 bash_folder = 'LOSO_RNN'
 if not os.path.exists(bash_folder):
     os.mkdir(bash_folder)
     os.mkdir(os.path.join(bash_folder,'outputs'))
+    copyfile('utils.py',os.path.join(bash_folder,'utils.py'))
 
 template            = 'simple_RNN_LOSO.py'
 experiment          = ['confidence','LOO','RNN']
