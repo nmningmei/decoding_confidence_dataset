@@ -146,11 +146,9 @@ for fold,(train_,test) in enumerate(cv.split(features,targets,groups=groups)):
                   callbacks         = callbacks,
                   verbose           = verbose,
                   )
-    if tf.__version__ == "2.0.0":# in tf 2.0
-        del model
-        model = tf.keras.models.load_model(model_name)
-    else: # in tf 1.0
-        model.load_weights(model_name)
+    
+    del model
+    model = tf.keras.models.load_model(model_name)
     # freeze the model
     for layer in model.layers:
         layers.trainable = False
@@ -164,6 +162,7 @@ for fold,(train_,test) in enumerate(cv.split(features,targets,groups=groups)):
                                                                   batch_size = batch_size,
                                                                   verbose = 1)
     print('on train')
+    
     score_train = scoring_func(y_valid,preds_valid,confidence_range = confidence_range)
     results['fold'].append(fold)
     results['score'].append(np.mean(score_train))

@@ -45,35 +45,49 @@ def preprocess(working_data,
     df_def: concatenated pandas dataframe that contains features at each time point and targets
     """
     df_for_concat = []
-    for f in tqdm(working_data,desc = 'concat'):
+    t = tqdm(working_data,)
+    for f in t:
         df_temp = pd.read_csv(f,header = 0)
         df_temp['accuracy'] = np.array(df_temp['Stimulus'] == df_temp['Response']).astype(int)
         df_temp['filename'] = f
-        df_temp = df_temp[np.concatenate([['Subj_idx','filename'],target_columns])]
+        if target_columns[0] == 'metaAdequacy':
+            t.set_description(f'add metaAdequacy,concatinating')
+            df_temp['metaAdequacy'] = df_temp.apply(meta_adequacy,axis = 1)
+        else:
+            t.set_description(f'add confidence,concatinating')
+        df_temp = df_temp[np.concatenate([['Subj_idx','filename','accuracy'],target_columns])]
         df_for_concat.append(df_temp)
     df_concat = pd.concat(df_for_concat)
     
     df = dict(sub = [],
               filename = [],
-              targets = [])
-    for ii in range(7):
+              targets = [],
+              accuracy = [],)
+    for ii in range(time_steps):
         df[f'feature{ii + 1}'] = []
     
     for (sub,filename), df_sub in tqdm(df_concat.groupby(['Subj_idx','filename']),desc = 'feature generating'):
     #    print(sub,filename)
         values = df_sub[target_columns].values
+        accuracy = df_sub['accuracy'].values
         data_gen = TimeseriesGenerator(values,values,
                                        length = time_steps,
                                        sampling_rate = 1,
                                        batch_size = 1)
         
-        for features_,targets_ in list(data_gen):
+        for (features_,targets_),accuracy_ in zip(list(data_gen),accuracy[time_steps:]):
             df['sub'].append(sub)
             df['filename'].append(filename)
             [df[f"feature{ii + 1}"].append(f) for ii,f in enumerate(features_.flatten())]
             df["targets"].append(targets_.flatten()[0])
+            df["accuracy"].append(accuracy_)
     df = pd.DataFrame(df)
-    df = df[['filename', 'sub','feature1', 'feature2', 'feature3', 'feature4', 'feature5', 'feature6','feature7', 'targets']]
+    # re-order the columns
+    df = df[np.concatenate([
+             ['filename', 'sub','accuracy'],
+             [f'feature{ii + 1}' for ii in range(time_steps)],
+             ['targets']
+             ])]
     """
     REMOVING FEATURES AND TARGETS DIFFERENT FROM 1-4
     """
@@ -102,69 +116,6 @@ def check_column_type(df_sub):
         else:
             df_sub[name] = df_sub[name].astype(int)
     return df_sub
-
-def add_adequacy(working_data,
-                 time_steps = 7,
-                 n_jobs = 8,
-                 verbose = 1
-                 ):
-    """
-    Inputs
-    -----------------------
-    working_data: list of csv names
-    time_steps: int, trials looking back
-    n_jobs: number of CPUs we want to parallize the for-loop job
-    verbose: if > 0, we print out the parallized for-loop processes
-    
-    Outputs
-    -----------------------
-    df_def: concatenated pandas dataframe that contains features at each time point and targets
-    """
-    df_for_concat = []
-    for f in tqdm(working_data,desc = 'concat'):
-        df_temp = pd.read_csv(f,header = 0)
-        df_temp['accuracy'] = np.array(df_temp['Stimulus'] == df_temp['Response']).astype(int)
-        df_temp['filename'] = f
-        df_temp['metaAdequacy'] = df_temp.apply(meta_adequacy,axis = 1)
-        df_temp = df_temp[np.concatenate([['Subj_idx','filename'],['metaAdequacy']])]
-        df_for_concat.append(df_temp)
-    df_concat = pd.concat(df_for_concat)
-    
-    df = dict(sub = [],
-              filename = [],
-              targets = [])
-    for ii in range(7):
-        df[f'feature{ii + 1}'] = []
-    
-    for (sub,filename), df_sub in tqdm(df_concat.groupby(['Subj_idx','filename']),desc = 'feature generating'):
-    #    print(sub,filename)
-        values = df_sub['metaAdequacy'].values
-        data_gen = TimeseriesGenerator(values,values,
-                                       length = time_steps,
-                                       sampling_rate = 1,
-                                       batch_size = 1)
-        
-        for features_,targets_ in list(data_gen):
-            df['sub'].append(sub)
-            df['filename'].append(filename)
-            [df[f"feature{ii + 1}"].append(f) for ii,f in enumerate(features_.flatten())]
-            df["targets"].append(targets_.flatten()[0])
-    df = pd.DataFrame(df)
-    df = df[['filename', 'sub','feature1', 'feature2', 'feature3', 'feature4', 'feature5', 'feature6','feature7', 'targets']]
-    """
-    REMOVING FEATURES AND TARGETS DIFFERENT FROM 1-4
-    """
-    df_temp = df.dropna()
-    ###################### parallelize the for-loop to multiple CPUs ############################
-    def detect(row):
-        values = row[2:].values
-        return np.logical_and(values < 5, values > 0)
-    
-    idx_within_range = Parallel(n_jobs = n_jobs,verbose = verbose)(delayed(detect)(**{'row':row})for ii,row in df_temp.iterrows())
-    #############################################################################################
-    idx = np.sum(idx_within_range,axis = 1) == (time_steps + 1) # ALL df_pepe columns must be true(1) & sum 8
-    df_def = df_temp.loc[idx,:]
-    return df_def
 
 # the most important helper function: early stopping and model saving
 def make_CallBackList(model_name,monitor='val_loss',mode='min',verbose=0,min_delta=1e-4,patience=50,frequency = 1):
