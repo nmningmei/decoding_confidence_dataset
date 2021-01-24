@@ -6,25 +6,23 @@ Created on Fri Nov 22 14:26:17 2019
 @author: nmei
 """
 import os
-import re
 import pandas as pd
 import numpy as np
-from glob import glob
 
 from sklearn.model_selection import GroupShuffleSplit
 from sklearn.utils           import shuffle as util_shuffle
+from shutil                  import copyfile
 
 templates           = ['simple_RNN_cross_domain_RF.py',
                        'simple_RNN_cross_domain_train_RNN.py',
                        'simple_RNN_cross_domain_hidden.py']
-experiment          = ['cross_domain','adequacy','RF','RNN']
+experiment          = ['confidence','cross_domain','RF','RNN']
 data_dir            = '../data'
 source_dir          = '../data/4-point'
 target_dir          = '../data/targets/*/'
-source_data         = glob(os.path.join(source_dir, "*.csv"))
-target_data         = glob(os.path.join(target_dir, "*.csv"))
-source_df_name      = os.path.join(data_dir,experiment[1],experiment[0],'source.csv')
-target_df_name      = os.path.join(data_dir,experiment[1],experiment[0],'target.csv')
+result_dir          = os.path.join('../results/',experiment[0],experiment[1],)
+source_df_name      = os.path.join(data_dir,experiment[0],experiment[1],'source.csv')
+target_df_name      = os.path.join(data_dir,experiment[0],experiment[1],'target.csv')
 node                = 1
 core                = 16
 mem                 = 2 * core * node
@@ -43,6 +41,7 @@ bash_folder = f'{"_".join(experiment)}_bash'
 if not os.path.exists(bash_folder):
     os.mkdir(bash_folder)
     os.mkdir(os.path.join(bash_folder,'outputs'))
+copyfile('utils.py',os.path.join(bash_folder,'utils.py'))
 
 add_on = """from shutil import copyfile
 copyfile('../utils.py','utils.py')

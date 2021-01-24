@@ -17,21 +17,23 @@ from tensorflow.keras.utils import to_categorical
 
 import numpy   as np
 import pandas  as pd
-# add here
+from shutil import copyfile
+copyfile('../utils.py','utils.py')
+
 from utils import scoring_func
 
 from sklearn.model_selection import GroupShuffleSplit
 from sklearn.utils           import shuffle as util_shuffle
 
 
-experiment          = ['confidence','cross_domain','RNN']
+experiment          = ['cross_domain','cross_domain','RNN']
 feature_properties  = 'hidden states' # or hidden states or feature importance
-data_dir            = '../data/'
-model_dir           = os.path.join('../models',experiment[0],experiment[1],)
-source_dir          = '../data/4-point'
-target_dir          = '../data/targets/*/'
-result_dir          = os.path.join('../results/',experiment[0],experiment[1],)
-hidden_dir          = os.path.join('../results/',experiment[0],experiment[1],feature_properties)
+data_dir            = '../../data/'
+model_dir           = os.path.join('../../models',experiment[0],experiment[1],)
+source_dir          = '../../data/4-point'
+target_dir          = '../../data/targets/*/'
+result_dir          = os.path.join('../../results/',experiment[0],experiment[1],)
+hidden_dir          = os.path.join('../../results/',experiment[0],experiment[1],feature_properties)
 source_df_name      = os.path.join(data_dir,experiment[0],experiment[1],'source.csv')
 target_df_name      = os.path.join(data_dir,experiment[0],experiment[1],'target.csv')
 batch_size          = 32
@@ -78,7 +80,7 @@ for fold,(train,valid) in enumerate(cv.split(features,targets,groups = groups)):
     X_train,y_train = features[train],targets[train]
     X_valid,y_valid = features[valid],targets[valid]
     acc_valid       = df_source['accuracy'].values[valid]
-    if fold >= 0: # batch_change
+    if fold >= 42: # batch_change
         break
 
 
