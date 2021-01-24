@@ -199,6 +199,7 @@ for fold,(train_,test) in enumerate(cv.split(features,targets,groups=groups)):
                 results['n_sample'].append(X_test[_idx].shape[0])
                 results['source'].append('same')
                 results['sub_name'].append(np.unique(groups[test])[0])
+                results['accuracy'].append(acc_)
                 [results[f'hidden state T-{time_steps - ii}'].append(hidden_state_test.mean(0)[ii,0]) for ii in range(time_steps)]
                 
         gc.collect()
