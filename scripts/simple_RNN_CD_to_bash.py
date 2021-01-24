@@ -85,7 +85,7 @@ for template in templates:
                             _temp = 'RF'
                         else:
                             _temp = 'RNN'
-                        line = f"experiment          = ['cross_domain','{experiment[1]}','{_temp}']\n"
+                        line = f"experiment          = ['{experiment[0]}','cross_domain','{_temp}']\n"
                     new_file.write(line)
                 old_file.close()
             new_file.close()
