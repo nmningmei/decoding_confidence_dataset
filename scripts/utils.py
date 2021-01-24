@@ -94,7 +94,8 @@ def preprocess(working_data,
     df_temp = df.dropna()
     ###################### parallelize the for-loop to multiple CPUs ############################
     def detect(row):
-        values = np.array([item for item in row[2:]])
+        col_names = np.concatenate([[f'feature{ii+1}' for ii in range(time_steps)],['targets']])
+        values = np.array([row[col_name] for col_name in col_names])
         return np.logical_and(values < 5, values > 0)
     
     idx_within_range = Parallel(n_jobs = n_jobs,verbose = verbose)(delayed(detect)(**{'row':row})for ii,row in df_temp.iterrows())

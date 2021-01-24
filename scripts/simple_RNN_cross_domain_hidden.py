@@ -27,16 +27,16 @@ from sklearn.utils           import shuffle as util_shuffle
 sns.set_style('white')
 sns.set_context('talk')
 
-experiment          = ['cross_domain','adequacy','RNN']
+experiment          = ['confidence','cross_domain','RNN']
 feature_properties  = 'hidden states' # or hidden states or feature importance
 data_dir            = '../data/'
-model_dir           = f'../models/{experiment[1]}/{experiment[2]}_CD'
+model_dir           = os.path.join('../models',experiment[0],experiment[1],)
 source_dir          = '../data/4-point'
 target_dir          = '../data/targets/*/'
-result_dir          = f'../results/{experiment[1]}/{experiment[2]}_CD'
-hidden_dir          = f'../results/{experiment[1]}/{experiment[2]}_CD_{"".join(feature_properties.split(" "))}'
-source_df_name      = os.path.join(data_dir,experiment[1],experiment[0],'source.csv')
-target_df_name      = os.path.join(data_dir,experiment[1],experiment[0],'target.csv')
+result_dir          = os.path.join('../results/',experiment[0],experiment[1],)
+hidden_dir          = os.path.join('../results/',experiment[0],experiment[1],feature_properties)
+source_df_name      = os.path.join(data_dir,experiment[0],experiment[1],'source.csv')
+target_df_name      = os.path.join(data_dir,experiment[0],experiment[1],'target.csv')
 batch_size          = 32
 time_steps          = 7
 confidence_range    = 4
@@ -61,6 +61,7 @@ results             = dict(
                            n_sample     = [],
                            source       = [],
                            sub_name     = [],
+                           accuracy     = [],
                            )
 for ii in range(confidence_range):
     results[f'score{ii + 1}'] = []
@@ -79,6 +80,7 @@ cv                      = GroupShuffleSplit(n_splits        = n_splits,
 for fold,(train,valid) in enumerate(cv.split(features,targets,groups = groups)):
     X_train,y_train = features[train],targets[train]
     X_valid,y_valid = features[valid],targets[valid]
+    acc_valid       = df_source['accuarcy'].values[valid]
     if fold >= 0: # batch_change
         break
 
@@ -123,25 +125,29 @@ X_valid = to_categorical(X_valid - 1, num_classes = confidence_range)
 
 y_train = to_categorical(y_train - 1, num_classes = confidence_range)
 y_valid = to_categorical(y_valid - 1, num_classes = confidence_range)
-
 preds_valid = model.predict(X_valid,batch_size = batch_size,verbose = 1)
-score_train = scoring_func(y_valid,preds_valid,confidence_range = confidence_range)
-hidden_state_valid,h_state_valid,c_state_valid = hidden_model.predict(X_valid,
-                                                                      batch_size = batch_size,
-                                                                      verbose = 1)
-df_valid = pd.DataFrame(hidden_state_valid[:,:,0],columns = [f'T{ii - time_steps}' for ii in range(time_steps)])
-df_valid['sub'] = groups[valid]
-df_valid_ave = df_valid.groupby(['sub']).mean().reset_index()
-df_valid_ave['data'] = 'Train'
-df_valid_ave['score'] = np.mean(score_train)
 
-results['fold'].append(fold)
-results['score'].append(np.mean(score_train))
-[results[f'score{ii + 1}'].append(score_train[ii]) for ii in range(confidence_range)]
-results['n_sample'].append(X_valid.shape[0])
-results['source'].append('train')
-results['sub_name'].append('train')
-[results[f'{feature_properties} T-{time_steps - ii}'].append(hidden_state_valid.mean(0)[ii,0]) for ii in range(time_steps)]
+for acc_ in [0,1]:
+    _idx, = np.where(acc_valid == acc_)
+    if len(_idx) > 1:
+        score_train = scoring_func(y_valid[_idx],preds_valid[_idx],confidence_range = confidence_range)
+        hidden_state_valid,h_state_valid,c_state_valid = hidden_model.predict(X_valid[_idx],
+                                                                              batch_size = batch_size,
+                                                                              verbose = 1)
+        # df_valid = pd.DataFrame(hidden_state_valid[:,:,0],columns = [f'T{ii - time_steps}' for ii in range(time_steps)])
+        # df_valid['sub'] = groups[valid]
+        # df_valid_ave = df_valid.iloc[_idx].groupby(['sub']).mean().reset_index()
+        # df_valid_ave['data'] = 'Train'
+        # df_valid_ave['score'] = np.mean(score_train)
+        
+        results['fold'].append(fold)
+        results['score'].append(np.mean(score_train))
+        [results[f'score{ii + 1}'].append(score_train[ii]) for ii in range(confidence_range)]
+        results['n_sample'].append(X_valid[_idx].shape[0])
+        results['source'].append('train')
+        results['sub_name'].append('train')
+        results['accuracy'].append(acc_)
+        [results[f'{feature_properties} T-{time_steps - ii}'].append(hidden_state_valid.mean(0)[ii,0]) for ii in range(time_steps)]
 
 # 
 for (sub_name,target_domain),df_sub in df_target.groupby(['sub','domain']):
@@ -150,29 +156,31 @@ for (sub_name,target_domain),df_sub in df_target.groupby(['sub','domain']):
     targets_         = df_sub["targets"].values.astype(int)
     groups_          = df_sub["sub"].values
     X_test,y_test    = features_.copy(),targets_.copy()
+    acc_test         = df_sub['accuracy'].values
     X_test           = to_categorical(X_test - 1, num_classes = confidence_range)
     y_test           = to_categorical(y_test - 1, num_classes = confidence_range)
     
-    
-    preds_test  = model.predict(X_test,batch_size=batch_size,verbose = 1)
-    score_test  = scoring_func(y_test,preds_test,confidence_range = confidence_range)
-    
-    print(f'training score = {np.mean(score_train):.4f} with {len(train)} instances, testing score = {np.mean(score_test):.4f} with {len(y_test)} instances')
-    
-    print('get hidden states')
-    hidden_state_test,h_state_test,c_state_test = hidden_model.predict(X_test,
-                                                                       batch_size = batch_size,
-                                                                       verbose = 1)
-    print('{:.3f}_{:.3f}_{:.3f}_{:.3f}_{:.3f}_{:.3f}_{:.3f}'.format(*list(hidden_state_test.mean(0).reshape(7,))))
-    
-    results['fold'].append(fold)
-    results['score'].append(np.mean(score_test))
-    [results[f'score{ii + 1}'].append(score_test[ii]) for ii in range(confidence_range)]
-    results['n_sample'].append(X_test.shape[0])
-    results['source'].append(target_domain)
-    results['sub_name'].append(sub_name)
-    [results[f'{feature_properties} T-{time_steps - ii}'].append(np.abs(hidden_state_test.mean(0)[ii,0])) for ii in range(time_steps)]
-    
+    preds_test       = model.predict(X_test,batch_size=batch_size,verbose = 1)
+    for acc_ in [0,1]:
+        _idx, = np.where(acc_test == acc_)
+        if len(_idx) > 1:
+            score_test  = scoring_func(y_test[_idx],preds_test[_idx],confidence_range = confidence_range)
+            print(f'training score = {np.mean(score_train):.4f} with {len(train)} instances, testing score = {np.mean(score_test):.4f} with {len(y_test)} instances')
+            print('get hidden states')
+            hidden_state_test,h_state_test,c_state_test = hidden_model.predict(X_test[_idx],
+                                                                               batch_size = batch_size,
+                                                                               verbose = 1)
+            print('{:.3f}_{:.3f}_{:.3f}_{:.3f}_{:.3f}_{:.3f}_{:.3f}'.format(*list(hidden_state_test.mean(0).reshape(7,))))
+            
+            results['fold'].append(fold)
+            results['score'].append(np.mean(score_test))
+            [results[f'score{ii + 1}'].append(score_test[ii]) for ii in range(confidence_range)]
+            results['n_sample'].append(X_test[_idx].shape[0])
+            results['source'].append(target_domain)
+            results['sub_name'].append(sub_name)
+            results['accuracy'].append(acc_)
+            [results[f'{feature_properties} T-{time_steps - ii}'].append(np.abs(hidden_state_test.mean(0)[ii,0])) for ii in range(time_steps)]
+            
     results_to_save = pd.DataFrame(results)
     results_to_save.to_csv(csv_saving_name,index = False)
 

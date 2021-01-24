@@ -30,16 +30,16 @@ from sklearn.model_selection import GroupShuffleSplit
 from sklearn.utils           import shuffle as util_shuffle
 #from sklearn.metrics         import roc_auc_score
 
-experiment          = ['cross_domain','adequacy','RNN']
+experiment          = ['confidence','cross_domain','RNN']
 feature_properties  = 'hidden states' # or hidden states or feature importance
 data_dir            = '../data/'
-model_dir           = f'../models/{experiment[1]}/{experiment[2]}_CD'
+model_dir           = os.path.join('../models',experiment[0],experiment[1],)
 source_dir          = '../data/4-point'
 target_dir          = '../data/targets/*/'
-result_dir          = f'../results/{experiment[1]}/{experiment[2]}_CD'
-hidden_dir          = f'../results/{experiment[1]}/{experiment[2]}_CD_{"".join(feature_properties.split(" "))}'
-source_df_name      = os.path.join(data_dir,experiment[1],experiment[0],'source.csv')
-target_df_name      = os.path.join(data_dir,experiment[1],experiment[0],'target.csv')
+result_dir          = os.path.join('../results/',experiment[0],experiment[1],)
+hidden_dir          = os.path.join('../results/',experiment[0],experiment[1],feature_properties)
+source_df_name      = os.path.join(data_dir,experiment[0],experiment[1],'source.csv')
+target_df_name      = os.path.join(data_dir,experiment[0],experiment[1],'target.csv')
 batch_size          = 32
 time_steps          = 7
 confidence_range    = 4

@@ -25,16 +25,16 @@ from sklearn.utils           import shuffle as util_shuffle
 
 from scipy.special           import softmax
 
-experiment          = ['cross_domain','adequacy','RF']
+experiment          = ['confidence','cross_domain','RF']
 feature_properties  = 'feature importance' # or hidden states or feature importance
 data_dir            = '../data/'
-model_dir           = f'../models/{experiment[1]}/{experiment[2]}_CD'
+model_dir           = os.path.join('../models',experiment[0],experiment[1],)
 source_dir          = '../data/4-point'
 target_dir          = '../data/targets/*/'
-result_dir          = f'../results/{experiment[1]}/{experiment[2]}_CD'
-hidden_dir          = f'../results/{experiment[1]}/{experiment[2]}_CD_{"".join(feature_properties.split(" "))}'
-source_df_name      = os.path.join(data_dir,experiment[1],experiment[0],'source.csv')
-target_df_name      = os.path.join(data_dir,experiment[1],experiment[0],'target.csv')
+result_dir          = os.path.join('../results/',experiment[0],experiment[1],)
+hidden_dir          = os.path.join('../results/',experiment[0],experiment[1],feature_properties)
+source_df_name      = os.path.join(data_dir,experiment[0],experiment[1],'source.csv')
+target_df_name      = os.path.join(data_dir,experiment[0],experiment[1],'target.csv')
 batch_size          = 32
 time_steps          = 7
 confidence_range    = 4
@@ -58,6 +58,7 @@ results             = dict(
                            n_sample     = [],
                            source       = [],
                            sub_name     = [],
+                           accuracy     = [],
                            )
 for ii in range(confidence_range):
     results[f'score{ii + 1}'] = []
@@ -80,6 +81,7 @@ for fold,(train,valid) in enumerate(cv.split(features,targets,groups = groups)):
         break
 y_train = to_categorical(y_train - 1, num_classes = confidence_range)
 y_valid = to_categorical(y_valid - 1, num_classes = confidence_range)
+acc_valid = df_source['accuracy'].values[valid]
 
 csv_saving_name     = f'RF cross validation results (fold {fold + 1}).csv'
 
@@ -92,22 +94,26 @@ randomforestclassifier.fit(X_train,y_train)
 preds_valid = randomforestclassifier.predict_proba(X_valid)
 preds_valid = softmax(np.array(preds_valid)[:,:,-1].T,axis = 1)
 print('done fitting')
-score_train = scoring_func(y_valid,preds_valid,confidence_range = confidence_range)
-_targets = to_categorical(targets - 1, num_classes = confidence_range)
-feature_importance,results,_ = get_RF_feature_importance(randomforestclassifier,
-                                                         features,
-                                                         _targets,
-                                                         valid,
-                                                         results,
-                                                         feature_properties,
-                                                         time_steps,)
-
-results['fold'].append(fold)
-results['score'].append(np.mean(score_train))
-[results[f'score{ii + 1}'].append(score_train[ii]) for ii in range(confidence_range)]
-results['n_sample'].append(X_valid.shape[0])
-results['source'].append('train')
-results['sub_name'].append('train')
+for acc_ in [0,1]:
+    _idx, = np.where(acc_valid == acc_)
+    if len(_idx) > 1:
+        score_train = scoring_func(y_valid[_idx],preds_valid[_idx],confidence_range = confidence_range)
+        _targets = to_categorical(targets - 1, num_classes = confidence_range)
+        feature_importance,results,_ = get_RF_feature_importance(randomforestclassifier,
+                                                                 features,
+                                                                 _targets,
+                                                                 valid[_idx],
+                                                                 results,
+                                                                 feature_properties,
+                                                                 time_steps,)
+        
+        results['fold'].append(fold)
+        results['score'].append(np.mean(score_train))
+        [results[f'score{ii + 1}'].append(score_train[ii]) for ii in range(confidence_range)]
+        results['n_sample'].append(X_valid[_idx].shape[0])
+        results['source'].append('train')
+        results['sub_name'].append('train')
+        results['accuracy'].append(acc_)
 
 
 # cross domain testing
@@ -117,32 +123,37 @@ for (sub_name,target_domain),df_sub in df_target.groupby(['sub','domain']):
     groups_         = df_sub["sub"].values
     X_test,y_test   = features_.copy(),targets_.copy()
     y_test          = to_categorical(y_test - 1, num_classes = confidence_range,)
+    acc_test        = df_sub['accuracy'].values
     
     preds_test  = randomforestclassifier.predict_proba(X_test)
     preds_test  = softmax(np.array(preds_test)[:,:,-1].T,axis = 1)
-    score_test  = scoring_func(y_test,preds_test,confidence_range = confidence_range)
-    
-    print(f'training score = {np.mean(score_train):.4f} with {len(train)} instances, testing score = {np.mean(score_test):.4f} with {len(y_test)} instances')
-    print('get feature importance')
-    feature_importance,results,c = get_RF_feature_importance(randomforestclassifier,
-                                                             features_,
-                                                             y_test,
-                                                             np.arange(features_.shape[0]),
-                                                             results,
-                                                             feature_properties,
-                                                             time_steps,)
-    print('{:.3f}_{:.3f}_{:.3f}_{:.3f}_{:.3f}_{:.3f}_{:.3f}_'.format(*c))
-    results['fold'].append(fold)
-    results['score'].append(np.mean(score_test))
-    [results[f'score{ii + 1}'].append(score_test[ii]) for ii in range(confidence_range)]
-    results['n_sample'].append(X_test.shape[0])
-    results['source'].append(target_domain)
-    results['sub_name'].append(sub_name)
+    for acc_ in [0,1]:
+        _idx, = np.where(acc_test == acc_)
+        if len(_idx) > 1:
+            score_test  = scoring_func(y_test[_idx],preds_test[_idx],confidence_range = confidence_range)
+            
+            print(f'training score = {np.mean(score_train):.4f} with {len(train)} instances, testing score = {np.mean(score_test):.4f} with {len(y_test)} instances')
+            print('get feature importance')
+            feature_importance,results,c = get_RF_feature_importance(randomforestclassifier,
+                                                                     features_,
+                                                                     y_test,
+                                                                     np.arange(features_.shape[0])[_idx],
+                                                                     results,
+                                                                     feature_properties,
+                                                                     time_steps,)
+            print('{:.3f}_{:.3f}_{:.3f}_{:.3f}_{:.3f}_{:.3f}_{:.3f}_'.format(*c))
+            results['fold'].append(fold)
+            results['score'].append(np.mean(score_test))
+            [results[f'score{ii + 1}'].append(score_test[ii]) for ii in range(confidence_range)]
+            results['n_sample'].append(X_test[_idx].shape[0])
+            results['source'].append(target_domain)
+            results['sub_name'].append(sub_name)
+            results['accuracy'].append(acc_)
     gc.collect()
     
     results_to_save = pd.DataFrame(results)
     results_to_save.to_csv(os.path.join(result_dir,f'{csv_saving_name}'),
-                           index = False)
+                            index = False)
 
 
 
