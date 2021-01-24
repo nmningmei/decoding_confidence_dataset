@@ -69,6 +69,7 @@ if not os.path.exists(csv_name):
         results[f'score{ii + 1}'] = []
     for ii in range(time_steps):
         results[f'feature importance T-{time_steps - ii}'] = []
+    get_folds = []
 else:
     results = pd.read_csv(csv_name)
     get_folds = pd.unique(results['fold'])
