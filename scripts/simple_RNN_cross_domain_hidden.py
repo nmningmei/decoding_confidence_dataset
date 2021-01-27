@@ -73,13 +73,13 @@ features,targets,groups = util_shuffle(features,targets,groups)
 cv                      = GroupShuffleSplit(n_splits        = n_splits,
                                             test_size       = 0.2,
                                             random_state    = 12345)
+fold = 0 # batch_change
+train_test_folds = list(cv.split(features,targets,groups = groups))
+_train,valid = train_test_folds[fold]
+X_train,y_train = features[train],targets[train]
+X_valid,y_valid = features[valid],targets[valid]
+acc_valid       = df_source['accuracy'].values[valid]
 
-for fold,(train,valid) in enumerate(cv.split(features,targets,groups = groups)):
-    X_train,y_train = features[train],targets[train]
-    X_valid,y_valid = features[valid],targets[valid]
-    acc_valid       = df_source['accuracy'].values[valid]
-    if fold >= 0: # batch_change
-        break
 
 
 

@@ -16,7 +16,7 @@ from shutil                  import copyfile
 templates           = ['simple_RNN_cross_domain_RF.py',
                        'simple_RNN_cross_domain_train_RNN.py',
                        'simple_RNN_cross_domain_hidden.py']
-experiment          = ['confidence','cross_domain','RF','RNN']
+experiment          = ['adequacy','cross_domain','RF','RNN']
 data_dir            = '../data'
 source_dir          = '../data/4-point'
 target_dir          = '../data/targets/*/'

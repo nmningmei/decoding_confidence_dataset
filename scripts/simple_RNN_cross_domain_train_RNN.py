@@ -65,16 +65,15 @@ features,targets,groups = util_shuffle(features,targets,groups)
 cv                      = GroupShuffleSplit(n_splits        = n_splits,
                                             test_size       = 0.2,
                                             random_state    = 12345)
-
-for fold,(_train,test) in enumerate(cv.split(features,targets,groups = groups)):
-    training_features = features[_train]
-    training_targets = targets[_train]
-    training_groups = groups[_train]
-    for train,valid in cv.split(training_features,training_targets,groups = training_groups):
-        X_train,y_train = training_features[train],training_targets[train]
-        X_valid,y_valid = training_features[valid],training_targets[valid]
-    if fold >= 0: # batch_change
-        break
+fold = 0 # batch_change
+train_test_folds = list(cv.split(features,targets,groups = groups))
+_train,test = train_test_folds[fold]
+training_features = features[_train]
+training_targets = targets[_train]
+training_groups = groups[_train]
+for train,valid in cv.split(training_features,training_targets,groups = training_groups):
+    X_train,y_train = training_features[train],training_targets[train]
+    X_valid,y_valid = training_features[valid],training_targets[valid]
     
 # reset the GPU memory
 tf.keras.backend.clear_session()

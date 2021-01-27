@@ -1,0 +1,19 @@
+#!/bin/bash
+#PBS -q bcbl
+#PBS -l nodes=1:ppn=16
+#PBS -l mem=32gb
+#PBS -l cput=384:00:00
+#PBS -N adequacy_cross_domain_RF_RNN_24
+#PBS -o outputs/out_24.txt
+#PBS -e outputs/err_24.txt
+
+cd $PBS_O_WORKDIR
+export PATH="/scratch/ningmei/anaconda3/bin:/scratch/ningmei/anaconda3/condabin:$PATH"
+source activate keras-2.1.6_tensorflow-2.0.0
+pwd
+echo fold-23
+
+python "simple_RNN_cross_domain_RF_24.py"
+python "simple_RNN_cross_domain_train_RNN_24.py"
+python "simple_RNN_cross_domain_hidden_24.py"
+    

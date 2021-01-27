@@ -16,7 +16,7 @@ if not os.path.exists(bash_folder):
     copyfile('utils.py',os.path.join(bash_folder,'utils.py'))
 
 template            = 'simple_RF_LOSO.py'
-experiment          = ['confidence','LOO','RF']
+experiment          = ['adequacy','LOO','RF']
 data_dir            = '../data'
 working_df_name     = os.path.join(data_dir,experiment[0],experiment[1],'all_data.csv')
 df_def              = pd.read_csv(working_df_name,)
