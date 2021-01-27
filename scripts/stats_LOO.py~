@@ -23,7 +23,7 @@ from sklearn.model_selection import (LeaveOneOut,
                                      cross_validate)
 
 
-experiment = 'confidence' # confidence or adequacy
+experiment = 'adequacy' # confidence or adequacy
 working_dir = f'../results/{experiment}/LOO/'
 stats_dir = f'../stats/{experiment}/LOO_compare_RNN_RF/'
 if not os.path.exists(stats_dir):
