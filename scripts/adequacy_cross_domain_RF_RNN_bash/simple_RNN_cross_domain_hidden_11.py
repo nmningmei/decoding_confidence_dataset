@@ -78,7 +78,7 @@ cv                      = GroupShuffleSplit(n_splits        = n_splits,
 fold = 10 # batch_change
 train_test_folds = list(cv.split(features,targets,groups = groups))
 _train,valid = train_test_folds[fold]
-X_train,y_train = features[train],targets[train]
+X_train,y_train = features[_train],targets[_train]
 X_valid,y_valid = features[valid],targets[valid]
 acc_valid       = df_source['accuracy'].values[valid]
 
@@ -164,7 +164,7 @@ for (sub_name,target_domain),df_sub in df_target.groupby(['sub','domain']):
         _idx, = np.where(acc_test == acc_)
         if len(_idx) > 1:
             score_test  = scoring_func(y_test[_idx],preds_test[_idx],confidence_range = confidence_range)
-            print(f'training score = {np.mean(score_train):.4f} with {len(train)} instances, testing score = {np.mean(score_test):.4f} with {len(y_test)} instances')
+            print(f'training score = {np.mean(score_train):.4f} with {len(_train)} instances, testing score = {np.mean(score_test):.4f} with {len(y_test)} instances')
             print('get hidden states')
             hidden_state_test,h_state_test,c_state_test = hidden_model.predict(X_test[_idx],
                                                                                batch_size = batch_size,
