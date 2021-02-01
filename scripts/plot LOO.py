@@ -114,7 +114,7 @@ for ii,(ax,experiment) in enumerate(zip(axes.flatten(),unique_experiment)):
                        ax = ax,
                        hue = 'condition',
                        hue_order = xargs['hue_order'],
-                       dodge = 0.5,
+                       dodge = 0.6,
                        palette = 'dark',
                        estimator = temp_func,
                        markers = ['D','d','X','x'],
