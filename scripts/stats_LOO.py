@@ -21,9 +21,10 @@ from sklearn.pipeline import make_pipeline
 from sklearn.model_selection import (LeaveOneOut,
                                      permutation_test_score,
                                      cross_validate)
+from itertools import combinations
 
 
-experiment = 'confidence' # confidence or adequacy
+experiment = 'adequacy' # confidence or adequacy
 working_dir = f'../results/{experiment}/LOO/'
 stats_dir = f'../stats/{experiment}/LOO_compare_RNN_RF/'
 if not os.path.exists(stats_dir):
@@ -51,14 +52,18 @@ df = pd.concat(df)
 
 df_plot = df[df['source'] != 'train']
 
+# further process the data for plotting
+df_plot['acc']  = df_plot['accuracy'].map({0:'incorrect',1:'correct'})
+df_plot['condition'] = df_plot['model'] + '_' + df_plot['acc']
+
 res_scores = dict(experiment = [],
-                  model = [],
+                  condition = [],
                   score_mean = [],
                   score_std = [],
                   pval = [],
                   )
 res_features = dict(experiment = [],
-                    model = [],
+                    condition = [],
                     slope_mean = [],
                     slope_std = [],
                     intercept_mean = [],
@@ -69,9 +74,9 @@ res_features = dict(experiment = [],
                     y_std = [],
                     )
 res_slopes = dict(experiment = [],
-                  model = [],
+                  condition = [],
                   slope = [],)
-for (experiment,model),df_sub in df_plot.groupby(['experiment','model']):
+for (experiment,condition),df_sub in df_plot.groupby(['experiment','condition']):
     # on the scores: compare against to theorectial chance level
     scores = df_sub['score'].values
     gc.collect()
@@ -83,7 +88,7 @@ for (experiment,model),df_sub in df_plot.groupby(['experiment','model']):
                               verbose = 0,)
     gc.collect()
     res_scores['experiment'].append(experiment)
-    res_scores['model'].append(model)
+    res_scores['condition'].append(condition)
     res_scores['score_mean'].append(np.mean(scores))
     res_scores['score_std'].append(np.std(scores))
     res_scores['pval'].append(np.mean(ps))
@@ -122,7 +127,7 @@ for (experiment,model),df_sub in df_plot.groupby(['experiment','model']):
     # save for 2 sample t tests
     for item in coefficients:
         res_slopes['experiment'].append(experiment)
-        res_slopes['model'].append(model)
+        res_slopes['condition'].append(condition)
         res_slopes['slope'].append(item)
     intercepts = np.array([est.intercept_ for est in _res['estimator']])
     xxx = np.linspace(0,6,1000)
@@ -130,7 +135,7 @@ for (experiment,model),df_sub in df_plot.groupby(['experiment','model']):
     y_mean = temp[:,0,:]
     y_std = temp[:,0,:]
     res_features['experiment'].append(experiment)
-    res_features['model'].append(model)
+    res_features['condition'].append(condition)
     res_features['slope_mean'].append(np.mean(coefficients))
     res_features['slope_std'].append(np.std(coefficients))
     res_features['intercept_mean'].append(np.mean(intercepts))
@@ -144,7 +149,7 @@ res_features = pd.DataFrame(res_features)
 res_slopes = pd.DataFrame(res_slopes)
 
 temp = []
-for model,df_sub in res_scores.groupby(['model']):
+for condition,df_sub in res_scores.groupby(['condition']):
     df_sub = df_sub.sort_values(['pval'])
     pvals = df_sub['pval'].values
     converter = utils.MCPConverter(pvals = pvals)
@@ -154,7 +159,7 @@ for model,df_sub in res_scores.groupby(['model']):
 res_scores = pd.concat(temp)
 
 temp = []
-for model,df_sub in res_features.groupby(['model']):
+for condition,df_sub in res_features.groupby(['condition']):
     df_sub = df_sub.sort_values(['pval'])
     pvals = df_sub['pval'].values
     converter = utils.MCPConverter(pvals = pvals)
@@ -163,29 +168,44 @@ for model,df_sub in res_features.groupby(['model']):
     temp.append(df_sub)
 res_features = pd.concat(temp)
 
-feature_comparison = dict(experiment = [],
+temp = np.concatenate(res_slopes['condition'].apply(lambda x:np.array(x.split('_'))).values).reshape(-1,2)
+res_slopes['model'] = temp[:,0]
+res_slopes['accuracy'] = temp[:,1]
+
+
+feature_comparison = dict(condition = [],
+                          experiment = [],
                           pval = [],
                           slope_rf_mean = [],
                           slope_rf_std = [],
                           slope_rnn_mean = [],
                           slope_rnn_std = [],
                           )
-for (experiment),df_sub in res_slopes.groupby(['experiment']):
-    rf = df_sub[df_sub['model'] == 'RF']['slope'].values
-    rn = df_sub[df_sub['model'] == 'RNN']['slope'].values
-    ps = utils.resample_ttest_2sample(rf,rn,
-                                      one_tail = False,
-                                      match_sample_size = False,
-                                      n_jobs = -1,
-                                      n_ps = 2,
-                                      n_permutation = int(1e5),
-                                      verbose = 1)
-    feature_comparison['experiment'].append(experiment)
-    feature_comparison['pval'].append(np.mean(ps))
-    feature_comparison['slope_rf_mean'].append(rf.mean())
-    feature_comparison['slope_rf_std'].append(rf.std())
-    feature_comparison['slope_rnn_mean'].append(rn.mean())
-    feature_comparison['slope_rnn_std'].append(rn.std())
+for experiment,df_sub in res_slopes.groupby(['experiment']):
+    for conditions in list(combinations(pd.unique(res_slopes['condition']),2)):
+        a,b = conditions
+        if a[:3] != b[:3]:
+            for temp in conditions:
+                if 'RF' in temp:
+                    rf = df_sub[df_sub['condition'] == temp]['slope'].values
+                else:
+                    rnn = df_sub[df_sub['condition'] == temp]['slope'].values
+            ps = utils.resample_ttest_2sample(rf,rnn,
+                                              one_tail = False,
+                                              match_sample_size = False,
+                                              n_jobs = -1,
+                                              n_ps = 2,
+                                              n_permutation = int(1e5),
+                                              verbose = 1)
+            feature_comparison['experiment'].append(experiment)
+            feature_comparison['condition'].append(f'{a}_{b}')
+            feature_comparison['pval'].append(np.mean(ps))
+            feature_comparison['slope_rf_mean'].append(rf.mean())
+            feature_comparison['slope_rf_std'].append(rf.std())
+            feature_comparison['slope_rnn_mean'].append(rf.mean())
+            feature_comparison['slope_rnn_std'].append(rf.std())
+            del rf
+            del rnn
 feature_comparison = pd.DataFrame(feature_comparison)
 
 res_scores['stars'] = res_scores['p_corrected'].apply(utils.stars)
@@ -193,6 +213,8 @@ res_scores.to_csv(os.path.join(stats_dir,'scores.csv'),index = False)
 
 res_features['stars'] = res_features['p_corrected'].apply(utils.stars)
 res_features.to_csv(os.path.join(stats_dir,'features.csv'),index = False)
+
+res_slopes.to_csv(os.path.join(stats_dir,'slopes.csv'),index = False)
 
 feature_comparison.to_csv(os.path.join(stats_dir,'slope_comparison.csv'),index = False)
 
