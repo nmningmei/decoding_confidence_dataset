@@ -222,7 +222,7 @@ for ii,(ax,experiment) in enumerate(zip(axes.flatten(),unique_experiment)):
 #           ylim = (-0.23,0.23),
            )
     if ii % 4 == 0:
-        ax.set(ylabel = 'Slope')
+        ax.set(ylabel = r'$\beta$')
     if ii >=12:
         ax.set(xlabel = '',xticklabels = ['Correct trials','Incorrect trials'])
 fig.tight_layout()
