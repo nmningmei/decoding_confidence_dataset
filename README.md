@@ -21,19 +21,19 @@
 ## Decoding scores (within domain)
 Confidence             |  Adequacy
 :-------------------------:|:-------------------------:
-![cws](https://github.com/nmningmei/decoding_confidence_dataset/blob/main/figures/confidence/LOO_compare_RNN_RF/RNN%20vs%20RF%20LOO.jpeg)  |  ![aws](https://github.com/nmningmei/decoding_confidence_dataset/blob/main/figures/adequacy/LOO_compare_RNN_RF/RNN%20vs%20RF%20LOO.jpeg)
+![cws](https://github.com/nmningmei/decoding_confidence_dataset/blob/main/figures/confidence/LOO_compare_RNN_RF/scores.jpg)  |  ![aws](https://github.com/nmningmei/decoding_confidence_dataset/blob/main/figures/adequacy/LOO_compare_RNN_RF/scores.jpg)
 
 ## Feature attribution (within domain)
 Confidence             |  Adequacy
 :-------------------------:|:-------------------------:
-![cwf](https://github.com/nmningmei/decoding_confidence_dataset/blob/main/figures/confidence/LOO_compare_RNN_RF/RNN%20vs%20RF%20features.jpeg)  |  ![awf](https://github.com/nmningmei/decoding_confidence_dataset/blob/main/figures/adequacy/LOO_compare_RNN_RF/RNN%20vs%20RF%20features.jpeg)
+![cwf](https://github.com/nmningmei/decoding_confidence_dataset/blob/main/figures/confidence/LOO_compare_RNN_RF/features.jpg)  |  ![awf](https://github.com/nmningmei/decoding_confidence_dataset/blob/main/figures/adequacy/LOO_compare_RNN_RF/features.jpg)
 
 ## Decoding scores (cross domain)
 Confidence             |  Adequacy
 :-------------------------:|:-------------------------:
-![ccs](https://github.com/nmningmei/decoding_confidence_dataset/blob/main/figures/confidence/CD/cross%20domain%20decoding%20scores.jpeg)  |  ![acs](https://github.com/nmningmei/decoding_confidence_dataset/blob/main/figures/adequacy/CD/cross%20domain%20decoding%20scores.jpeg)
+![ccs](https://github.com/nmningmei/decoding_confidence_dataset/blob/main/figures/confidence/CD/scores.jpg)  |  ![acs](https://github.com/nmningmei/decoding_confidence_dataset/blob/main/figures/adequacy/CD/scores.jpg)
 
 ## Feature attribution (cross domain)
 Confidence             |  Adequacy
 :-------------------------:|:-------------------------:
-![ccf](https://github.com/nmningmei/decoding_confidence_dataset/blob/main/figures/confidence/CD/hidden%20states%20of%20time%20steps.jpeg)  |  ![acf](https://github.com/nmningmei/decoding_confidence_dataset/blob/main/figures/adequacy/CD/hidden%20states%20of%20time%20steps.jpeg)
+![ccf](https://github.com/nmningmei/decoding_confidence_dataset/blob/main/figures/confidence/CD/features.jpg)  |  ![acf](https://github.com/nmningmei/decoding_confidence_dataset/blob/main/figures/adequacy/CD/features.jpg)
