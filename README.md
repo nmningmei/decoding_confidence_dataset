@@ -28,6 +28,10 @@ Confidence             |  Adequacy
 :-------------------------:|:-------------------------:
 ![cwf](https://github.com/nmningmei/decoding_confidence_dataset/blob/main/figures/confidence/LOO_compare_RNN_RF/features.jpg)  |  ![awf](https://github.com/nmningmei/decoding_confidence_dataset/blob/main/figures/adequacy/LOO_compare_RNN_RF/features.jpg)
 
+## Trends of features (within domain)
+:-------------------------:|:-------------------------:
+![cwf](https://github.com/nmningmei/decoding_confidence_dataset/blob/main/figures/confidence/LOO_compare_RNN_RF/slopes.jpg)  |  ![awf](https://github.com/nmningmei/decoding_confidence_dataset/blob/main/figures/adequacy/LOO_compare_RNN_RF/slopes.jpg)
+
 ## Decoding scores (cross domain)
 Confidence             |  Adequacy
 :-------------------------:|:-------------------------:
@@ -37,3 +41,8 @@ Confidence             |  Adequacy
 Confidence             |  Adequacy
 :-------------------------:|:-------------------------:
 ![ccf](https://github.com/nmningmei/decoding_confidence_dataset/blob/main/figures/confidence/CD/features.jpg)  |  ![acf](https://github.com/nmningmei/decoding_confidence_dataset/blob/main/figures/adequacy/CD/features.jpg)
+
+## Trends of features (cross domain)
+:-------------------------:|:-------------------------:
+![cwf](https://github.com/nmningmei/decoding_confidence_dataset/blob/main/figures/confidence/CD/slopes.jpg)  |  ![awf](https://github.com/nmningmei/decoding_confidence_dataset/blob/main/figures/adequacy/CD/slopes.jpg)
+
