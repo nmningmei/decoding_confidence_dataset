@@ -281,7 +281,9 @@ def resample_ttest(x,
                    one_tail         = False,
                    n_jobs           = 12, 
                    verbose          = 0,
-                   full_size        = True
+                   full_size        = True,
+                   stat_func        = np.mean,
+                   size_catch       = int(1e4),
                    ):
     """
     http://www.stat.ucla.edu/~rgould/110as02/bshypothesis.pdf
@@ -297,10 +299,10 @@ def resample_ttest(x,
     import gc
     from joblib import Parallel,delayed
     # statistics with the original data distribution
-    t_experiment    = np.mean(x)
-    null            = x - np.mean(x) + baseline # shift the mean to the baseline but keep the distribution
+    t_experiment    = stat_func(x)
+    null            = x - stat_func(x) + baseline # shift the mean to the baseline but keep the distribution
     
-    if null.shape[0] > int(1e4): # catch for big data
+    if null.shape[0] > size_catch: # catch for big data
         full_size   = False
     if not full_size:
         size        = int(1e3)
@@ -315,7 +317,7 @@ def resample_ttest(x,
         size: tuple of 2 integers (n_for_averaging,n_permutation)
         """
         null_dist   = np.random.choice(null,size = size,replace = True)
-        t_null      = np.mean(null_dist,0)
+        t_null      = stat_func(null_dist,0)
         if one_tail:
             return ((np.sum(t_null >= t_experiment)) + 1) / (size[1] + 1)
         else:
@@ -437,3 +439,11 @@ def stars(x):
         return '*'
     else:
         return 'n.s.'
+
+def get_array_from_dataframe(df,column_name):
+    return np.array([item for item in df[column_name].values[0].replace('[',
+                     '').replace(']',
+                        '').replace('\n',
+                          '').replace('  ',
+                            ' ').split(' ') if len(item) > 0],
+                    dtype = 'float32')

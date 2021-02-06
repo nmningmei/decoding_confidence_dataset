@@ -42,11 +42,11 @@ for f in working_data:
     rename_mapper = {item:f'{item.split(" ")[-1]}' for item in col_to_rename}
     temp = temp.rename(columns = rename_mapper)
     # normalize with each decoding
-    temp_array = temp[[item for item in temp.columns if ('T-' in item)]].values
-    if decoder == 'RNN':
-        temp_array = np.abs(temp_array)
-    temp_array = scaler().fit_transform(temp_array.T)
-    temp[[item for item in temp.columns if ('T-' in item)]] = temp_array.T
+#    temp_array = temp[[item for item in temp.columns if ('T-' in item)]].values
+#    if decoder == 'RNN':
+#        temp_array = np.abs(temp_array)
+#    temp_array = scaler().fit_transform(temp_array.T)
+#    temp[[item for item in temp.columns if ('T-' in item)]] = temp_array.T
     df.append(temp)
 df = pd.concat(df)
 
@@ -95,7 +95,7 @@ for (experiment,condition),df_sub in df_plot.groupby(['experiment','condition'])
     
     # on the feature contributions
     features = df_sub[[f'T-{7 - ii}' for ii in range(7)]].values
-    features = np.abs(features)
+#    features = np.abs(features)
     xx = np.vstack([np.arange(7) for _ in range(features.shape[0])])
     cv = LeaveOneOut()
     # a regularized linear regression
