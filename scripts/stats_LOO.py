@@ -18,7 +18,7 @@ from sklearn.preprocessing import MinMaxScaler as scaler
 from sklearn.preprocessing import RobustScaler
 from sklearn import linear_model
 from sklearn.pipeline import make_pipeline
-from sklearn.model_selection import (LeaveOneOut,
+from sklearn.model_selection import (LeaveOneGroupOut,
                                      permutation_test_score,
                                      cross_validate)
 from itertools import combinations
@@ -64,18 +64,21 @@ res_scores = dict(experiment = [],
                   )
 res_features = dict(experiment = [],
                     condition = [],
-                    slope_mean = [],
-                    slope_std = [],
-                    intercept_mean = [],
-                    intercept_std = [],
+                    slope = [],
+                    intercept = [],
+#                    slope_mean = [],
+#                    slope_std = [],
+#                    intercept_mean = [],
+#                    intercept_std = [],
                     cv_score = [],
                     pval = [],
-                    y_mean = [],
-                    y_std = [],
+#                    y_mean = [],
+#                    y_std = [],
                     )
 res_slopes = dict(experiment = [],
                   condition = [],
-                  slope = [],)
+                  slope = [],
+                  intercept = [],)
 for (experiment,condition),df_sub in df_plot.groupby(['experiment','condition']):
     # on the scores: compare against to theorectial chance level
     scores = df_sub['score'].values
@@ -97,25 +100,28 @@ for (experiment,condition),df_sub in df_plot.groupby(['experiment','condition'])
     features = df_sub[[f'T-{7 - ii}' for ii in range(7)]].values
 #    features = np.abs(features)
     xx = np.vstack([np.arange(7) for _ in range(features.shape[0])])
-    cv = LeaveOneOut()
+    groups = np.repeat(np.arange(features.shape[0]),7)
+    cv = LeaveOneGroupOut()
+    
     # a regularized linear regression
 #    pipeline = linear_model.RidgeCV(alphas = np.logspace(-9,9,19),
 #                                    scoring = 'neg_mean_squared_error',
 #                                    cv = None,# set to None for efficient LOO algorithm
 #                                    )
-    pipeline = linear_model.BayesianRidge(fit_intercept = True)
+    pipeline = linear_model.LinearRegression(fit_intercept = True)
     # permutation test to get p values
-    _score,_,pval = permutation_test_score(pipeline,xx.reshape(-1,1),features.reshape(-1,1).ravel(),
-                                           cv = cv,
-                                           n_jobs = -1,
-                                           random_state = 12345,
-                                           n_permutations = int(1e3),
-                                           scoring = 'neg_mean_squared_error',
-                                           verbose = 1,
-                                           )
+#    _score,_,pval = permutation_test_score(pipeline,xx.reshape(-1,1),features.reshape(-1,1).ravel(),
+#                                           cv = cv,
+#                                           n_jobs = -1,
+#                                           random_state = 12345,
+#                                           n_permutations = int(1e3),
+#                                           scoring = 'neg_mean_squared_error',
+#                                           verbose = 1,
+#                                           )
     # cross validation to get the slopes and intercepts
     gc.collect()
     _res = cross_validate(pipeline,xx.reshape(-1,1),features.reshape(-1,1).ravel(),
+                          groups = groups,
                           cv = cv,
                           n_jobs = -1,
                           verbose = 1,
@@ -124,26 +130,35 @@ for (experiment,condition),df_sub in df_plot.groupby(['experiment','condition'])
                           )
     gc.collect()
     coefficients = np.array([est.coef_[0] for est in _res['estimator']])
-    # save for 2 sample t tests
-    for item in coefficients:
+    intercepts = np.array([est.intercept_ for est in _res['estimator']])
+    pval = utils.resample_ttest(coefficients,
+                                baseline = 0,
+                                n_ps = 10,
+                                n_permutation = int(1e5),
+                                one_tail = True,
+                                n_jobs = -1,
+                                verbose = 1,)
+    # save
+    for coef,interc in zip(coefficients,intercepts):
         res_slopes['experiment'].append(experiment)
         res_slopes['condition'].append(condition)
-        res_slopes['slope'].append(item)
+        res_slopes['slope'].append(coef)
+        res_slopes['intercept'].append(interc)
     intercepts = np.array([est.intercept_ for est in _res['estimator']])
-    xxx = np.linspace(0,6,1000)
-    temp = np.array([est.predict(xxx.reshape(-1,1),return_std = True) for est in _res['estimator']])
-    y_mean = temp[:,0,:]
-    y_std = temp[:,0,:]
+#    xxx = np.linspace(0,6,1000)
+#    temp = np.array([est.predict(xxx.reshape(-1,1),) for est in _res['estimator']])
+#    y_mean = temp[:,0,:]
+#    y_std = temp[:,0,:]
     res_features['experiment'].append(experiment)
     res_features['condition'].append(condition)
-    res_features['slope_mean'].append(np.mean(coefficients))
-    res_features['slope_std'].append(np.std(coefficients))
-    res_features['intercept_mean'].append(np.mean(intercepts))
-    res_features['intercept_std'].append(np.std(intercepts))
-    res_features['pval'].append(pval)
-    res_features['cv_score'].append(_score)
-    res_features['y_mean'].append(y_mean.mean(0))
-    res_features['y_std'].append(y_std.mean(0))
+    res_features['slope'].append([item for item in coefficients])
+#    res_features['slope_std'].append(np.std(coefficients))
+    res_features['intercept'].append([item for item in intercepts])
+#    res_features['intercept_std'].append(np.std(intercepts))
+    res_features['pval'].append(np.mean(pval))
+    res_features['cv_score'].append(np.mean(_res['test_score']))
+#    res_features['y_mean'].append(y_mean.mean(0))
+#    res_features['y_std'].append(y_std.mean(0))
 res_scores = pd.DataFrame(res_scores)
 res_features = pd.DataFrame(res_features)
 res_slopes = pd.DataFrame(res_slopes)

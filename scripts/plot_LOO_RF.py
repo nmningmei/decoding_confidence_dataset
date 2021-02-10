@@ -7,6 +7,7 @@ Created on Mon Dec 16 14:39:57 2019
 """
 
 import os
+import gc
 from glob import glob
 import pandas as pd
 import numpy as np
@@ -73,13 +74,13 @@ ax = sns.violinplot(y = 'experiment',
                     **xargs)
 handles,labels = ax.get_legend_handles_labels()
 plt.setp(ax.collections,alpha = .3)
-ax = sns.stripplot(y = 'experiment',
-                   x = 'score',
-                   data = df_plot,
-                   ax = ax,
-                   hue = xargs['hue'],
-                   dodge = True,
-                   )
+#ax = sns.stripplot(y = 'experiment',
+#                   x = 'score',
+#                   data = df_plot,
+#                   ax = ax,
+#                   hue = xargs['hue'],
+#                   dodge = True,
+#                   )
 ytick_order = list(ax.yaxis.get_majorticklabels())
 
 for ii,text_obj in enumerate(ytick_order):
@@ -101,6 +102,70 @@ fig.savefig(os.path.join(figure_dir,
                          'scores.jpg'),
 #            dpi = 400,
             bbox_inches = 'tight')
+
+fig,ax = plt.subplots(figsize = (16,16))
+df_for_plot = df_plot.melt(id_vars = ['fold','sub_name','acc','experiment',],
+                           value_vars = ['T-7', 'T-6', 'T-5', 'T-4', 'T-3', 'T-2', 'T-1'],)
+_xargs = dict(x = 'variable',
+              y = 'value',
+              hue = xargs['hue'],
+              hue_order = xargs['hue_order'],
+              data = df_for_plot,
+              ax = ax,)
+ax = sns.stripplot(dodge = True,
+                   alpha = 1 / df_for_plot.shape[0] * 100,
+                   **_xargs,)
+# compute a less bias mean
+temp_func = partial(stats.trim_mean,**dict(proportiontocut=0.05))
+ax = sns.pointplot(dodge = 0.4,
+                   palette = 'dark',
+                   estimator = temp_func,
+                   markers = ['D','d'],
+                   join = False,
+                   ci = None,
+                   scale = 0.5,
+                   **_xargs,
+                   )
+########################################################################
+df_for_plot['x'] = df_for_plot['variable'].map({f'T-{7-ii}':ii for ii in range(7)})
+df_for_plot = df_for_plot.sort_values(['acc'])
+df_stat_features = df_stat_features.sort_values(['acc'])
+df_stat_slope = df_stat_slope.sort_values(['acc'])
+
+for (_condition,df_for_plot_sub),(_,df_stat_features_sub),(_,df_stat_slope_sub),_color in zip(
+                        df_for_plot.groupby(['acc']),
+                        df_stat_features.groupby(['acc']),
+                        df_stat_slope.groupby(['acc']),
+                        ['blue','orange','green','red']):
+    x_vals = df_for_plot_sub['x'].values
+    slopes = df_stat_slope_sub['slope'].values
+    intercepts = df_stat_slope_sub['intercept'].values
+    xxx = np.linspace(0,6,1000)
+    yyy = xxx.reshape(-1,1).dot(slopes.reshape(1,-1)) + intercepts
+    
+    y_mean = temp_func(yyy,axis = 1)
+    y_std = np.std(yyy,axis = 1) / np.sqrt(1000)
+    ax.plot(xxx,y_mean,linestyle = '--',color = _color,alpha = 0.7)
+    ax.fill_between(xxx,
+                    y_mean + y_std,
+                    y_mean - y_std,
+                    color = _color,
+                    alpha = 0.05)
+########################################################################
+handles,labels = ax.get_legend_handles_labels()
+ax.get_legend().remove()
+ax.set(xlabel = 'Time Steps',
+       xticklabels = [f'T-{7-ii}' for ii in range(7)],
+       ylabel = 'Feature importance',
+       ylim = (-0.05,0.15,))
+ax.legend(handles = handles[-2:],labels = labels[-2:],
+          title = '',
+          loc = 'upper left')
+fig.savefig(os.path.join(figure_dir,
+                         'features.jpg'),
+#            dpi = 400,
+#            bbox_inches = 'tight',
+            )
 
 unique_experiment = pd.unique(df_plot['experiment'])
 fig,axes = plt.subplots(figsize = (30,36),
@@ -152,11 +217,13 @@ for ii,(ax,experiment) in enumerate(zip(axes.flatten(),unique_experiment)):
                             df_stat_slope_sub.groupby(['acc']),
                             ['blue','orange','green','red']):
         x_vals = df_sub_plot_sub['x'].values
-        y_mean = np.array([item for item in df_stat_features_sub_sub['y_mean'].values[0].replace('[','').replace(']','').replace('\n','').replace('  ',' ').split(' ') if len(item) > 0],
-                           dtype = 'float32')
-        y_std = np.array([item for item in df_stat_features_sub_sub['y_std'].values[0].replace('[','').replace(']','').replace('\n','').replace('  ',' ').split(' ') if len(item) > 0],
-                          dtype = 'float32') / np.sqrt(x_vals.shape[0])
-        xxx = np.linspace(0,6,y_mean.shape[0])
+        slopes = df_stat_slope_sub_sub['slope'].values
+        intercepts = df_stat_slope_sub_sub['intercept'].values
+        xxx = np.linspace(0,6,1000)
+        yyy = np.dot(xxx.reshape(-1,1), slopes.reshape(1,-1)) + intercepts
+        
+        y_mean = temp_func(yyy,axis = 1)
+        y_std = np.std(yyy,axis = 1) / np.sqrt(1000)
         ax.plot(xxx,y_mean,linestyle = '--',color = _color,alpha = 0.7)
         ax.fill_between(xxx,
                         y_mean + y_std,
@@ -180,10 +247,52 @@ for ii,(ax,experiment) in enumerate(zip(axes.flatten(),unique_experiment)):
 #plt.subplots_adjust(top = 1.1)
 fig.legend(handles[-4:],labels[-2:],loc = (0.45,0.035),title = '')
 fig.savefig(os.path.join(figure_dir,
-                         'features.jpg'),
+                         '_features.jpg'),
 #            dpi = 400,
 #            bbox_inches = 'tight',
             )
+
+
+fig,ax = plt.subplots(figsize = (16,16))
+_vals = []
+for _acc,_df_sub in df_stat_slope.groupby(['acc']):
+    slopes = _df_sub['slope'].values
+    pvals = resample_ttest(slopes,
+                           0.,
+                           n_ps = 1,
+                           n_permutation = int(1e5),
+                           n_jobs = -1,
+                           verbose = 1,
+                           stat_func = np.median,
+                           )
+    gc.collect()
+    _vals.append([stars(pvals),slopes.max() + 0.001])
+df_stat_slope['x'] = 0
+ax = sns.violinplot(x = 'x',
+                   y = 'slope',
+                   data = df_stat_slope,
+                   ax = ax,
+                   hue = 'acc',
+#                   marker = '.',
+#                   dodge = True,
+                   split = True,
+                   cut = 0,
+                   inner = 'quartile',
+                   )
+for jj,(_val,_jitter) in enumerate(zip(_vals,[-.02,.02])):
+    ax.annotate(_val[0],
+                xy = (0 + _jitter,_val[1]),
+                ha = 'center',
+                )
+ax.set(xlabel = '',
+#       xticklabels = ['Correct trials','Incorrect trials'],
+       ylabel = r'$\beta$',
+       title = "",
+       )
+ax.get_legend().set_title('')
+fig.savefig(os.path.join(figure_dir,
+                         'slopes.jpg'),
+        )
 
 fig,axes = plt.subplots(figsize = (30,36),
                         nrows = 4,
@@ -227,7 +336,7 @@ for ii,(ax,experiment) in enumerate(zip(axes.flatten(),unique_experiment)):
         ax.set(xlabel = '',xticklabels = ['Correct trials','Incorrect trials'])
 fig.tight_layout()
 fig.savefig(os.path.join(figure_dir,
-                         'slopes.jpg'),
+                         '_slopes.jpg'),
         )
 
 

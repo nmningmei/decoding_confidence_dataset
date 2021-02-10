@@ -19,7 +19,7 @@ import seaborn as sns
 sns.set_style('whitegrid')
 sns.set_context('poster')
 
-experiment = 'adequacy' # confidence or adequacy
+experiment = 'confidence' # confidence or adequacy
 working_dir = f'../results/{experiment}/cross_domain/'
 stats_dir = f'../stats/{experiment}/CD'
 figure_dir = f'../figures/{experiment}/CD'
