@@ -3,7 +3,7 @@
 """
 Created on Wed Nov 20 14:36:16 2019
 
-@author: dsb
+@author: ningmei
 """
 import re
 import gc
@@ -32,22 +32,28 @@ def preprocess(working_data,
                verbose = 1
                ):
     """
-    Inputs
+    Parameters
     -----------------------
-    working_data: list of csv names
-    time_steps: int, trials looking back
-    target_columns: list of columns names that we want to parse to become the RNN features, i.e. Confidence, accuracy, RTs
-    n_jobs: number of CPUs we want to parallize the for-loop job
-    verbose: if > 0, we print out the parallized for-loop processes
+    working_data : list of strings, csv names
+    time_steps : int, default = 7
+        trials looking back
+    target_columns : list of strings, default = ['Confidence']
+        columns names that we want to parse to become the RNN features, i.e. Confidence, accuracy, RTs
+    n_jobs : int, default = 8
+        number of CPUs we want to parallize the for-loop job, use -1 to use all CPUs
+    verbose: int or bool, default = 1
+        if > 0, we print out the parallized for-loop processes
     
-    Outputs
+    Returns
     -----------------------
-    df_def: concatenated pandas dataframe that contains features at each time point and targets
+    df_def: pandas.DataFrame,
+        concatenated pandas dataframe that contains features at each time point and targets
     """
     df_for_concat = []
+    # define iterator
     t = tqdm(working_data,)
     for f in t:
-        df_temp = pd.read_csv(f,header = 0)
+        df_temp             = pd.read_csv(f,header = 0)
         df_temp['accuracy'] = np.array(df_temp['Stimulus'] == df_temp['Response']).astype(int)
         df_temp['filename'] = f
         if target_columns[0] == 'metaAdequacy':
@@ -59,28 +65,34 @@ def preprocess(working_data,
         df_for_concat.append(df_temp)
     df_concat = pd.concat(df_for_concat)
     
-    df = dict(sub = [],
-              filename = [],
-              targets = [],
-              accuracy = [],)
+    # initialize
+    df = dict(sub       = [],
+              filename  = [],
+              targets   = [],
+              accuracy  = [],
+              )
     for ii in range(time_steps):
         df[f'feature{ii + 1}'] = []
     
     for (sub,filename), df_sub in tqdm(df_concat.groupby(['Subj_idx','filename']),desc = 'feature generating'):
     #    print(sub,filename)
-        values = df_sub[target_columns].values
-        accuracy = df_sub['accuracy'].values
-        data_gen = TimeseriesGenerator(values,values,
-                                       length = time_steps,
-                                       sampling_rate = 1,
-                                       batch_size = 1)
+        values      = df_sub[target_columns].values
+        accuracy    = df_sub['accuracy'].values
+        # tensorflow.keras.preprocessing.TimeseriesGenerator
+        data_gen    = TimeseriesGenerator(values,
+                                          values,
+                                          length        = time_steps,
+                                          sampling_rate = 1,
+                                          batch_size    = 1,
+                                          )
         
         for (features_,targets_),accuracy_ in zip(list(data_gen),accuracy[time_steps:]):
-            df['sub'].append(sub)
-            df['filename'].append(filename)
+            df["sub"        ].append(sub)
+            df["filename"   ].append(filename)
+            df["targets"    ].append(targets_.flatten()[0])
+            df["accuracy"   ].append(accuracy_)
             [df[f"feature{ii + 1}"].append(f) for ii,f in enumerate(features_.flatten())]
-            df["targets"].append(targets_.flatten()[0])
-            df["accuracy"].append(accuracy_)
+            
     df = pd.DataFrame(df)
     # re-order the columns
     df = df[np.concatenate([
@@ -93,18 +105,32 @@ def preprocess(working_data,
     """
     df_temp = df.dropna()
     ###################### parallelize the for-loop to multiple CPUs ############################
+    ###################### it is faster than df_temp.apply           ############################
     def detect(row):
-        col_names = np.concatenate([[f'feature{ii+1}' for ii in range(time_steps)],['targets']])
-        values = np.array([row[col_name] for col_name in col_names])
+        col_names   = np.concatenate([[f'feature{ii+1}' for ii in range(time_steps)],['targets']])
+        values      = np.array([row[col_name] for col_name in col_names])
         return np.logical_and(values < 5, values > 0)
     
-    idx_within_range = Parallel(n_jobs = n_jobs,verbose = verbose)(delayed(detect)(**{'row':row})for ii,row in df_temp.iterrows())
+    idx_within_range = Parallel(n_jobs  = n_jobs,
+                                verbose = verbose,
+                                )(delayed(detect)(**{'row':row})for ii,row in df_temp.iterrows())
     #############################################################################################
-    idx = np.sum(idx_within_range,axis = 1) == (time_steps + 1) # ALL df_pepe columns must be true(1) & sum 8
-    df_def = df_temp.loc[idx,:]
+    # ALL df_pepe columns must be true(1) & sum up to 8
+    idx     = np.sum(idx_within_range,axis = 1) == (time_steps + 1)
+    df_def  = df_temp.loc[idx,:]
     return df_def
 
 def meta_adequacy(x):
+    """
+    If  accuracy is 1 and Confidence is  1 then adequacy is  1 
+    If  accuracy is 1 and Confidence is  2 then adequacy is  2 
+    If  accuracy is 1 and Confidence is  3 then adequacy is  3 
+    If  accuracy is 1 and Confidence is  4 then adequacy is  4 
+    If  accuracy is 0 and Confidence is  1 then adequacy is  4
+    If  accuracy is 0 and Confidence is  2 then adequacy is  3
+    If  accuracy is 0 and Confidence is  3 then adequacy is  2 
+    If  accuracy is 0 and Confidence is  4 then adequacy is  1
+    """
     if x['accuracy'] == 1:
         return x['Confidence']
     else:
@@ -124,35 +150,41 @@ def make_CallBackList(model_name,monitor='val_loss',mode='min',verbose=0,min_del
     """
     Make call back function lists for the keras models
     
-    Inputs
+    Parameters
     -------------------------
-    model_name: directory of where we want to save the model and its name
-    monitor:    the criterion we used for saving or stopping the model
-    mode:       min --> lower the better, max --> higher the better
-    verboser:   printout the monitoring messages
-    min_delta:  minimum change for early stopping
-    patience:   temporal windows of the minimum change monitoring
-    frequency:  temporal window steps of the minimum change monitoring
+    model_name : str,
+        directory of where we want to save the model and its name
+    monitor : str, default = 'val_loss'
+        the criterion we used for saving or stopping the model
+    mode : str, default = 'min'
+        min --> lower the better, max --> higher the better
+    verboser : int or bool, default = 0
+        printout the monitoring messages
+    min_delta : float, default = 1e-4
+        minimum change for early stopping
+    patience : int, default = 50
+        temporal windows of the minimum change monitoring
+    frequency : int, default = 1
+        temporal window steps of the minimum change monitoring
     
     Return
     --------------------------
-    CheckPoint:     saving the best model
-    EarlyStopping:  early stoppi
+    CheckPoint : tensorflow.keras.callbacks
+        saving the best model
+    EarlyStopping : tensorflow.keras.callbacks
+        early stoppi
     """
     checkPoint = ModelCheckpoint(model_name,# saving path
                                  monitor          = monitor,# saving criterion
                                  save_best_only   = True,# save only the best model
                                  mode             = mode,# saving criterion
-#                                 save_freq        = 'epoch',# frequency of check the update 
                                  verbose          = verbose,# print out (>1) or not (0)
-#                                 load_weights_on_restart = True,
                                  )
     earlyStop = EarlyStopping(   monitor          = monitor,
                                  min_delta        = min_delta,
                                  patience         = patience,
                                  verbose          = verbose, 
                                  mode             = mode,
-#                                 restore_best_weights = True,
                                  )
     return [checkPoint,earlyStop]
 
@@ -217,8 +249,48 @@ def get_RF_feature_importance(randomforestclassifier,
                               idx,
                               results,
                               feature_properties = 'feature importance',
-                              time_steps = 7,):
+                              time_steps = 7,
+                              n_repeats = 10,
+                              n_jobs = -1,
+                              random_state = 12345,
+                              ):
+    """
+    Parameters
+    --------------
+    randomforestclassifier : sklearn.ensemble.RandomForestClassifier, should already be fit
+        a trained random forest classifier object
+    features : numpy.ndarray
+        the feature matrix
+    targets : numpy.ndarray or list
+        the target vector
+    idx : numpy.ndarray or list
+        indicies for selecting instances to feed the feature importance calculation
+        function
+    results : dict
+        to record the results
+    feature_properties : str, default = "feature importance"
+        we used to use something else, I forget what they are
+    time_steps : int, default = 7
+    n_repeats : Number of times to permute a feature
+    n_jobs : int or None, default = -1
+        number of CPUs used for the calculation, -1 means all CPUs
+    random_state : int, RandomState instance
+        control for reproducibility
     
+    Returns
+    -------------------
+    feature_importance : sklearn.utils.Bunch
+        Dictionary-like object, with the following attributes.
+        importances_mean ndarray, shape (n_features, )
+            Mean of feature importance over n_repeats.
+        importances_std ndarray, shape (n_features, )
+            Standard deviation over n_repeats.
+        importances ndarray, shape (n_features, n_repeats)
+            Raw permutation importance scores.
+    results : Dict
+        the dictionary for the results
+    feature_importance_mean : numpy.ndarray
+    """
     print('permutation feature importance...')
     try:
         from sklearn.inspection import permutation_importance
@@ -227,14 +299,14 @@ def get_RF_feature_importance(randomforestclassifier,
     feature_importance = permutation_importance(randomforestclassifier,
                                                 features[idx],
                                                 targets[idx],
-                                                n_repeats       = 10,
-                                                n_jobs          = -1,
-                                                random_state    = 12345,
+                                                n_repeats       = n_repeats,
+                                                n_jobs          = n_jobs,
+                                                random_state    = random_state,
                                                 )
-    c = feature_importance['importances_mean']
+    feature_importance_mean = feature_importance['importances_mean']
     
-    [results[f'{feature_properties} T-{time_steps - ii}'].append(c[ii]) for ii in range(time_steps)]
-    return feature_importance,results,c
+    [results[f'{feature_properties} T-{time_steps - ii}'].append(feature_importance_mean[ii]) for ii in range(time_steps)]
+    return feature_importance,results,feature_importance_mean
 
 def append_dprime_metadprime(df,df_metadprime):
     temp = []
@@ -264,11 +336,25 @@ def label_high_low(df,n_jobs = 1):
     return df
 
 def scoring_func(y_true,y_pred,confidence_range = 4):
+    """
+    Customized scoring function
+    
+    Parameters
+    ---------------
+    y_true : list or numpy.ndarray, shape (n_samples, confidence_range)
+    y_pred : list or numpy.ndarray, shape (n_samples, confidence_range)
+    confidence_range : int
+    
+    Return
+    ---------------
+    score : list, shape (confidence_range,)
+    """
     score  = []
     for ii in range(confidence_range):
         try:
             score.append(roc_auc_score(y_true[:,ii],y_pred[:,ii]))
         except:
+            # when a column contains only one class, we add 2 points
             score.append(roc_auc_score(np.concatenate([y_true[:,ii],[0,1]]),
                                        np.concatenate([y_pred[:,ii],[0.5,0.5]])
                                        ))
@@ -288,15 +374,36 @@ def resample_ttest(x,
     """
     http://www.stat.ucla.edu/~rgould/110as02/bshypothesis.pdf
     https://www.tau.ac.il/~saharon/StatisticsSeminar_files/Hypothesis.pdf
-    Inputs:
+    Parameters
     ----------
-    x: numpy array vector, the data that is to be compared
-    baseline: the single point that we compare the data with
-    n_ps: number of p values we want to estimate
-    one_tail: whether to perform one-tailed comparison
+    x : numpy.ndarray, shape (n_samples,)
+        the data that is to be compared
+    baseline : float, default = 0.5 for ROC AUC
+        the single point that we compare the data with
+    n_ps : int, default = 100
+        number of p values we want to estimate
+    n_permutation : int, default = 10000
+        number of resampling
+    one_tail : bool
+        whether to perform one-tailed comparison
+    n_jobs : int or None, default = 12
+        -1 uses all CPUs
+    verbose : int or None, default = 0
+    full_size : bool
+        exist to control for memory overload when the data is too big
+    stat_func : callable, default = numpy.mean
+        the function we use to estimate the effect, we could also use median or
+        many other statistical estimates
+    size_catch : int, default = int(1e4)
+        exist to control for memory overload when the data is too big
+        
+    Return
+    ----------------
+    ps : float or numpy.ndarray, shape (n_ps,)
     """
-    import numpy as np
+    
     import gc
+    import numpy as np
     from joblib import Parallel,delayed
     # statistics with the original data distribution
     t_experiment    = stat_func(x)
@@ -305,38 +412,67 @@ def resample_ttest(x,
     if null.shape[0] > size_catch: # catch for big data
         full_size   = False
     if not full_size:
-        size        = int(1e3)
+        size        = (size_catch,int(n_permutation))
     else:
-        size = null.shape[0]
-    
+        size        = (null.shape[0],int(n_permutation))
     
     gc.collect()
     def t_statistics(null,size,):
         """
-        null: shifted data distribution
+        Parameters
+        ------
+        null : numpy.ndarray,
+            shifted data distribution
         size: tuple of 2 integers (n_for_averaging,n_permutation)
+        
+        Return
+        ------
+        float \in (0,1]
         """
         null_dist   = np.random.choice(null,size = size,replace = True)
         t_null      = stat_func(null_dist,0)
         if one_tail:
             return ((np.sum(t_null >= t_experiment)) + 1) / (size[1] + 1)
         else:
-            return ((np.sum(np.abs(t_null) >= np.abs(t_experiment))) + 1) / (size[1] + 1) /2
+            return ((np.sum(np.abs(t_null) >= np.abs(t_experiment))) + 1) / (size[1] + 1) / 2
     if n_ps == 1:
-        ps = t_statistics(null, (size,int(n_permutation)))
+        ps = t_statistics(null, size,)
     else:
         ps = Parallel(n_jobs = n_jobs,verbose = verbose)(delayed(t_statistics)(**{
                         'null':null,
-                        'size':(size,int(n_permutation)),}) for i in range(n_ps))
+                        'size':size,}) for i in range(n_ps))
         ps = np.array(ps)
     return ps
+
 def resample_ttest_2sample(a,b,
                            n_ps                 = 100,
                            n_permutation        = 10000,
                            one_tail             = False,
                            match_sample_size    = True,
                            n_jobs               = 6,
-                           verbose              = 0):
+                           verbose              = 0,
+                           stat_func            = np.mean,
+                           ):
+    """
+    Parameters
+    ---------
+    a : ndarray, shape (n_samples,)
+    b : ndarray, shape (n_samples,)
+    n_ps : int, default = 100
+        number of p values to estimate
+    n_permutation : in, default = 10000
+        numer of resample to estimate one p value
+    one_tail : bool, default = False
+    match_sample_size : bool, default = True
+        whether to perform matching sampleing t test
+    n_jobs : int or None, default = 6
+    verbose : int or bool, default = 0
+    stat_func : callable
+    
+    Return
+    -----------
+    ps : float or ndarray, shape (n_ps,)
+    """
     from joblib import Parallel,delayed
     import gc
     # when the samples are dependent just simply test the pairwise difference against 0
@@ -349,19 +485,24 @@ def resample_ttest_2sample(a,b,
                                      n_permutation  = n_permutation,
                                      one_tail       = one_tail,
                                      n_jobs         = n_jobs,
-                                     verbose        = verbose,)
+                                     verbose        = verbose,
+                                     stat_func      = stat_func)
         return ps
     else: # when the samples are independent
-        t_experiment        = np.mean(a) - np.mean(b)
+        t_experiment        = stat_func(a) - stat_func(b)
         if not one_tail:
             t_experiment    = np.abs(t_experiment)
             
         def t_statistics(a,b):
+            """
+            shuffle the data for both groups
+            mix -> shuffle -> split -> compare
+            """
             group           = np.concatenate([a,b])
             np.random.shuffle(group)
             new_a           = group[:a.shape[0]]
             new_b           = group[a.shape[0]:]
-            t_null          = np.mean(new_a) - np.mean(new_b)
+            t_null          = stat_func(new_a) - stat_func(new_b)
             if not one_tail:
                 t_null      = np.abs(t_null)
             return t_null
