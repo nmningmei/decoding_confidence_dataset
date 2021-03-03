@@ -23,6 +23,8 @@ from joblib import Parallel,delayed
 from sklearn.cluster import KMeans
 from sklearn.metrics import roc_auc_score
 
+from scipy.special import softmax
+
 gc.collect()
 
 def preprocess(working_data,
@@ -294,11 +296,14 @@ def get_RF_feature_importance(randomforestclassifier,
     print('permutation feature importance...')
     try:
         from sklearn.inspection import permutation_importance
+        from sklearn.metrics import make_scorer
     except:
         print('why, IT?')
+    scorer = make_scorer(scoring_func,needs_proba=True,**{'confidence_range':4,'need_normalize':True,'return_mean_score':True})
     feature_importance = permutation_importance(randomforestclassifier,
                                                 features[idx],
                                                 targets[idx],
+                                                scoring         = scorer,
                                                 n_repeats       = n_repeats,
                                                 n_jobs          = n_jobs,
                                                 random_state    = random_state,
@@ -335,7 +340,7 @@ def label_high_low(df,n_jobs = 1):
 
     return df
 
-def scoring_func(y_true,y_pred,confidence_range = 4):
+def scoring_func(y_true,y_pred,confidence_range = 4,need_normalize = False,return_mean_score = False):
     """
     Customized scoring function
     
@@ -349,8 +354,11 @@ def scoring_func(y_true,y_pred,confidence_range = 4):
     ---------------
     score : list, shape (confidence_range,)
     """
+    if need_normalize:
+        y_pred = softmax(np.array(y_pred)[:,:,-1].T,axis = 1)
     score  = []
     for ii in range(confidence_range):
+        # print(y_pred.shape,ii)
         try:
             score.append(roc_auc_score(y_true[:,ii],y_pred[:,ii]))
         except:
@@ -358,7 +366,10 @@ def scoring_func(y_true,y_pred,confidence_range = 4):
             score.append(roc_auc_score(np.concatenate([y_true[:,ii],[0,1]]),
                                        np.concatenate([y_pred[:,ii],[0.5,0.5]])
                                        ))
-    return score
+    if return_mean_score:
+        return np.mean(score)
+    else:
+        return score
 
 def resample_ttest(x,
                    baseline         = 0.5,

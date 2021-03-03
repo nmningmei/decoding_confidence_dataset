@@ -30,7 +30,7 @@ from sklearn.model_selection import GroupShuffleSplit
 from sklearn.utils           import shuffle as util_shuffle
 #from sklearn.metrics         import roc_auc_score
 
-experiment          = ['confidence','cross_domain','RNN']
+experiment          = ['adequacy','cross_domain','RNN']
 feature_properties  = 'hidden states' # or hidden states or feature importance
 data_dir            = '../data/'
 model_dir           = os.path.join('../models',experiment[0],experiment[1],)

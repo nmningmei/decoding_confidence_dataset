@@ -59,6 +59,7 @@ results             = dict(
                            source       = [],
                            sub_name     = [],
                            accuracy     = [],
+                           filename     = [],
                            )
 for ii in range(confidence_range):
     results[f'score{ii + 1}'] = []
@@ -77,9 +78,9 @@ cv                      = GroupShuffleSplit(n_splits        = n_splits,
 fold = 0 # batch_change
 train_test_folds = list(cv.split(features,targets,groups = groups))
 _train,valid = train_test_folds[fold]
-X_train,y_train = features[_train],targets[_train]
+X_train,y_train = features.copy(),targets.copy()
 X_valid,y_valid = features[valid],targets[valid]
-acc_valid       = df_source['accuracy'].values[valid]
+acc_train       = df_source['accuracy'].values.copy()
 
 y_train = to_categorical(y_train - 1, num_classes = confidence_range)
 y_valid = to_categorical(y_valid - 1, num_classes = confidence_range)
@@ -116,10 +117,11 @@ for acc_ in [0,1]:
         results['source'].append('train')
         results['sub_name'].append('train')
         results['accuracy'].append(acc_)
+        results['filename'].append('train')
 
 
 # cross domain testing
-for (sub_name,target_domain),df_sub in df_target.groupby(['sub','domain']):
+for (filename,sub_name,target_domain),df_sub in df_target.groupby(['filename','sub','domain']):
     features_       = df_sub[[f"feature{ii + 1}" for ii in range(7)]].values
     targets_        = df_sub["targets"].values.astype(int)
     groups_         = df_sub["sub"].values
@@ -137,9 +139,9 @@ for (sub_name,target_domain),df_sub in df_target.groupby(['sub','domain']):
             print(f'training score = {np.mean(score_train):.4f} with {len(_train)} instances, testing score = {np.mean(score_test):.4f} with {len(y_test)} instances')
             print('get feature importance')
             feature_importance,results,c = get_RF_feature_importance(randomforestclassifier,
-                                                                     features_,
+                                                                     X_test,
                                                                      y_test,
-                                                                     np.arange(features_.shape[0])[_idx],
+                                                                     np.arange(X_test.shape[0])[_idx],
                                                                      results,
                                                                      feature_properties,
                                                                      time_steps,)
@@ -151,6 +153,7 @@ for (sub_name,target_domain),df_sub in df_target.groupby(['sub','domain']):
             results['source'].append(target_domain)
             results['sub_name'].append(sub_name)
             results['accuracy'].append(acc_)
+            results['filename'].append(filename)
     gc.collect()
     
     results_to_save = pd.DataFrame(results)

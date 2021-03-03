@@ -59,6 +59,7 @@ results             = dict(
                            source       = [],
                            sub_name     = [],
                            accuracy     = [],
+                           filename     = [],
                            )
 for ii in range(confidence_range):
     results[f'score{ii + 1}'] = []
@@ -79,8 +80,6 @@ _train,valid = train_test_folds[fold]
 X_train,y_train = features[_train],targets[_train]
 X_valid,y_valid = features[valid],targets[valid]
 acc_valid       = df_source['accuracy'].values[valid]
-
-
 
 
 csv_saving_name     = f'RNN cross validation results (fold {fold + 1}).csv'
@@ -131,11 +130,6 @@ for acc_ in [0,1]:
         hidden_state_valid,h_state_valid,c_state_valid = hidden_model.predict(X_valid[_idx],
                                                                               batch_size = batch_size,
                                                                               verbose = 1)
-        # df_valid = pd.DataFrame(hidden_state_valid[:,:,0],columns = [f'T{ii - time_steps}' for ii in range(time_steps)])
-        # df_valid['sub'] = groups[valid]
-        # df_valid_ave = df_valid.iloc[_idx].groupby(['sub']).mean().reset_index()
-        # df_valid_ave['data'] = 'Train'
-        # df_valid_ave['score'] = np.mean(score_train)
         
         results['fold'].append(fold)
         results['score'].append(np.mean(score_train))
@@ -145,9 +139,9 @@ for acc_ in [0,1]:
         results['sub_name'].append('train')
         results['accuracy'].append(acc_)
         [results[f'{feature_properties} T-{time_steps - ii}'].append(hidden_state_valid.mean(0)[ii,0]) for ii in range(time_steps)]
-
+        results['filename'].append('train')
 # 
-for (sub_name,target_domain),df_sub in df_target.groupby(['sub','domain']):
+for (filename,sub_name,target_domain),df_sub in df_target.groupby(['filename','sub','domain']):
     df_sub
     features_        = df_sub[[f"feature{ii + 1}" for ii in range(7)]].values
     targets_         = df_sub["targets"].values.astype(int)
@@ -176,6 +170,7 @@ for (sub_name,target_domain),df_sub in df_target.groupby(['sub','domain']):
             results['source'].append(target_domain)
             results['sub_name'].append(sub_name)
             results['accuracy'].append(acc_)
+            results['filename'].append(filename)
             [results[f'{feature_properties} T-{time_steps - ii}'].append(np.abs(hidden_state_test.mean(0)[ii,0])) for ii in range(time_steps)]
             
     results_to_save = pd.DataFrame(results)
