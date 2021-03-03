@@ -9,12 +9,6 @@ import os
 import pandas as pd
 from shutil import copyfile
 
-bash_folder = 'LOSO_RF'
-if not os.path.exists(bash_folder):
-    os.mkdir(bash_folder)
-    os.mkdir(os.path.join(bash_folder,'outputs'))
-    copyfile('utils.py',os.path.join(bash_folder,'utils.py'))
-
 template            = 'simple_RF_LOSO.py'
 experiment          = ['adequacy','LOO','RF']
 data_dir            = '../data'
@@ -24,6 +18,12 @@ node                = 1
 core                = 16
 mem                 = 5 * core * node
 cput                = 24 * core * node
+
+bash_folder = '{}_{}_{}'.format(*experiment)
+if not os.path.exists(bash_folder):
+    os.mkdir(bash_folder)
+    os.mkdir(os.path.join(bash_folder,'outputs'))
+    copyfile('utils.py',os.path.join(bash_folder,'utils.py'))
 
 add = """from shutil import copyfile
 copyfile('../utils.py','utils.py')
