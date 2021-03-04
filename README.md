@@ -7,6 +7,7 @@
 - numpy:         1.16.4 {blas=mkl_rt, lapack=mkl_rt}
 - scipy:         1.3.1
 - matplotlib:    3.1.3 {backend=agg}
+- seaborn:       0.11.1
 - sklearn:       0.23.2
 - pandas:        1.0.1
 - tensorflow:    2.0.0
