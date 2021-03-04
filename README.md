@@ -14,6 +14,7 @@
 
 # Random Forest model
 <img src="https://www.kdnuggets.com/wp-content/uploads/rand-forest-2.jpg" width="100%" />
+source: https://www.kdnuggets.com
 
 # RNN model
 <p float="left">
