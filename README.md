@@ -12,6 +12,9 @@
 - pandas:        1.0.1
 - tensorflow:    2.0.0
 
+# Random Forest model
+<img src="https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Ftse1.mm.bing.net%2Fth%3Fid%3DOIP.NeBQT14ZM3Rr5r_bdjoHKAHaES%26pid%3DApi&f=1" width="100%" />
+
 # RNN model
 <p float="left">
   <img src="https://github.com/nmningmei/decoding_confidence_dataset/blob/main/figures/RNN%20model%20confidence%20database.jpg" width="40%" /> <img src="https://github.com/nmningmei/decoding_confidence_dataset/blob/main/figures/external-content.duckduckgo.com.jpg" width="40%" /> 
