@@ -19,7 +19,7 @@ import seaborn as sns
 sns.set_style('whitegrid')
 sns.set_context('poster')
 
-experiment = 'confidence' # confidence or adequacy
+experiment = 'adequacy' # confidence or adequacy
 working_dir = f'../results/{experiment}/cross_domain/'
 stats_dir = f'../stats/{experiment}/CD'
 figure_dir = f'../figures/{experiment}/CD'
@@ -82,13 +82,13 @@ ax = sns.violinplot(x = 'source',
                     )
 handles,labels = ax.get_legend_handles_labels()
 plt.setp(ax.collections,alpha = .3)
-ax = sns.stripplot(x = 'source',
-                   y = 'score',
-                   data = df_plot,
-                   ax = ax,
-                   hue = xargs['hue'],
-                   dodge = True,
-                   )
+#ax = sns.stripplot(x = 'source',
+#                   y = 'score',
+#                   data = df_plot,
+#                   ax = ax,
+#                   hue = xargs['hue'],
+#                   dodge = True,
+#                   )
 xtick_order = list(ax.xaxis.get_majorticklabels())
 
 for ii,text_obj in enumerate(xtick_order):
@@ -127,7 +127,7 @@ for ax,(source,df_sub_plot) in zip(axes.flatten(),_df_plot.groupby('source')):
                        data = df_sub_plot,
                        ax = ax,
                        dodge = True,
-                       alpha = 0.005,)
+                       alpha = 0.1,)
     temp_func = partial(stats.trim_mean,**dict(proportiontocut=0.05))
     ax = sns.pointplot(x = 'Time',
                        y = 'hidden states/feature importance',
@@ -172,7 +172,7 @@ for ax,(source,df_sub_plot) in zip(axes.flatten(),_df_plot.groupby('source')):
                         y_mean + y_std,
                         y_mean - y_std,
                         color = _color,
-                        alpha = 0.1)
+                        alpha = 0.2)
         
     ###########################################################################
     ax.set(xlabel = '',

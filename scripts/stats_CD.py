@@ -55,6 +55,8 @@ df_plot = df[df['source'] != 'train']
 # further process the data for plotting
 df_plot['acc']  = df_plot['accuracy'].map({0:'incorrect',1:'correct'})
 df_plot['condition'] = df_plot['model'] + '_' + df_plot['acc']
+df_plot['experiment'] = df_plot['filename'].apply(lambda x: x.split('/')[-1].split('.')[0])
+df_plot['group'] = df_plot['experiment'] + '_' + df_plot['sub_name']
 
 res_scores = dict(source = [],
                   condition = [],
@@ -99,7 +101,7 @@ for (source,condition),df_sub in df_plot.groupby(['source','condition']):
     
     # on the feature contributions
     features = df_sub[[f'T-{7 - ii}' for ii in range(7)]].values
-    groups = np.vstack([[ii] * 7 for ii in range(features.shape[0])])
+    groups = np.repeat(df_sub['experiment'].values,7)
 #    features = np.abs(features)
     xx = np.vstack([np.arange(7) for _ in range(features.shape[0])])
     cv = LeaveOneGroupOut()
