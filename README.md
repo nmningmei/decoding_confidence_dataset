@@ -13,7 +13,7 @@
 - tensorflow:    2.0.0
 
 # Random Forest model
-<img src="https://www.kdnuggets.com/wp-content/uploads/rand-forest-2.jpg" width="100%" />
+<img src="https://www.kdnuggets.com/wp-content/uploads/rand-forest-2.jpg" width="50%" />
 source: https://www.kdnuggets.com
 
 # RNN model
