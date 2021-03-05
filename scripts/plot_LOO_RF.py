@@ -273,6 +273,7 @@ ax = sns.violinplot(x = 'x',
                    y = 'slope',
                    data = df_stat_slope,
                    ax = ax,
+#                   bw = 1,
                    **xargs,
                    )
 #plt.setp(ax.collections,alpha = .3)
