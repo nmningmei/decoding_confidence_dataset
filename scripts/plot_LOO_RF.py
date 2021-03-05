@@ -20,7 +20,7 @@ from matplotlib import pyplot as plt
 sns.set_style('whitegrid')
 sns.set_context('poster')
 
-experiment = 'adequacy' # confidence or adequacy
+experiment = 'confidence' # confidence or adequacy
 working_dir = f'../results/{experiment}/LOO/'
 stats_dir = f'../stats/{experiment}/LOO_compare_RNN_RF/'
 figure_dir = f'../figures/{experiment}/LOO_compare_RNN_RF/'
@@ -273,13 +273,7 @@ ax = sns.violinplot(x = 'x',
                    y = 'slope',
                    data = df_stat_slope,
                    ax = ax,
-                   hue = 'acc',
-#                   marker = '.',
-#                   dodge = True,
-                   split = True,
-                   cut = 0,
-                   inner = 'quartile',
-                   palette = xargs['palette'],
+                   **xargs,
                    )
 #plt.setp(ax.collections,alpha = .3)
 for jj,(_val,_jitter) in enumerate(zip(_vals,[-.02,.02])):
@@ -291,6 +285,7 @@ ax.set(xlabel = '',
 #       xticklabels = ['Correct trials','Incorrect trials'],
        ylabel = r'$\beta$',
        title = "",
+       ylim = (-0.003,0.03),
        )
 ax.get_legend().set_title('')
 fig.savefig(os.path.join(figure_dir,

@@ -70,7 +70,8 @@ xargs = dict(hue = 'acc',
              split = True,
              inner = 'quartile',
              cut = 0,
-             scale = 'width',)
+             scale = 'width',
+             palette = ['deepskyblue','tomato'])
 
 
 fig,ax = plt.subplots(figsize = (16,16))
@@ -81,7 +82,7 @@ ax = sns.violinplot(x = 'source',
                     **xargs,
                     )
 handles,labels = ax.get_legend_handles_labels()
-plt.setp(ax.collections,alpha = .3)
+#plt.setp(ax.collections,alpha = .3)
 #ax = sns.stripplot(x = 'source',
 #                   y = 'score',
 #                   data = df_plot,
@@ -127,6 +128,7 @@ for ax,(source,df_sub_plot) in zip(axes.flatten(),_df_plot.groupby('source')):
                        data = df_sub_plot,
                        ax = ax,
                        dodge = True,
+                       palette = xargs['palette'],
                        alpha = 0.1,)
     temp_func = partial(stats.trim_mean,**dict(proportiontocut=0.05))
     ax = sns.pointplot(x = 'Time',
@@ -155,7 +157,7 @@ for ax,(source,df_sub_plot) in zip(axes.flatten(),_df_plot.groupby('source')):
                             df_sub_plot.groupby(['acc']),
                             df_stat_features_sub.groupby(['acc']),
                             df_stat_slope_sub.groupby(['acc']),
-                            ['blue','orange','green','red']):
+                            xargs['palette']):
         x_vals = df_sub_plot_sub['x'].values
         xxx = np.linspace(0,6,1000)
         slopes = df_stat_slope_sub_sub['slope'].values
@@ -202,6 +204,7 @@ for ii,((source,df_stat_slope_sub),ax) in enumerate(zip(
                        data = df_stat_slope_sub,
                        ax = ax,
                        order = xargs['hue_order'],
+                       palette = xargs['palette'],
                        )
     ax.set(xlabel = '',
            ylabel = r'$\beta$',
