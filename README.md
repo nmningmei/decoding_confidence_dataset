@@ -16,13 +16,13 @@
 <img src="https://www.kdnuggets.com/wp-content/uploads/rand-forest-2.jpg" width="50%" />
 source: https://www.kdnuggets.com
 
-# RNN model
+# RNN model - as an alternative model, but we do not perform model selection, so we would show the secondary statistics as we did for the random forest model
 <p float="left">
   <img src="https://github.com/nmningmei/decoding_confidence_dataset/blob/main/figures/RNN%20model%20confidence%20database.jpg" width="40%" /> <img src="https://github.com/nmningmei/decoding_confidence_dataset/blob/main/figures/external-content.duckduckgo.com.jpg" width="40%" /> 
 </p>
 
 
-# Results
+# Results - random forest model
 ## Decoding scores (within domain)
 Confidence             |  Adequacy
 :-------------------------:|:-------------------------:
