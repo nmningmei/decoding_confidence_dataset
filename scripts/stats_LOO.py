@@ -25,6 +25,7 @@ from itertools import combinations
 
 
 experiment = 'adequacy' # confidence or adequacy
+_decoder = 'RF'
 working_dir = f'../results/{experiment}/LOO/'
 stats_dir = f'../stats/{experiment}/LOO_compare_RNN_RF/'
 if not os.path.exists(stats_dir):
@@ -41,13 +42,14 @@ for f in working_data:
     col_to_rename = [item for item in temp.columns if ('T-' in item)]
     rename_mapper = {item:f'{item.split(" ")[-1]}' for item in col_to_rename}
     temp = temp.rename(columns = rename_mapper)
+    if decoder == _decoder:
     # normalize with each decoding
 #    temp_array = temp[[item for item in temp.columns if ('T-' in item)]].values
 #    if decoder == 'RNN':
 #        temp_array = np.abs(temp_array)
 #    temp_array = scaler().fit_transform(temp_array.T)
 #    temp[[item for item in temp.columns if ('T-' in item)]] = temp_array.T
-    df.append(temp)
+        df.append(temp)
 df = pd.concat(df)
 
 df_plot = df[df['source'] != 'train']
@@ -108,7 +110,7 @@ for (experiment,condition),df_sub in df_plot.groupby(['experiment','condition'])
 #                                    scoring = 'neg_mean_squared_error',
 #                                    cv = None,# set to None for efficient LOO algorithm
 #                                    )
-    pipeline = linear_model.LinearRegression(fit_intercept = True)
+    pipeline = linear_model.BayesianRidge(fit_intercept = True)
     # permutation test to get p values
 #    _score,_,pval = permutation_test_score(pipeline,xx.reshape(-1,1),features.reshape(-1,1).ravel(),
 #                                           cv = cv,

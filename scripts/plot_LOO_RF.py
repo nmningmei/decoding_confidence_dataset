@@ -64,7 +64,8 @@ xargs = dict(hue = 'acc',
              split = True,
              inner = 'quartile',
              cut = 0,
-             scale = 'width',)
+             scale = 'width',
+             palette = ['deepskyblue','tomato'])
 
 fig,ax = plt.subplots(figsize = (16,26))
 ax = sns.violinplot(y = 'experiment',
@@ -73,7 +74,7 @@ ax = sns.violinplot(y = 'experiment',
                     ax = ax,
                     **xargs)
 handles,labels = ax.get_legend_handles_labels()
-plt.setp(ax.collections,alpha = .3)
+#plt.setp(ax.collections,alpha = .3)
 #ax = sns.stripplot(y = 'experiment',
 #                   x = 'score',
 #                   data = df_plot,
@@ -215,7 +216,7 @@ for ii,(ax,experiment) in enumerate(zip(axes.flatten(),unique_experiment)):
                             df_sub_plot.groupby(['acc']),
                             df_stat_features_sub.groupby(['acc']),
                             df_stat_slope_sub.groupby(['acc']),
-                            ['blue','orange','green','red']):
+                            xargs['palette']):
         x_vals = df_sub_plot_sub['x'].values
         slopes = df_stat_slope_sub_sub['slope'].values
         intercepts = df_stat_slope_sub_sub['intercept'].values
@@ -278,7 +279,9 @@ ax = sns.violinplot(x = 'x',
                    split = True,
                    cut = 0,
                    inner = 'quartile',
+                   palette = xargs['palette'],
                    )
+#plt.setp(ax.collections,alpha = .3)
 for jj,(_val,_jitter) in enumerate(zip(_vals,[-.02,.02])):
     ax.annotate(_val[0],
                 xy = (0 + _jitter,_val[1]),
