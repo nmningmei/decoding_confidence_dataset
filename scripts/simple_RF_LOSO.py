@@ -16,14 +16,14 @@ from tensorflow.keras.utils  import to_categorical
 import numpy  as np
 import pandas as pd
 
-from utils import build_RF,get_RF_feature_importance,scoring_func,check_column_type
+from utils import build_RidgeRegression,scoring_func,check_column_type
 
 from sklearn.model_selection import LeaveOneGroupOut
 from sklearn.utils           import shuffle as util_shuffle
 
 from scipy.special           import softmax
 
-experiment          = ['confidence','LOO','RF']
+experiment          = ['confidence','LOO','Ridge']
 data_dir            = '../data'
 model_dir           = f'../models/{experiment[1]}_{experiment[2]}'
 working_dir         = '../data/4-point'
@@ -76,7 +76,7 @@ else:
     results = {col_name:list(results[col_name].values) for col_name in results.columns}
     
 for fold,(train_,test) in enumerate(cv.split(features,targets,groups=groups)):
-    model_name  = os.path.join(model_dir,f'RF_{kk}_fold{fold + 1}.h5')
+    model_name  = os.path.join(model_dir,f'RR_{kk}_fold{fold + 1}.h5')
     print(model_name)
     if fold not in get_folds:
         # leave out test data
@@ -103,14 +103,14 @@ for fold,(train_,test) in enumerate(cv.split(features,targets,groups=groups)):
         y_valid = to_categorical(y_valid - 1, num_classes = confidence_range)
         y_test  = to_categorical(y_test  - 1, num_classes = confidence_range)
         
-        randomforestclassifier = build_RF(n_jobs = n_jobs,
-                                          n_estimators = 500,
-                                          sklearnlib = True,
-                                          )
+        Ridgetclassifier = build_RidgeRegression(extract_params = {'confidence_range':4,
+                                                                   'need_normalize':True,
+                                                                   'return_mean_score':True})
+        
         
         print('fitting...')
-        randomforestclassifier.fit(X_train,y_train)
-        preds_valid = randomforestclassifier.predict_proba(X_valid)
+        Ridgetclassifier.fit(X_train,y_train)
+        preds_valid = Ridgetclassifier.predict_proba(X_valid)
         preds_valid = softmax(np.array(preds_valid)[:,:,-1].T,axis = 1)
         print('done fitting')
         
