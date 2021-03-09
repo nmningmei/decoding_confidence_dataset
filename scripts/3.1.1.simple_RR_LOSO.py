@@ -35,6 +35,7 @@ confidence_range    = 4
 n_jobs              = -1
 verbose             = 1
 property_name       = 'weight'
+debug               = True
 
 df_def          = pd.read_csv(working_df_name,)
 
@@ -84,6 +85,10 @@ for fold,(train_,test) in enumerate(cv.split(features,targets,groups=groups)):
         acc_test        = accuraies[test]
         acc_train_      = accuraies[train_]
         
+        # make sure processing the X_test and y_test only once
+        X_test  = to_categorical(X_test  - 1, num_classes = confidence_range).reshape(-1,time_steps*confidence_range)
+        y_test  = to_categorical(y_test  - 1, num_classes = confidence_range)
+        
         # split into train and validation data
         np.random.seed(12345)
         X_,y_ = util_shuffle(X_,y_)
@@ -129,11 +134,9 @@ for fold,(train_,test) in enumerate(cv.split(features,targets,groups=groups)):
             
             X_train = to_categorical(X_train - 1, num_classes = confidence_range).reshape(-1,time_steps*confidence_range)
             X_valid = to_categorical(X_valid - 1, num_classes = confidence_range).reshape(-1,time_steps*confidence_range)
-            X_test  = to_categorical(X_test  - 1, num_classes = confidence_range).reshape(-1,time_steps*confidence_range)
             
             y_train = to_categorical(y_train - 1, num_classes = confidence_range)
             y_valid = to_categorical(y_valid - 1, num_classes = confidence_range)
-            y_test  = to_categorical(y_test  - 1, num_classes = confidence_range)
             
             if not os.path.exists(os.path.join(*model_name.split('/')[:-1])):
                 os.makedirs(os.path.join(*model_name.split('/')[:-1]))
@@ -146,7 +149,7 @@ for fold,(train_,test) in enumerate(cv.split(features,targets,groups=groups)):
                       validation_data   = (X_valid,y_valid),
                       shuffle           = True,
                       callbacks         = callbacks,
-                      verbose           = verbose,
+                      verbose           = debug,
                       )
             
             del model
@@ -177,7 +180,8 @@ for fold,(train_,test) in enumerate(cv.split(features,targets,groups=groups)):
             for acc_trial_test in [0,1]:
                 _idx_test, = np.where(acc_test == acc_trial_test)
                 if len(_idx_test) > 1:
-                    score_test = scoring_func(y_test[_idx_test],preds_test[_idx_test],confidence_range = confidence_range)
+                    score_test = scoring_func(y_test[_idx_test],preds_test[_idx_test],
+                                              confidence_range = confidence_range)
                     
                     print('{:.3f}_{:.3f}_{:.3f}_{:.3f}_{:.3f}_{:.3f}_{:.3f}_'.format(*list(properties)))
                     
@@ -193,6 +197,5 @@ for fold,(train_,test) in enumerate(cv.split(features,targets,groups=groups)):
         gc.collect()
         
         results_to_save = pd.DataFrame(results)
-        asdf
         results_to_save.to_csv(csv_name,index = False)
 
