@@ -17,12 +17,10 @@ from tensorflow.keras.utils import to_categorical
 import numpy  as np
 import pandas as pd
 
-from utils import make_CallBackList,check_column_type,scoring_func,build_RidgeRegression
+from utils import make_CallBackList,check_column_type,scoring_func
 
 from sklearn.model_selection import LeaveOneGroupOut,StratifiedShuffleSplit
 from sklearn.utils           import shuffle as util_shuffle
-
-from scipy.special           import softmax
 
 experiment          = ['confidence','LOO','regression']
 data_dir            = '../data'

@@ -20,7 +20,7 @@ from tqdm import tqdm
 
 from joblib import Parallel,delayed
 
-from sklearn.cluster import KMeans
+# from sklearn.cluster import KMeans
 from sklearn.metrics import roc_auc_score
 
 from scipy.special import softmax
