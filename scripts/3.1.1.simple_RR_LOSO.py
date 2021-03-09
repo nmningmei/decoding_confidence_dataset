@@ -34,6 +34,7 @@ time_steps          = 7
 confidence_range    = 4
 n_jobs              = -1
 verbose             = 1
+property_name       = 'weight'
 
 df_def          = pd.read_csv(working_df_name,)
 
@@ -57,17 +58,16 @@ print(csv_name)
 
 if not os.path.exists(csv_name):
     results             = dict(
-                               fold         = [],
-                               score        = [],
-                               n_sample     = [],
-                               source       = [],
-                               sub_name     = [],
-                               accuracy     = [],
+                               fold             = [],
+                               score            = [],
+                               n_sample         = [],
+                               source           = [],
+                               sub_name         = [],
+                               accuracy_train   = [],
+                               accuracy_test    = [],
                                )
-    for ii in range(confidence_range):
-        results[f'score{ii + 1}'] = []
     for ii in range(time_steps):
-        results[f'feature importance T-{time_steps - ii}'] = []
+        results[f'{property_name} T-{time_steps - ii}'] = []
     get_folds = []
 else:
     results = pd.read_csv(csv_name)
@@ -87,113 +87,112 @@ for fold,(train_,test) in enumerate(cv.split(features,targets,groups=groups)):
         # split into train and validation data
         np.random.seed(12345)
         X_,y_ = util_shuffle(X_,y_)
-        
-        # the for-loop does not mean any thing, we only take the last step/output of the for-loop
-        for train,valid in StratifiedShuffleSplit(test_size = 0.2,
-                                                  random_state = 12345).split(features[train_],targets[train_],groups=groups[train_]):
-            X_train,y_train = X_[train],y_[train]
-            X_valid,y_valid = X_[valid],y_[valid]
-            acc_valid       = acc_train_[valid]
-       
-        # reset the GPU memory
-        tf.keras.backend.clear_session()
-        try:
-            tf.random.set_random_seed(12345) # tf 1.0
-        except:
-            tf.random.set_seed(12345) # tf 2.0
+        for acc_trial_train in [0,1]:
+            _idx, = np.where(acc_train_ == acc_trial_train)
             
-        # build a regression model
-        inputs                  = layers.Input(shape     = (time_steps*confidence_range,),# time steps by features 
-                                               name      = 'inputs')
-        outputs                 = layers.Dense(confidence_range,
-                                               name             = "output",
-                                               activation       = "softmax")(inputs)
-        model                   = Model(inputs,
-                                        outputs)
-        
-        model.compile(optimizer     = optimizers.SGD(lr = 1e-2),
-                      loss          = losses.binary_crossentropy,
-                      metrics       = ['mse'])
-        # early stopping
-        callbacks = make_CallBackList(model_name    = model_name,
-                                      monitor       = 'val_loss',
-                                      mode          = 'min',
-                                      verbose       = 0,
-                                      min_delta     = 1e-4,
-                                      patience      = 5,
-                                      frequency     = 1,)
-        
-        X_train = to_categorical(X_train - 1, num_classes = confidence_range).reshape(-1,time_steps*confidence_range)
-        X_valid = to_categorical(X_valid - 1, num_classes = confidence_range).reshape(-1,time_steps*confidence_range)
-        X_test  = to_categorical(X_test  - 1, num_classes = confidence_range).reshape(-1,time_steps*confidence_range)
-        
-        y_train = to_categorical(y_train - 1, num_classes = confidence_range)
-        y_valid = to_categorical(y_valid - 1, num_classes = confidence_range)
-        y_test  = to_categorical(y_test  - 1, num_classes = confidence_range)
-        
-        if not os.path.exists(os.path.join(*model_name.split('/')[:-1])):
-            os.makedirs(os.path.join(*model_name.split('/')[:-1]))
-        
-        print('trained model not found, start training ...')
-        model.fit(X_train,
-                  y_train,
-                  batch_size        = batch_size,
-                  epochs            = 1000,
-                  validation_data   = (X_valid,y_valid),
-                  shuffle           = True,
-                  callbacks         = callbacks,
-                  verbose           = verbose,
-                  )
-        
-        del model
-        model = tf.keras.models.load_model(model_name)
-        # freeze the model
-        for layer in model.layers:
-            layers.trainable = False
-        
-        preds_valid = model.predict(X_valid.astype('float32'),batch_size=batch_size)
-        preds_test  = model.predict(X_test.astype('float32'), batch_size=batch_size)
-        asdf
-        print('get hidden states')
-        hidden_state_valid,h_state_valid,c_state_valid = hidden_model.predict(X_valid,
-                                                                      batch_size = batch_size,
-                                                                      verbose = 1)
-        
-        print('on train')
-        for acc_ in [0,1]:
-            _idx, = np.where(acc_valid == acc_)
-            if len(_idx) > 1:
-                score_valid = scoring_func(y_valid[_idx],preds_valid[_idx],confidence_range = confidence_range)
-                results['fold'].append(fold)
-                results['score'].append(np.mean(score_valid))
-                [results[f'score{ii + 1}'].append(score_valid[ii]) for ii in range(confidence_range)]
-                results['n_sample'].append(X_valid[_idx].shape[0])
-                results['source'].append('train')
-                results['sub_name'].append('train')
-                [results[f'hidden state T-{time_steps - ii}'].append(hidden_state_valid.mean(0)[ii,0]) for ii in range(time_steps)]
-                results['accuracy'].append(acc_)
-        
-        print('on test')
-        for acc_ in [0,1]:
-            _idx, = np.where(acc_test == acc_)
-            if len(_idx) > 1:
-                score_test = scoring_func(y_test[_idx],preds_test[_idx],confidence_range = confidence_range)
-                hidden_state_test,h_state_test,c_state_test = hidden_model.predict(X_test[_idx],
-                                                                                   batch_size = batch_size,
-                                                                                   verbose = 1)
-                print('{:.3f}_{:.3f}_{:.3f}_{:.3f}_{:.3f}_{:.3f}_{:.3f}_'.format(*list(hidden_state_test.mean(0).reshape(7,))))
+            # the for-loop does not mean any thing, we only take the last step/output of the for-loop
+            for train,valid in StratifiedShuffleSplit(test_size = 0.2,
+                                                      random_state = 12345).split(features[train_][_idx],
+                                                                                  targets[train_][_idx],
+                                                                                  groups=groups[train_][_idx]):
+                X_train,y_train = X_[_idx][train],y_[_idx][train]
+                X_valid,y_valid = X_[_idx][valid],y_[_idx][valid]
+                acc_valid = acc_train_[_idx][valid]
+           
+            # reset the GPU memory
+            tf.keras.backend.clear_session()
+            try:
+                tf.random.set_random_seed(12345) # tf 1.0
+            except:
+                tf.random.set_seed(12345) # tf 2.0
                 
-                results['fold'].append(fold)
-                results['score'].append(np.mean(score_test))
-                [results[f'score{ii + 1}'].append(score_test[ii]) for ii in range(confidence_range)]
-                results['n_sample'].append(X_test[_idx].shape[0])
-                results['source'].append('same')
-                results['sub_name'].append(np.unique(groups[test])[0])
-                results['accuracy'].append(acc_)
-                [results[f'hidden state T-{time_steps - ii}'].append(hidden_state_test.mean(0)[ii,0]) for ii in range(time_steps)]
-                
+            # build a regression model
+            inputs                  = layers.Input(shape     = (time_steps*confidence_range,),# time steps by features 
+                                                   name      = 'inputs')
+            outputs                 = layers.Dense(confidence_range,
+                                                   name             = "output",
+                                                   activation       = "softmax")(inputs)
+            model                   = Model(inputs,
+                                            outputs)
+            
+            model.compile(optimizer     = optimizers.SGD(lr = 1e-2),
+                          loss          = losses.binary_crossentropy,
+                          metrics       = ['mse'])
+            # early stopping
+            callbacks = make_CallBackList(model_name    = model_name,
+                                          monitor       = 'val_loss',
+                                          mode          = 'min',
+                                          verbose       = 0,
+                                          min_delta     = 1e-4,
+                                          patience      = 5,
+                                          frequency     = 1,)
+            
+            X_train = to_categorical(X_train - 1, num_classes = confidence_range).reshape(-1,time_steps*confidence_range)
+            X_valid = to_categorical(X_valid - 1, num_classes = confidence_range).reshape(-1,time_steps*confidence_range)
+            X_test  = to_categorical(X_test  - 1, num_classes = confidence_range).reshape(-1,time_steps*confidence_range)
+            
+            y_train = to_categorical(y_train - 1, num_classes = confidence_range)
+            y_valid = to_categorical(y_valid - 1, num_classes = confidence_range)
+            y_test  = to_categorical(y_test  - 1, num_classes = confidence_range)
+            
+            if not os.path.exists(os.path.join(*model_name.split('/')[:-1])):
+                os.makedirs(os.path.join(*model_name.split('/')[:-1]))
+            
+            print('trained model not found, start training ...')
+            model.fit(X_train,
+                      y_train,
+                      batch_size        = batch_size,
+                      epochs            = 1000,
+                      validation_data   = (X_valid,y_valid),
+                      shuffle           = True,
+                      callbacks         = callbacks,
+                      verbose           = verbose,
+                      )
+            
+            del model
+            model = tf.keras.models.load_model(model_name)
+            # freeze the model
+            for layer in model.layers:
+                layers.trainable = False
+            
+            preds_valid = model.predict(X_valid.astype('float32'),batch_size=batch_size)
+            preds_test  = model.predict(X_test.astype('float32'), batch_size=batch_size)
+            
+            print(f'get {property_name}')
+            properties = model.get_weights()[0].mean(-1).reshape(time_steps,confidence_range).mean(-1)
+            
+            print('on train')
+            temp_idx = acc_valid == acc_trial_train
+            score_valid = scoring_func(y_valid[temp_idx],preds_valid[temp_idx],confidence_range = confidence_range)
+            results['fold'].append(fold)
+            results['score'].append(score_valid)
+            results['n_sample'].append(X_valid[temp_idx].shape[0])
+            results['source'].append('train')
+            results['sub_name'].append('train')
+            [results[f'{property_name} T-{time_steps - ii}'].append(properties[ii]) for ii in range(time_steps)]
+            results['accuracy_train'].append(acc_trial_train)
+            results['accuracy_test'].append(acc_trial_train)
+        
+            print('on test')
+            for acc_trial_test in [0,1]:
+                _idx_test, = np.where(acc_test == acc_trial_test)
+                if len(_idx_test) > 1:
+                    score_test = scoring_func(y_test[_idx_test],preds_test[_idx_test],confidence_range = confidence_range)
+                    
+                    print('{:.3f}_{:.3f}_{:.3f}_{:.3f}_{:.3f}_{:.3f}_{:.3f}_'.format(*list(properties)))
+                    
+                    results['fold'].append(fold)
+                    results['score'].append(np.mean(score_test))
+                    results['n_sample'].append(X_test[_idx_test].shape[0])
+                    results['source'].append('same')
+                    results['sub_name'].append(np.unique(groups[test])[0])
+                    results['accuracy_train'].append(acc_trial_train)
+                    results['accuracy_test'].append(acc_trial_test)
+                    [results[f'{property_name} T-{time_steps - ii}'].append(properties[ii]) for ii in range(time_steps)]
+                    
         gc.collect()
         
         results_to_save = pd.DataFrame(results)
+        asdf
         results_to_save.to_csv(csv_name,index = False)
 
