@@ -135,3 +135,6 @@ dmypy.json
 
 # reports
 *.txt
+
+confidence_LOO_regression/
+confidence_LOO_RNN/

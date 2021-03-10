@@ -9,14 +9,8 @@ import os
 import pandas as pd
 from shutil import copyfile
 
-bash_folder = 'LOSO_RNN'
-if not os.path.exists(bash_folder):
-    os.mkdir(bash_folder)
-    os.mkdir(os.path.join(bash_folder,'outputs'))
-    copyfile('utils.py',os.path.join(bash_folder,'utils.py'))
-
-template            = 'simple_RNN_LOSO.py'
-experiment          = ['adequacy','LOO','RNN']
+template            = '3.2.1.simple_RNN_LOSO.py'
+experiment          = ['confidence','LOO','RNN']
 data_dir            = '../data'
 working_df_name     = os.path.join(data_dir,experiment[0],experiment[1],'all_data.csv')
 df_def              = pd.read_csv(working_df_name,)
@@ -24,6 +18,19 @@ node                = 1
 core                = 16
 mem                 = 5 * core * node
 cput                = 48 * core * node
+
+bash_folder = '{}_{}_{}'.format(*experiment)
+with open('../.gitignore','r') as f:
+    check_bash_folder_name = [bash_folder not in line for line in f]
+    f.close()
+if all(check_bash_folder_name):
+    with open('../.gitignore','a')  as f:
+        f.write(f'\n{bash_folder}/')
+
+if not os.path.exists(bash_folder):
+    os.mkdir(bash_folder)
+    os.mkdir(os.path.join(bash_folder,'outputs'))
+    copyfile('utils.py',os.path.join(bash_folder,'utils.py'))
 
 add = """from shutil import copyfile
 copyfile('../utils.py','utils.py')
@@ -46,6 +53,8 @@ for ii,((filename),df_sub) in enumerate(df_def.groupby(["filename"])):
                     line = "verbose             = 0\n"
                 elif "experiment          = " in line:
                     line = line.replace("confidence",experiment[0])
+                elif "debug               = " in line:
+                    line = line.replace("True","False")
                 new_file.write(line)
             old_file.close()
         new_file.close()

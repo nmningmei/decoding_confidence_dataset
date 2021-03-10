@@ -24,7 +24,7 @@ with open('../.gitignore','r') as f:
     check_bash_folder_name = [bash_folder not in line for line in f]
     f.close()
 if all(check_bash_folder_name):
-    with open('../gitignore','a')  as f:
+    with open('../.gitignore','a')  as f:
         f.write(f'\n{bash_folder}/')
 
 if not os.path.exists(bash_folder):
