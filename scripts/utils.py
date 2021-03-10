@@ -375,6 +375,9 @@ def scoring_func(y_true,y_pred,confidence_range = 4,need_normalize = False,one_h
         y_pred = softmax(np.array(y_pred),axis = 1)
     if one_hot_y_true:
         y_true = to_categorical(y_true - 1, num_classes = confidence_range)
+    y_true = np.concatenate([y_true,np.eye(confidence_range)])
+    # there is a logical problem but it works
+    y_pred = np.concatenate([y_pred,np.ones((confidence_range,confidence_range))/confidence_range])
     score = roc_auc_score(y_true,y_pred)
     return score
 
