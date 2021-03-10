@@ -212,5 +212,5 @@ for fold,(train_,test) in enumerate(cv.split(features,targets,groups=groups)):
         gc.collect()
         
         results_to_save = pd.DataFrame(results)
-        safd
+        
         results_to_save.to_csv(csv_name,index = False)
