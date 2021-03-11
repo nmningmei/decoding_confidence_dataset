@@ -64,7 +64,7 @@ targets     = df_source["targets"].values.astype(int)
 groups      = df_source["sub"].values
 accuracies  = df_source['accuracy'].values
 
-csv_saving_name     = 'RR cross validation results.csv'
+csv_saving_name     = os.path.join(result_dir,f'{experiment[-1]}_{experiment[0]} results.csv')
 
 for acc_trial_train in [0,1]:
     _idx, = np.where(accuracies == acc_trial_train)
