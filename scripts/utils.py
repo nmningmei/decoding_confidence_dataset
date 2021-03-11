@@ -12,7 +12,9 @@ import numpy as np
 import pandas as pd
 
 try:
+    import tensorflow as tf
     from tensorflow.keras.preprocessing.sequence import TimeseriesGenerator
+    from tensorflow.keras       import layers, Model, optimizers, losses, regularizers
 except:
     pass
 
@@ -341,20 +343,71 @@ def label_high_low(df,n_jobs = 1):
 
     return df
 
-def build_RidgeRegression(n_jobs = -1,extract_params = {'confidence_range':4,'need_normalize':True,'return_mean_score':True,
-                                                        'one_hot_y_true':True}):
-    from sklearn.linear_model import RidgeClassifier
-    from sklearn.metrics import make_scorer
-    from sklearn.calibration import CalibratedClassifierCV
-    from sklearn.model_selection import GridSearchCV
-    scorer = make_scorer(scoring_func,needs_proba=True,**extract_params)
-    model = RidgeClassifier(class_weight = 'balanced',)
-    model = CalibratedClassifierCV(model, cv = 5,
-                                   # n_jobs = n_jobs,
-                                   )
-    param_dict = {"base_estimator__alpha":np.logspace(-3,3,7)}
-    model = GridSearchCV(model, param_dict,cv = 5,scoring=scorer,n_jobs = n_jobs,refit = True)
-    return model
+def build_Regression(time_steps = 7,confidence_range = 4,model_name = 'temp.h5'):
+    # reset the GPU memory
+    tf.keras.backend.clear_session()
+    try:
+        tf.random.set_random_seed(12345) # tf 1.0
+    except:
+        tf.random.set_seed(12345) # tf 2.0
+    # build a regression model
+    inputs                  = layers.Input(shape     = (time_steps*confidence_range,),# time steps by features 
+                                           name      = 'inputs')
+    outputs                 = layers.Dense(confidence_range,
+                                           kernel_regularizer   = regularizers.l2(),
+                                           name                 = "output",
+                                           activation           = "softmax")(inputs)
+    model                   = Model(inputs,
+                                    outputs)
+    
+    model.compile(optimizer     = optimizers.SGD(lr = 1e-4),
+                  loss          = losses.binary_crossentropy,
+                  metrics       = ['mse'])
+    # early stopping
+    callbacks = make_CallBackList(model_name    = model_name,
+                                  monitor       = 'val_loss',
+                                  mode          = 'min',
+                                  verbose       = 0,
+                                  min_delta     = 1e-4,
+                                  patience      = 5,
+                                  frequency     = 1,)
+    return model,callbacks
+
+def build_RNN(time_steps = 7,confidence_range = 4,model_name = 'temp.h5'):
+    # reset the GPU memory
+    tf.keras.backend.clear_session()
+    try:
+        tf.random.set_random_seed(12345) # tf 1.0
+    except:
+        tf.random.set_seed(12345) # tf 2.0
+    # build a 3-layer RNN model
+    inputs                  = layers.Input(shape     = (time_steps,4),# time steps by features 
+                                           name      = 'inputs')
+    # the recurrent layer
+    lstm,state_h,state_c    = layers.LSTM(units             = 1,
+                                          return_sequences  = True,
+                                          return_state      = True,
+                                          name              = "lstm")(inputs)
+    # from the LSTM layer, we will have an output with time steps by features, but 
+    dimension_squeeze       = layers.Lambda(lambda x:tf.keras.backend.squeeze(x,2))(lstm)
+    outputs                 = layers.Dense(4,
+                                           name             = "output",
+                                           activation       = "softmax")(dimension_squeeze)
+    model                   = Model(inputs,
+                                    outputs)
+    
+    model.compile(optimizer     = optimizers.SGD(lr = 1e-3),
+                  loss          = losses.binary_crossentropy,
+                  metrics       = ['mse'])
+    # early stopping
+    callbacks = make_CallBackList(model_name    = model_name,
+                                  monitor       = 'val_loss',
+                                  mode          = 'min',
+                                  verbose       = 0,
+                                  min_delta     = 1e-4,
+                                  patience      = 5,
+                                  frequency     = 1,)
+    return model,callbacks
 
 def scoring_func(y_true,y_pred,confidence_range = 4,need_normalize = False,one_hot_y_true = False,):
     from tensorflow.keras.utils import to_categorical
@@ -609,3 +662,4 @@ def get_array_from_dataframe(df,column_name):
                           '').replace('  ',
                             ' ').split(' ') if len(item) > 0],
                     dtype = 'float32')
+
