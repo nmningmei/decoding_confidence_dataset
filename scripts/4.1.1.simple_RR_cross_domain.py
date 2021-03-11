@@ -64,7 +64,7 @@ targets     = df_source["targets"].values.astype(int)
 groups      = df_source["sub"].values
 accuracies  = df_source['accuracy'].values
 
-csv_saving_name     = f'RR cross validation results.csv'
+csv_saving_name     = 'RR cross validation results.csv'
 
 for acc_trial_train in [0,1]:
     _idx, = np.where(accuracies == acc_trial_train)
@@ -95,7 +95,7 @@ for acc_trial_train in [0,1]:
     model = tf.keras.models.load_model(model_name)
     # freeze the model
     for layer in model.layers:
-        layers.trainable = False
+        layer.trainable = False
     
     # test phase
     for (filename,sub_name,target_domain),df_sub in df_target.groupby(['filename','sub','domain']):
