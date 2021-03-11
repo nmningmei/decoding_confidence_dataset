@@ -94,6 +94,6 @@ python "{row.split('/')[-1]}"
         with open(new_batch_script_name,'w') as ff:
             ff.write(content)
             ff.close()
-        f.write(f'\nos.system("qsub {row.split("_")[2]}_{row.split("_")[-1].split(".")[0]}\n')
+        f.write(f'\nos.system("qsub {row.split("_")[2]}_{row.split("_")[-1].split(".")[0]}")\n')
     f.close()
 
