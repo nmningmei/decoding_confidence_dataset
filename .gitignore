@@ -138,3 +138,5 @@ dmypy.json
 
 confidence_LOO_regression/
 confidence_LOO_RNN/
+adequacy_LOO_regression/
+adequacy_LOO_RNN/
