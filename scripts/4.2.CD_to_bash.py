@@ -14,7 +14,7 @@ from sklearn.model_selection import GroupShuffleSplit
 from sklearn.utils           import shuffle as util_shuffle
 from shutil                  import copyfile
 
-templates           = glob('4.1*cross_domain.py')
+templates           = glob('4.1*RNN*cross_domain.py')
 
 node                = 1
 core                = 16

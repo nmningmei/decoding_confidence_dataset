@@ -112,16 +112,15 @@ for acc_trial_train in [0,1]:
         X_test           = to_categorical(X_test - 1, num_classes = confidence_range)
         y_test           = to_categorical(y_test - 1, num_classes = confidence_range)
         
-        preds_test  = model.predict(X_test.astype('float32'), batch_size=batch_size)
-        print(f'get {property_name}')
-        hidden_state_test,h_state_test,c_state_test = hidden_model.predict(X_test[_idx],
-                                                                            batch_size = batch_size,
-                                                                            verbose = 1)
-        
         for acc_trial_test in [0,1]:
             _idx_test, = np.where(acc_test == acc_trial_test)
             if len(_idx_test) > 1:
-                score_test = scoring_func(y_test[_idx_test],preds_test[_idx_test],
+                preds_test  = model.predict(X_test.astype('float32')[_idx_test], batch_size=batch_size)
+                print(f'get {property_name}')
+                hidden_state_test,h_state_test,c_state_test = hidden_model.predict(X_test[_idx_test],
+                                                                                    batch_size = batch_size,
+                                                                                    verbose = 1)
+                score_test = scoring_func(y_test[_idx_test],preds_test,
                                           confidence_range = confidence_range)
                 print(score_test)
                 results['score'].append(np.mean(score_test))
