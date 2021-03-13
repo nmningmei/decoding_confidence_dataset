@@ -24,7 +24,7 @@ from sklearn.model_selection import (LeaveOneGroupOut,
 from itertools import combinations
 
 
-experiment = 'confidence' # confidence or adequacy
+experiment = 'adequacy' # confidence or adequacy
 _decoder = 'regression'
 working_dir = f'../results/{experiment}/LOO/'
 stats_dir = f'../stats/{experiment}/LOO_compare_RNN_RF/'
@@ -189,9 +189,10 @@ for condition,df_sub in res_features.groupby(['condition']):
     temp.append(df_sub)
 res_features = pd.concat(temp)
 
-temp = np.concatenate(res_slopes['condition'].apply(lambda x:np.array(x.split('_'))).values).reshape(-1,2)
+temp = np.concatenate(res_slopes['condition'].apply(lambda x:np.array(x.split('_'))).values).reshape(-1,3)
 res_slopes['model'] = temp[:,0]
-res_slopes['accuracy'] = temp[:,1]
+res_slopes['accuracy_train'] = temp[:,1]
+res_slopes['accuracy_test'] = temp[:,-1]
 
 temp = []
 for condition, df_sub in res_slopes.groupby(['condition']):
@@ -201,7 +202,7 @@ for condition, df_sub in res_slopes.groupby(['condition']):
     d = converter.adjust_many()
     df_sub['p_corrected'] = d['bonferroni'].values
     temp.append(df_sub)
-res_splops = pd.concat(res_slopes)
+res_slopes = pd.concat(temp)
 
 # feature_comparison = dict(condition = [],
 #                           experiment = [],
