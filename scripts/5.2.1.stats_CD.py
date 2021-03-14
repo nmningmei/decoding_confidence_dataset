@@ -24,7 +24,7 @@ from sklearn.model_selection import (LeaveOneGroupOut,
 #from itertools import combinations
 
 
-experiment = 'adequacy' # confidence or adequacy
+experiment = 'confidence' # confidence or adequacy
 _decoder = 'regression'
 working_dir = f'../results/{experiment}/cross_domain/'
 stats_dir = f'../stats/{experiment}/CD/'

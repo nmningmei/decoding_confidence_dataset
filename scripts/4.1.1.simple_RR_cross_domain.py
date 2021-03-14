@@ -11,6 +11,7 @@ import gc
 gc.collect() # clean garbage memory
 from glob import glob
 
+from tensorflow.keras.utils import to_categorical
 from sklearn.linear_model import SGDClassifier
 
 import numpy  as np
@@ -20,7 +21,7 @@ from utils import scoring_func
 
 from scipy.special import softmax
 
-experiment          = ['confidence','cross_domain','regression']
+experiment          = ['adequacy','cross_domain','regression']
 property_name       = 'weight' # or hidden states or weight
 data_dir            = '../data/'
 model_dir           = os.path.join('../models',experiment[0],experiment[1],)

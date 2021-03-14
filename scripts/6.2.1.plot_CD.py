@@ -19,12 +19,13 @@ import seaborn as sns
 sns.set_style('whitegrid')
 sns.set_context('poster')
 
-experiment = 'adequacy' # confidence or adequacy
+experiment = 'confidence' # confidence or adequacy
+_decoder = 'regression'
 working_dir = f'../results/{experiment}/cross_domain/'
 stats_dir = f'../stats/{experiment}/CD'
 figure_dir = f'../figures/{experiment}/CD'
 if not os.path.exists(figure_dir):
-    os.mkdir(figure_dir)
+    os.makedirs(figure_dir)
 working_data = np.sort(glob(os.path.join(working_dir,"*.csv")))
 
 df = []
@@ -37,34 +38,41 @@ for f in working_data:
     col_to_rename = [item for item in temp.columns if ('T-' in item)]
     rename_mapper = {item:f'{item.split(" ")[-1]}' for item in col_to_rename}
     temp = temp.rename(columns = rename_mapper)
-    if decoder == 'RF':
+    # if decoder == 'RF':
 #    # normalize with each decoding
 #    temp_array = temp[[item for item in temp.columns if ('T-' in item)]].values
 #    if decoder == 'RNN':
 #        temp_array = np.abs(temp_array)
 #    temp_array = scaler().fit_transform(temp_array.T)
 #    temp[[item for item in temp.columns if ('T-' in item)]] = temp_array.T
-        df.append(temp)
+    df.append(temp)
 df = pd.concat(df)
 
 df_plot = df[df['source'] != 'train']
-df_plot['acc']  = df_plot['accuracy'].map({0:'incorrect',1:'correct'})
-df_plot['condition'] = df_plot['model'] + '_' + df_plot['acc']
-df_plot = df_plot.sort_values(['experiment','model','acc'])
+
+# further process the data for plotting
+df_plot['acc_train']  = df_plot['accuracy_train'].map({0:'incorrect',1:'correct'})
+df_plot['acc_test'] = df_plot['accuracy_test'].map({0:'incorrect',1:'correct'})
+df_plot['condition'] = df_plot['acc_train'] + '->' + df_plot['acc_test']
+df_plot = df_plot.sort_values(['experiment','model','condition'])
+
 df_stat_score = pd.read_csv(os.path.join(stats_dir,'scores.csv'))
-df_stat_score['acc'] = df_stat_score['condition'].apply(lambda x: x.split('_')[-1])
-df_stat_score['model'] = df_stat_score['condition'].apply(lambda x: x.split('_')[0])
+df_stat_score['model'] = df_stat_score['condition'].apply(lambda x:x.split('_')[0])
+df_stat_score = df_stat_score[df_stat_score['model'] == _decoder]
+df_stat_score['acc_train'] = df_stat_score['condition'].apply(lambda x:x.split('_')[1])
+df_stat_score['acc_test'] = df_stat_score['condition'].apply(lambda x:x.split('_')[-1])
+
 df_stat_slope = pd.read_csv(os.path.join(stats_dir,'slopes.csv'))
-df_stat_slope['acc'] = df_stat_slope['accuracy'].values.copy()
+df_stat_slope['model'] = df_stat_slope['condition'].apply(lambda x:x.split('_')[0])
+df_stat_slope = df_stat_slope[df_stat_slope['model'] == _decoder]
+
 df_stat_features = pd.read_csv(os.path.join(stats_dir,'features.csv'))
-df_stat_features['acc'] = df_stat_features['condition'].apply(lambda x: x.split('_')[-1])
-df_stat_features['model'] = df_stat_features['condition'].apply(lambda x: x.split('_')[0])
+df_stat_features['model'] = df_stat_features['condition'].apply(lambda x:x.split('_')[0])
+df_stat_features = df_stat_features[df_stat_features['model'] == _decoder]
+df_stat_features['acc_train'] = df_stat_features['condition'].apply(lambda x: x.split('_')[-2])
+df_stat_features['acc_test'] = df_stat_features['condition'].apply(lambda x: x.split('_')[-1])
 
-df_stat_score = df_stat_score[df_stat_score['model'] == 'RF']
-df_stat_slope = df_stat_slope[df_stat_slope['model'] == 'RF']
-df_stat_features = df_stat_features[df_stat_features['model'] == 'RF']
-
-xargs = dict(hue = 'acc',
+xargs = dict(hue = 'acc_test',
 #             hue_order = ['RF_correct','RF_incorrect','RNN_correct','RNN_incorrect'],
              hue_order = ['correct','incorrect',],
              split = True,
@@ -74,7 +82,7 @@ xargs = dict(hue = 'acc',
              palette = ['deepskyblue','tomato'])
 
 
-fig,ax = plt.subplots(figsize = (16,16))
+fig,axes = plt.subplots(figsize = (16,16))
 ax = sns.violinplot(x = 'source',
                     y = 'score',
                     data = df_plot,
@@ -82,14 +90,6 @@ ax = sns.violinplot(x = 'source',
                     **xargs,
                     )
 handles,labels = ax.get_legend_handles_labels()
-#plt.setp(ax.collections,alpha = .3)
-#ax = sns.stripplot(x = 'source',
-#                   y = 'score',
-#                   data = df_plot,
-#                   ax = ax,
-#                   hue = xargs['hue'],
-#                   dodge = True,
-#                   )
 xtick_order = list(ax.xaxis.get_majorticklabels())
 
 for ii,text_obj in enumerate(xtick_order):
