@@ -11,15 +11,14 @@ import gc
 gc.collect() # clean garbage memory
 from glob import glob
 
-import tensorflow as tf
-from tensorflow.keras.utils import to_categorical
+from sklearn.linear_model import SGDClassifier
 
 import numpy  as np
 import pandas as pd
 
-from utils import build_Regression,scoring_func
+from utils import scoring_func
 
-from sklearn.model_selection import StratifiedShuffleSplit
+from scipy.special import softmax
 
 experiment          = ['confidence','cross_domain','regression']
 property_name       = 'weight' # or hidden states or weight
@@ -69,33 +68,40 @@ csv_saving_name     = os.path.join(result_dir,f'{experiment[-1]}_{experiment[0]}
 for acc_trial_train in [0,1]:
     _idx, = np.where(accuracies == acc_trial_train)
     X_,Y_,Z_ = features[_idx],targets[_idx],groups[_idx]
+    
+    
+    model = SGDClassifier(loss = 'log',alpha = 1e-2,n_jobs = -1,random_state = 12345,class_weight = 'balanced')
+    model.fit(X_,Y_)
+    
+    print(f'get {property_name}')
+    properties = model.coef_.mean(0)
     # the for-loop does not mean any thing, we only take the last step/output of the for-loop
-    for train,valid in StratifiedShuffleSplit(test_size = 0.2,
-                                                      random_state = 12345).split(X_,Y_,Z_):
-        X_train,y_train,group_train,acc_train = X_[train],Y_[train],Z_[train],accuracies[train]
-        X_valid,y_valid,gruop_valid,acc_valid = X_[valid],Y_[valid],Z_[valid],accuracies[valid]
+    # for train,valid in StratifiedShuffleSplit(test_size = 0.2,
+    #                                                   random_state = 12345).split(X_,Y_,Z_):
+    #     X_train,y_train,group_train,acc_train = X_[train],Y_[train],Z_[train],accuracies[train]
+    #     X_valid,y_valid,gruop_valid,acc_valid = X_[valid],Y_[valid],Z_[valid],accuracies[valid]
     
-    X_train = to_categorical(X_train - 1, num_classes = confidence_range).reshape(-1,time_steps*confidence_range)
-    X_valid = to_categorical(X_valid - 1, num_classes = confidence_range).reshape(-1,time_steps*confidence_range)
+    # X_train = to_categorical(X_train - 1, num_classes = confidence_range).reshape(-1,time_steps*confidence_range)
+    # X_valid = to_categorical(X_valid - 1, num_classes = confidence_range).reshape(-1,time_steps*confidence_range)
     
-    y_train = to_categorical(y_train - 1, num_classes = confidence_range)
-    y_valid = to_categorical(y_valid - 1, num_classes = confidence_range)
-    model_name     = os.path.join(model_dir,f'{"_".join(experiment)}.h5')
-    model,callbacks = build_Regression(time_steps,confidence_range,model_name)
-    model.fit(X_train,
-              y_train,
-              batch_size        = batch_size,
-              epochs            = 1000,
-              validation_data   = (X_valid,y_valid),
-              shuffle           = True,
-              callbacks         = callbacks,
-              verbose           = 1,
-              )
-    del model
-    model = tf.keras.models.load_model(model_name)
-    # freeze the model
-    for layer in model.layers:
-        layer.trainable = False
+    # y_train = to_categorical(y_train - 1, num_classes = confidence_range)
+    # y_valid = to_categorical(y_valid - 1, num_classes = confidence_range)
+    # model_name     = os.path.join(model_dir,f'{"_".join(experiment)}.h5')
+    # model,callbacks = build_Regression(time_steps,confidence_range,model_name)
+    # model.fit(X_train,
+    #           y_train,
+    #           batch_size        = batch_size,
+    #           epochs            = 1000,
+    #           validation_data   = (X_valid,y_valid),
+    #           shuffle           = True,
+    #           callbacks         = callbacks,
+    #           verbose           = 1,
+    #           )
+    # del model
+    # model = tf.keras.models.load_model(model_name)
+    # # freeze the model
+    # for layer in model.layers:
+    #     layer.trainable = False
     
     # test phase
     for (filename,sub_name,target_domain),df_sub in df_target.groupby(['filename','sub','domain']):
@@ -105,12 +111,12 @@ for acc_trial_train in [0,1]:
         groups_          = df_sub["sub"].values
         X_test,y_test    = features_.copy(),targets_.copy()
         acc_test         = df_sub['accuracy'].values
-        X_test           = to_categorical(X_test - 1, num_classes = confidence_range).reshape(-1,time_steps*confidence_range)
+        # X_test           = to_categorical(X_test - 1, num_classes = confidence_range).reshape(-1,time_steps*confidence_range)
         y_test           = to_categorical(y_test - 1, num_classes = confidence_range)
         
-        preds_test  = model.predict(X_test.astype('float32'), batch_size=batch_size)
+        preds_test  = softmax(model.predict_proba(X_test),axis = -1)
         print(f'get {property_name}')
-        properties = model.get_weights()[0].mean(-1).reshape(time_steps,confidence_range).mean(-1)
+        properties = model.coef_.mean(0)
         
         for acc_trial_test in [0,1]:
             _idx_test, = np.where(acc_test == acc_trial_test)

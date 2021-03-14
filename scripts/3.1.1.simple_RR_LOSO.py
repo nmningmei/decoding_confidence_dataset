@@ -10,18 +10,17 @@ import gc
 gc.collect() # clean garbage memory
 from glob import glob
 
-import tensorflow as tf
-from tensorflow.keras       import layers, Model, optimizers, losses
 from tensorflow.keras.utils import to_categorical
 
 import numpy  as np
 import pandas as pd
 
-from utils import make_CallBackList,check_column_type,scoring_func
+from utils import check_column_type,scoring_func
 
 from sklearn.model_selection import LeaveOneGroupOut,StratifiedShuffleSplit
 from sklearn.utils           import shuffle as util_shuffle
-
+from sklearn.linear_model    import SGDClassifier
+from scipy.special           import softmax
 experiment          = ['confidence','LOO','regression']
 data_dir            = '../data'
 model_dir           = f'../models/{experiment[1]}_{experiment[2]}'
@@ -86,7 +85,7 @@ for fold,(train_,test) in enumerate(cv.split(features,targets,groups=groups)):
         acc_train_      = accuraies[train_]
         
         # make sure processing the X_test and y_test only once
-        X_test  = to_categorical(X_test  - 1, num_classes = confidence_range).reshape(-1,time_steps*confidence_range)
+        # X_test  = to_categorical(X_test  - 1, num_classes = confidence_range).reshape(-1,time_steps*confidence_range)
         y_test  = to_categorical(y_test  - 1, num_classes = confidence_range)
         
         # split into train and validation data
@@ -95,87 +94,15 @@ for fold,(train_,test) in enumerate(cv.split(features,targets,groups=groups)):
         for acc_trial_train in [0,1]:
             _idx, = np.where(acc_train_ == acc_trial_train)
             
-            # the for-loop does not mean any thing, we only take the last step/output of the for-loop
-            for train,valid in StratifiedShuffleSplit(test_size = 0.2,
-                                                      random_state = 12345).split(features[train_][_idx],
-                                                                                  targets[train_][_idx],
-                                                                                  groups=groups[train_][_idx]):
-                X_train,y_train = X_[_idx][train],y_[_idx][train]
-                X_valid,y_valid = X_[_idx][valid],y_[_idx][valid]
-                acc_valid = acc_train_[_idx][valid]
-           
-            # reset the GPU memory
-            tf.keras.backend.clear_session()
-            try:
-                tf.random.set_random_seed(12345) # tf 1.0
-            except:
-                tf.random.set_seed(12345) # tf 2.0
-                
-            # build a regression model
-            inputs                  = layers.Input(shape     = (time_steps*confidence_range,),# time steps by features 
-                                                   name      = 'inputs')
-            outputs                 = layers.Dense(confidence_range,
-                                                   name             = "output",
-                                                   activation       = "softmax")(inputs)
-            model                   = Model(inputs,
-                                            outputs)
             
-            model.compile(optimizer     = optimizers.SGD(lr = 1e-2),
-                          loss          = losses.binary_crossentropy,
-                          metrics       = ['mse'])
-            # early stopping
-            callbacks = make_CallBackList(model_name    = model_name,
-                                          monitor       = 'val_loss',
-                                          mode          = 'min',
-                                          verbose       = 0,
-                                          min_delta     = 1e-4,
-                                          patience      = 5,
-                                          frequency     = 1,)
-            
-            X_train = to_categorical(X_train - 1, num_classes = confidence_range).reshape(-1,time_steps*confidence_range)
-            X_valid = to_categorical(X_valid - 1, num_classes = confidence_range).reshape(-1,time_steps*confidence_range)
-            
-            y_train = to_categorical(y_train - 1, num_classes = confidence_range)
-            y_valid = to_categorical(y_valid - 1, num_classes = confidence_range)
-            
-            if not os.path.exists(os.path.join(*model_name.split('/')[:-1])):
-                os.makedirs(os.path.join(*model_name.split('/')[:-1]))
-            
-            print('trained model not found, start training ...')
-            model.fit(X_train,
-                      y_train,
-                      batch_size        = batch_size,
-                      epochs            = 1000,
-                      validation_data   = (X_valid,y_valid),
-                      shuffle           = True,
-                      callbacks         = callbacks,
-                      verbose           = debug,
-                      )
-            
-            del model
-            model = tf.keras.models.load_model(model_name)
-            # freeze the model
-            for layer in model.layers:
-                layers.trainable = False
-            
-            preds_valid = model.predict(X_valid.astype('float32'),batch_size=batch_size)
-            preds_test  = model.predict(X_test.astype('float32'), batch_size=batch_size)
+            model = SGDClassifier(loss = 'log',alpha = 1e-2,n_jobs = -1,random_state = 12345,class_weight = 'balanced')
+            model.fit(X_,y_)
+            preds_test  = softmax(model.predict_proba(X_test),1)
             
             print(f'get {property_name}')
-            properties = model.get_weights()[0].mean(-1).reshape(time_steps,confidence_range).mean(-1)
+            properties = model.coef_.mean(0)
             
-            print('on train')
-            temp_idx = acc_valid == acc_trial_train
-            score_valid = scoring_func(y_valid[temp_idx],preds_valid[temp_idx],confidence_range = confidence_range)
-            results['fold'].append(fold)
-            results['score'].append(score_valid)
-            results['n_sample'].append(X_valid[temp_idx].shape[0])
-            results['source'].append('train')
-            results['sub_name'].append('train')
-            [results[f'{property_name} T-{time_steps - ii}'].append(properties[ii]) for ii in range(time_steps)]
-            results['accuracy_train'].append(acc_trial_train)
-            results['accuracy_test'].append(acc_trial_train)
-        
+            
             print('on test')
             for acc_trial_test in [0,1]:
                 _idx_test, = np.where(acc_test == acc_trial_test)

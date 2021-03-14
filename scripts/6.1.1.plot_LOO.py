@@ -24,8 +24,9 @@ experiment = 'adequacy' # confidence or adequacy
 _decoder = 'regression'
 working_dir = f'../results/{experiment}/LOO/'
 stats_dir = f'../stats/{experiment}/LOO_compare_RNN_RF/'
-if not os.path.exists(stats_dir):
-    os.makedirs(stats_dir)
+figure_dir = f'../figures/{experiment}/LOO'
+if not os.path.exists(figure_dir):
+    os.makedirs(figure_dir)
 working_data = np.sort(glob(os.path.join(working_dir,'*.csv')))
 
 df = []
@@ -38,7 +39,7 @@ for f in working_data:
     col_to_rename = [item for item in temp.columns if ('T-' in item)]
     rename_mapper = {item:f'{item.split(" ")[-1]}' for item in col_to_rename}
     temp = temp.rename(columns = rename_mapper)
-    if True:#decoder == _decoder:
+    if decoder == _decoder:
     # normalize with each decoding
 #    temp_array = temp[[item for item in temp.columns if ('T-' in item)]].values
 #    if decoder == 'RNN':
@@ -55,13 +56,24 @@ df_plot['acc_train']  = df_plot['accuracy_train'].map({0:'incorrect',1:'correct'
 df_plot['acc_test'] = df_plot['accuracy_test'].map({0:'incorrect',1:'correct'})
 df_plot['condition'] = df_plot['acc_train'] + '->' + df_plot['acc_test']
 df_plot = df_plot.sort_values(['experiment','model','condition'])
+
 df_stat_score = pd.read_csv(os.path.join(stats_dir,'scores.csv'))
+df_stat_score['model'] = df_stat_score['condition'].apply(lambda x:x.split('_')[0])
+df_stat_score = df_stat_score[df_stat_score['model'] == _decoder]
+df_stat_score['acc_train'] = df_stat_score['condition'].apply(lambda x:x.split('_')[1])
+df_stat_score['acc_test'] = df_stat_score['condition'].apply(lambda x:x.split('_')[-1])
+
 df_stat_slope = pd.read_csv(os.path.join(stats_dir,'slopes.csv'))
+df_stat_slope['model'] = df_stat_slope['condition'].apply(lambda x:x.split('_')[0])
+df_stat_slope = df_stat_slope[df_stat_slope['model'] == _decoder]
+
 df_stat_features = pd.read_csv(os.path.join(stats_dir,'features.csv'))
+df_stat_features['model'] = df_stat_features['condition'].apply(lambda x:x.split('_')[0])
+df_stat_features = df_stat_features[df_stat_features['model'] == _decoder]
 df_stat_features['acc_train'] = df_stat_features['condition'].apply(lambda x: x.split('_')[-2])
 df_stat_features['acc_test'] = df_stat_features['condition'].apply(lambda x: x.split('_')[-1])
 
-xargs = dict(hue = 'acc',
+xargs = dict(hue = 'acc_test',
 #             hue_order = ['RF_correct','RF_incorrect','RNN_correct','RNN_incorrect'],
              hue_order = ['correct','incorrect',],
              split = True,
@@ -77,7 +89,7 @@ for (acc_train,df_plot_sub),(_,df_stat_score_sub),ax in zip(df_plot.groupby(['ac
                                       axes.flatten()):
     ax = sns.violinplot(y = 'experiment',
                         x = 'score',
-                        data = df_plot,
+                        data = df_plot_sub,
                         ax = ax,
                         **xargs)
     handles,labels = ax.get_legend_handles_labels()
@@ -86,7 +98,7 @@ for (acc_train,df_plot_sub),(_,df_stat_score_sub),ax in zip(df_plot.groupby(['ac
     for ii,text_obj in enumerate(ytick_order):
         position = text_obj.get_position()
         ytick_label = text_obj.get_text()
-        df_sub_stats = df_stat_score[df_stat_score_sub['experiment'] == ytick_label].sort_values(['condition'])
+        df_sub_stats = df_stat_score_sub[df_stat_score_sub['experiment'] == ytick_label].sort_values(['condition'])
         for (jj,temp_row),adjustment in zip(df_sub_stats.iterrows(),[-0.125,0.125]):
             if '*' in temp_row['stars']:
                 print(temp_row['stars'])
@@ -95,17 +107,19 @@ for (acc_train,df_plot_sub),(_,df_stat_score_sub),ax in zip(df_plot.groupby(['ac
                             xy = (1.01,ii + adjustment,),
                             verticalalignment = 'center',
                             fontsize = 14)
-    ax.set(xlim = (0.3,1.05),xlabel = 'ROC AUC',ylabel = 'Study')
+    ax.set(xlim = (0.15,1.05),xlabel = 'ROC AUC',ylabel = 'Study',title = f'Trained on {acc_train} trials')
     ax.axvline(0.5,linestyle = '--',color = 'black',alpha = 0.5,)
-    ax.legend(handles = handles,labels = labels,loc = 'upper left')
+    ax.legend(handles = handles,labels = labels,loc = 'upper left',title = 'Test data')
+ax.set(yticklabels = [],ylabel = '')
 fig.savefig(os.path.join(figure_dir,
                          'scores.jpg'),
 #            dpi = 400,
             bbox_inches = 'tight')
 
-fig,ax = plt.subplots(figsize = (16,16))
-df_for_plot = df_plot.melt(id_vars = ['fold','sub_name','acc','experiment',],
+df_for_plot = df_plot.melt(id_vars = ['sub_name','acc_train','acc_test','experiment',],
                            value_vars = ['T-7', 'T-6', 'T-5', 'T-4', 'T-3', 'T-2', 'T-1'],)
+
+fig,ax = plt.subplots(figsize = (16,16))
 _xargs = dict(x = 'variable',
               y = 'value',
               hue = xargs['hue'],
