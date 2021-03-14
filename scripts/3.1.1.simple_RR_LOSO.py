@@ -106,6 +106,7 @@ for fold,(train_,test) in enumerate(cv.split(features,targets,groups=groups)):
             print('on test')
             for acc_trial_test in [0,1]:
                 _idx_test, = np.where(acc_test == acc_trial_test)
+                preds_test  = softmax(model.predict_proba(X_test[_idx_test]),1)
                 if len(_idx_test) > 1:
                     score_test = scoring_func(y_test[_idx_test],preds_test[_idx_test],
                                               confidence_range = confidence_range)
