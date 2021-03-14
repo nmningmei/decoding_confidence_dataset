@@ -19,17 +19,18 @@ from glob import glob
 from sklearn import linear_model
 #from sklearn.pipeline import make_pipeline
 from sklearn.model_selection import (LeaveOneGroupOut,
-#                                     permutation_test_score,
+                                    permutation_test_score,
                                      cross_validate)
 #from itertools import combinations
 
 
 experiment = 'adequacy' # confidence or adequacy
+_decoder = 'regression'
 working_dir = f'../results/{experiment}/cross_domain/'
 stats_dir = f'../stats/{experiment}/CD/'
 if not os.path.exists(stats_dir):
     os.makedirs(stats_dir)
-working_data = np.sort(glob(os.path.join(working_dir,"*.csv")))
+working_data = np.sort(glob(os.path.join(working_dir,f"{_decoder}*.csv")))
 
 df = []
 for f in working_data:
@@ -53,8 +54,9 @@ df = pd.concat(df)
 df_plot = df[df['source'] != 'train']
 
 # further process the data for plotting
-df_plot['acc']  = df_plot['accuracy'].map({0:'incorrect',1:'correct'})
-df_plot['condition'] = df_plot['model'] + '_' + df_plot['acc']
+df_plot['acc_train']  = df_plot['accuracy_train'].map({0:'incorrect',1:'correct'})
+df_plot['acc_test'] = df_plot['accuracy_test'].map({0:'incorrect',1:'correct'})
+df_plot['condition'] = df_plot['model'] + '_' + df_plot['acc_train'] + '_' + df_plot['acc_test']
 df_plot['experiment'] = df_plot['filename'].apply(lambda x: x.split('/')[-1].split('.')[0])
 df_plot['group'] = df_plot['experiment'] + '_' + df_plot['sub_name']
 
@@ -112,17 +114,17 @@ for (source,condition),df_sub in df_plot.groupby(['source','condition']):
 #                                    )
     pipeline = linear_model.BayesianRidge(fit_intercept = True)
     # permutation test to get p values
-#    _score,_,pval = permutation_test_score(pipeline,
-#                                           xx.reshape(-1,1),
-#                                           features.reshape(-1,1).ravel(),
-#                                           groups = groups.reshape(-1,1).ravel(),
-#                                           cv = cv,
-#                                           n_jobs = -1,
-#                                           random_state = 12345,
-#                                           n_permutations = int(1e3),
-#                                           scoring = 'neg_mean_squared_error',
-#                                           verbose = 1,
-#                                           )
+    _score,_,pval = permutation_test_score(pipeline,
+                                          xx.reshape(-1,1),
+                                          features.reshape(-1,1).ravel(),
+                                          groups = groups.reshape(-1,1).ravel(),
+                                          cv = cv,
+                                          n_jobs = -1,
+                                          random_state = 12345,
+                                          n_permutations = int(1e4),
+                                          scoring = 'neg_mean_squared_error',
+                                          verbose = 1,
+                                          )
     # cross validation to get the slopes and intercepts
     gc.collect()
     _res = cross_validate(pipeline,
@@ -138,13 +140,13 @@ for (source,condition),df_sub in df_plot.groupby(['source','condition']):
     gc.collect()
     coefficients = np.array([est.coef_[0] for est in _res['estimator']])
     intercepts = np.array([est.intercept_ for est in _res['estimator']])
-    pval = utils.resample_ttest(coefficients,
-                                baseline = 0,
-                                n_ps = 10,
-                                n_permutation = int(1e5),
-                                one_tail = True,
-                                n_jobs = -1,
-                                verbose = 1,)
+    # pval = utils.resample_ttest(coefficients,
+    #                             baseline = 0,
+    #                             n_ps = 10,
+    #                             n_permutation = int(1e5),
+    #                             one_tail = True,
+    #                             n_jobs = -1,
+    #                             verbose = 1,)
     gc.collect()
     # save
     for coef,interc in zip(coefficients,intercepts):
@@ -163,7 +165,7 @@ for (source,condition),df_sub in df_plot.groupby(['source','condition']):
 #    res_features['slope_std'].append(np.std(coefficients))
     res_features['intercept'].append([item for item in intercepts])
 #    res_features['intercept_std'].append(np.std(intercepts))
-    res_features['pval'].append(np.mean(pval))
+    res_features['pval'].append(pval)
     res_features['cv_score'].append(np.mean(_res['test_score']))
     res_features['y_mean'].append(y_mean.mean(0))
     res_features['y_std'].append(y_std.mean(0))
@@ -191,9 +193,10 @@ for condition,df_sub in res_features.groupby(['condition']):
     temp.append(df_sub)
 res_features = pd.concat(temp)
 
-temp = np.concatenate(res_slopes['condition'].apply(lambda x:np.array(x.split('_'))).values).reshape(-1,2)
+temp = np.concatenate(res_slopes['condition'].apply(lambda x:np.array(x.split('_'))).values).reshape(-1,4)
 res_slopes['model'] = temp[:,0]
-res_slopes['accuracy'] = temp[:,1]
+res_slopes['accuracy_train'] = temp[:,2]
+res_slopes['accuracy_test'] = temp[:,3]
 
 
 res_scores['stars'] = res_scores['p_corrected'].apply(utils.stars)

@@ -20,12 +20,12 @@ from matplotlib import pyplot as plt
 sns.set_style('whitegrid')
 sns.set_context('poster')
 
-experiment = 'confidence' # confidence or adequacy
+experiment = 'adequacy' # confidence or adequacy
+_decoder = 'regression'
 working_dir = f'../results/{experiment}/LOO/'
 stats_dir = f'../stats/{experiment}/LOO_compare_RNN_RF/'
-figure_dir = f'../figures/{experiment}/LOO_compare_RNN_RF/'
-if not os.path.exists(figure_dir):
-    os.mkdir(figure_dir)
+if not os.path.exists(stats_dir):
+    os.makedirs(stats_dir)
 working_data = np.sort(glob(os.path.join(working_dir,'*.csv')))
 
 df = []
@@ -38,8 +38,8 @@ for f in working_data:
     col_to_rename = [item for item in temp.columns if ('T-' in item)]
     rename_mapper = {item:f'{item.split(" ")[-1]}' for item in col_to_rename}
     temp = temp.rename(columns = rename_mapper)
-    if decoder == 'RF':
-#    # normalize with each decoding
+    if True:#decoder == _decoder:
+    # normalize with each decoding
 #    temp_array = temp[[item for item in temp.columns if ('T-' in item)]].values
 #    if decoder == 'RNN':
 #        temp_array = np.abs(temp_array)
@@ -49,14 +49,17 @@ for f in working_data:
 df = pd.concat(df)
 
 df_plot = df[df['source'] != 'train']
-df_plot['acc']  = df_plot['accuracy'].map({0:'incorrect',1:'correct'})
-df_plot['condition'] = df_plot['model'] + '_' + df_plot['acc']
+
+# further process the data for plotting
+df_plot['acc_train']  = df_plot['accuracy_train'].map({0:'incorrect',1:'correct'})
+df_plot['acc_test'] = df_plot['accuracy_test'].map({0:'incorrect',1:'correct'})
+df_plot['condition'] = df_plot['acc_train'] + '->' + df_plot['acc_test']
 df_plot = df_plot.sort_values(['experiment','model','condition'])
 df_stat_score = pd.read_csv(os.path.join(stats_dir,'scores.csv'))
 df_stat_slope = pd.read_csv(os.path.join(stats_dir,'slopes.csv'))
-df_stat_slope['acc'] = df_stat_slope['accuracy'].values.copy()
 df_stat_features = pd.read_csv(os.path.join(stats_dir,'features.csv'))
-df_stat_features['acc'] = df_stat_features['condition'].apply(lambda x: x.split('_')[-1])
+df_stat_features['acc_train'] = df_stat_features['condition'].apply(lambda x: x.split('_')[-2])
+df_stat_features['acc_test'] = df_stat_features['condition'].apply(lambda x: x.split('_')[-1])
 
 xargs = dict(hue = 'acc',
 #             hue_order = ['RF_correct','RF_incorrect','RNN_correct','RNN_incorrect'],
@@ -67,38 +70,34 @@ xargs = dict(hue = 'acc',
              scale = 'width',
              palette = ['deepskyblue','tomato'])
 
-fig,ax = plt.subplots(figsize = (16,26))
-ax = sns.violinplot(y = 'experiment',
-                    x = 'score',
-                    data = df_plot,
-                    ax = ax,
-                    **xargs)
-handles,labels = ax.get_legend_handles_labels()
-#plt.setp(ax.collections,alpha = .3)
-#ax = sns.stripplot(y = 'experiment',
-#                   x = 'score',
-#                   data = df_plot,
-#                   ax = ax,
-#                   hue = xargs['hue'],
-#                   dodge = True,
-#                   )
-ytick_order = list(ax.yaxis.get_majorticklabels())
-
-for ii,text_obj in enumerate(ytick_order):
-    position = text_obj.get_position()
-    ytick_label = text_obj.get_text()
-    df_sub_stats = df_stat_score[df_stat_score['experiment'] == ytick_label].sort_values(['condition'])
-    for (jj,temp_row),adjustment in zip(df_sub_stats.iterrows(),[-0.125,0.125]):
-        if '*' in temp_row['stars']:
-            print(temp_row['stars'])
-            ax.annotate(temp_row['stars'],
-                        rotation = 90,
-                        xy = (1.01,ii + adjustment,),
-                        verticalalignment = 'center',
-                        fontsize = 14)
-ax.set(xlim = (0.3,1.05),xlabel = 'ROC AUC',ylabel = 'Study')
-ax.axvline(0.5,linestyle = '--',color = 'black',alpha = 0.5,)
-ax.legend(handles = handles,labels = labels,loc = 'upper left')
+fig,axes = plt.subplots(figsize = (16 * 2,26),
+                      ncols = 2,)
+for (acc_train,df_plot_sub),(_,df_stat_score_sub),ax in zip(df_plot.groupby(['acc_train']),
+                                      df_stat_score.groupby('acc_train'),
+                                      axes.flatten()):
+    ax = sns.violinplot(y = 'experiment',
+                        x = 'score',
+                        data = df_plot,
+                        ax = ax,
+                        **xargs)
+    handles,labels = ax.get_legend_handles_labels()
+    ytick_order = list(ax.yaxis.get_majorticklabels())
+    
+    for ii,text_obj in enumerate(ytick_order):
+        position = text_obj.get_position()
+        ytick_label = text_obj.get_text()
+        df_sub_stats = df_stat_score[df_stat_score_sub['experiment'] == ytick_label].sort_values(['condition'])
+        for (jj,temp_row),adjustment in zip(df_sub_stats.iterrows(),[-0.125,0.125]):
+            if '*' in temp_row['stars']:
+                print(temp_row['stars'])
+                ax.annotate(temp_row['stars'],
+                            rotation = 90,
+                            xy = (1.01,ii + adjustment,),
+                            verticalalignment = 'center',
+                            fontsize = 14)
+    ax.set(xlim = (0.3,1.05),xlabel = 'ROC AUC',ylabel = 'Study')
+    ax.axvline(0.5,linestyle = '--',color = 'black',alpha = 0.5,)
+    ax.legend(handles = handles,labels = labels,loc = 'upper left')
 fig.savefig(os.path.join(figure_dir,
                          'scores.jpg'),
 #            dpi = 400,
