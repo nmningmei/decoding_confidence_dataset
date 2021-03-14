@@ -18,6 +18,8 @@ import pandas as pd
 from utils import check_column_type,scoring_func
 
 from sklearn.model_selection import LeaveOneGroupOut,StratifiedShuffleSplit
+from sklearn.preprocessing   import StandardScaler
+from sklearn.pipeline        import make_pipeline
 from sklearn.utils           import shuffle as util_shuffle
 from sklearn.linear_model    import SGDClassifier
 from scipy.special           import softmax
@@ -96,11 +98,12 @@ for fold,(train_,test) in enumerate(cv.split(features,targets,groups=groups)):
             
             
             model = SGDClassifier(loss = 'log',alpha = 1e-2,n_jobs = -1,random_state = 12345,class_weight = 'balanced')
+            model = make_pipeline(StandardScaler(),model)
             model.fit(X_,y_)
             preds_test  = softmax(model.predict_proba(X_test),1)
             
             print(f'get {property_name}')
-            properties = model.coef_.mean(0)
+            properties = model.steps[-1][-1].coef_.mean(0)
             
             
             print('on test')

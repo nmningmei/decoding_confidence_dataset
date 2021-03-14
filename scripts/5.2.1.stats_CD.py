@@ -35,19 +35,13 @@ working_data = np.sort(glob(os.path.join(working_dir,f"{_decoder}*.csv")))
 df = []
 for f in working_data:
     temp = pd.read_csv(f)
-    decoder = f.split('/')[-1].split(' ')[0]
+    decoder = f.split('/')[-1].split(' ')[0].split('_')[0]
     experiment = f.split('/')[-1].split('(')[-1].split(')')[0]
     temp['model'] = decoder
     temp['experiment'] = experiment
     col_to_rename = [item for item in temp.columns if ('T-' in item)]
     rename_mapper = {item:f'{item.split(" ")[-1]}' for item in col_to_rename}
     temp = temp.rename(columns = rename_mapper)
-#    # normalize with each decoding
-#    temp_array = temp[[item for item in temp.columns if ('T-' in item)]].values
-#    if decoder == 'RNN':
-#        temp_array = np.abs(temp_array)
-#    temp_array = scaler().fit_transform(temp_array.T)
-#    temp[[item for item in temp.columns if ('T-' in item)]] = temp_array.T
     df.append(temp)
 df = pd.concat(df)
 
@@ -56,34 +50,36 @@ df_plot = df[df['source'] != 'train']
 # further process the data for plotting
 df_plot['acc_train']  = df_plot['accuracy_train'].map({0:'incorrect',1:'correct'})
 df_plot['acc_test'] = df_plot['accuracy_test'].map({0:'incorrect',1:'correct'})
-df_plot['condition'] = df_plot['model'] + '_' + df_plot['acc_train'] + '_' + df_plot['acc_test']
 df_plot['experiment'] = df_plot['filename'].apply(lambda x: x.split('/')[-1].split('.')[0])
 df_plot['group'] = df_plot['experiment'] + '_' + df_plot['sub_name']
 
 res_scores = dict(source = [],
-                  condition = [],
                   score_mean = [],
                   score_std = [],
                   pval = [],
+                  acc_train = [],
+                  acc_test = [],
+                  model = [],
                   )
 res_features = dict(source = [],
-                    condition = [],
                     slope = [],
                     intercept = [],
-#                    slope_mean = [],
-#                    slope_std = [],
-#                    intercept_mean = [],
-#                    intercept_std = [],
                     cv_score = [],
                     pval = [],
                     y_mean = [],
                     y_std = [],
+                    acc_train = [],
+                    acc_test = [],
+                    model = [],
                     )
 res_slopes = dict(source = [],
-                  condition = [],
                   slope = [],
-                  intercept = [],)
-for (source,condition),df_sub in df_plot.groupby(['source','condition']):
+                  intercept = [],
+                  acc_train = [],
+                  acc_test = [],
+                  model = [],
+                  )
+for (source,model,acc_train,acc_test),df_sub in df_plot.groupby(['source','model','acc_train','acc_test']):
     # on the scores: compare against to theorectial chance level
     scores = df_sub['score'].values
     gc.collect()
@@ -96,10 +92,12 @@ for (source,condition),df_sub in df_plot.groupby(['source','condition']):
                               verbose = 0,)
     gc.collect()
     res_scores['source'].append(source)
-    res_scores['condition'].append(condition)
     res_scores['score_mean'].append(np.mean(scores))
     res_scores['score_std'].append(np.std(scores))
     res_scores['pval'].append(np.mean(ps))
+    res_scores['acc_train'].append(acc_train)
+    res_scores['acc_test'].append(acc_test)
+    res_scores['model'].append(model)
     
     # on the feature contributions
     features = df_sub[[f'T-{7 - ii}' for ii in range(7)]].values
@@ -140,41 +138,35 @@ for (source,condition),df_sub in df_plot.groupby(['source','condition']):
     gc.collect()
     coefficients = np.array([est.coef_[0] for est in _res['estimator']])
     intercepts = np.array([est.intercept_ for est in _res['estimator']])
-    # pval = utils.resample_ttest(coefficients,
-    #                             baseline = 0,
-    #                             n_ps = 10,
-    #                             n_permutation = int(1e5),
-    #                             one_tail = True,
-    #                             n_jobs = -1,
-    #                             verbose = 1,)
     gc.collect()
     # save
     for coef,interc in zip(coefficients,intercepts):
         res_slopes['source'].append(source)
-        res_slopes['condition'].append(condition)
         res_slopes['slope'].append(coef)
         res_slopes['intercept'].append(interc)
-    
+        res_slopes['acc_train'].append(acc_train)
+        res_slopes['acc_test'].append(acc_test)
+        res_slopes['model'].append(model)
     xxx = np.linspace(0,6,1000)
     temp = np.array([est.predict(xxx.reshape(-1,1),return_std = True) for est in _res['estimator']])
     y_mean = temp[:,0,:]
     y_std = temp[:,0,:]
     res_features['source'].append(source)
-    res_features['condition'].append(condition)
     res_features['slope'].append([item for item in coefficients])
-#    res_features['slope_std'].append(np.std(coefficients))
     res_features['intercept'].append([item for item in intercepts])
-#    res_features['intercept_std'].append(np.std(intercepts))
     res_features['pval'].append(pval)
     res_features['cv_score'].append(np.mean(_res['test_score']))
     res_features['y_mean'].append(y_mean.mean(0))
     res_features['y_std'].append(y_std.mean(0))
+    res_features['acc_train'].append(acc_train)
+    res_features['acc_test'].append(acc_test)
+    res_features['model'].append(model)
 res_scores = pd.DataFrame(res_scores)
 res_features = pd.DataFrame(res_features)
 res_slopes = pd.DataFrame(res_slopes)
 
 temp = []
-for condition,df_sub in res_scores.groupby(['condition']):
+for source,df_sub in res_scores.groupby(['source']):
     df_sub = df_sub.sort_values(['pval'])
     pvals = df_sub['pval'].values
     converter = utils.MCPConverter(pvals = pvals)
@@ -184,7 +176,7 @@ for condition,df_sub in res_scores.groupby(['condition']):
 res_scores = pd.concat(temp)
 
 temp = []
-for condition,df_sub in res_features.groupby(['condition']):
+for source,df_sub in res_features.groupby(['source']):
     df_sub = df_sub.sort_values(['pval'])
     pvals = df_sub['pval'].values
     converter = utils.MCPConverter(pvals = pvals)
@@ -192,12 +184,6 @@ for condition,df_sub in res_features.groupby(['condition']):
     df_sub['p_corrected'] = d['bonferroni'].values
     temp.append(df_sub)
 res_features = pd.concat(temp)
-
-temp = np.concatenate(res_slopes['condition'].apply(lambda x:np.array(x.split('_'))).values).reshape(-1,4)
-res_slopes['model'] = temp[:,0]
-res_slopes['accuracy_train'] = temp[:,2]
-res_slopes['accuracy_test'] = temp[:,3]
-
 
 res_scores['stars'] = res_scores['p_corrected'].apply(utils.stars)
 res_scores.to_csv(os.path.join(stats_dir,'scores.csv'),index = False)

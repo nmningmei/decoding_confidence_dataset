@@ -13,6 +13,8 @@ from glob import glob
 
 from tensorflow.keras.utils import to_categorical
 from sklearn.linear_model import SGDClassifier
+from sklearn.preprocessing import StandardScaler
+from sklearn.pipeline import make_pipeline
 
 import numpy  as np
 import pandas as pd
@@ -72,10 +74,12 @@ for acc_trial_train in [0,1]:
     
     
     model = SGDClassifier(loss = 'log',alpha = 1e-2,n_jobs = -1,random_state = 12345,class_weight = 'balanced')
+    model = make_pipeline(StandardScaler(),model)
     model.fit(X_,Y_)
     
     print(f'get {property_name}')
-    properties = model.coef_.mean(0)
+    properties = model.steps[-1][-1].coef_.mean(0)
+    
     # the for-loop does not mean any thing, we only take the last step/output of the for-loop
     # for train,valid in StratifiedShuffleSplit(test_size = 0.2,
     #                                                   random_state = 12345).split(X_,Y_,Z_):
@@ -116,8 +120,6 @@ for acc_trial_train in [0,1]:
         y_test           = to_categorical(y_test - 1, num_classes = confidence_range)
         
         preds_test  = softmax(model.predict_proba(X_test),axis = -1)
-        print(f'get {property_name}')
-        properties = model.coef_.mean(0)
         
         for acc_trial_test in [0,1]:
             _idx_test, = np.where(acc_test == acc_trial_test)
