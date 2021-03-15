@@ -106,12 +106,12 @@ _df_plot = pd.melt(df_plot,id_vars = [item for item in df_plot.columns if ('T' n
                   var_name = ['Time'],
                   value_name = 'Weights')
 
-fig,axes = plt.subplots(figsize = (16 * 2,7 * 3),
-                        ncols = 2,
+fig,axes = plt.subplots(figsize = (16,7 * 3),
+                        # ncols = 2,
                         nrows = 3,
                         sharey = False,
                         )
-for ax,((source,acc_train),df_sub_plot) in zip(axes.flatten(),_df_plot.groupby(['source','acc_train'])):
+for ax,((source),df_sub_plot) in zip(axes.flatten(),_df_plot.groupby(['source'])):
     # ax = sns.violinplot(x = 'Time',
     #                  y = 'Weights',
     #                  data = df_sub_plot,
@@ -122,7 +122,7 @@ for ax,((source,acc_train),df_sub_plot) in zip(axes.flatten(),_df_plot.groupby([
                         y = 'Weights',
                         data = df_sub_plot,
                         ax = ax,
-                        hue = xargs['hue'],
+                        hue = 'acc_train',
                         hue_order = xargs['hue_order'],
                         dodge = 0.4,
                         palette = 'dark',
@@ -132,25 +132,27 @@ for ax,((source,acc_train),df_sub_plot) in zip(axes.flatten(),_df_plot.groupby([
                         ci = 95,
                         scale = 0.75,
                         )
-    asdf
+    
     ###########################################################################
     df_sub_plot['x'] = df_sub_plot['Time'].map({f'T-{7-ii}':ii for ii in range(7)})
     df_sub_plot = df_sub_plot.sort_values(['acc_test'])
-    df_stat_features_sub = df_stat_features[np.logical_and(
-                            df_stat_features['source'] == source,
-                            df_stat_features['acc_train'] == acc_train
-                            )]
+    df_stat_features_sub = df_stat_features[#np.logical_and(
+                            df_stat_features['source'] == source#,
+                            # df_stat_features['acc_train'] == acc_train
+                            # )
+        ]
     df_stat_features_sub = df_stat_features_sub.sort_values(['acc_test'])
-    df_stat_slope_sub = df_stat_slope[np.logical_and(
-                            df_stat_slope['source'] == source,
-                            df_stat_slope['acc_train'] == acc_train
-                            )]
+    df_stat_slope_sub = df_stat_slope[#np.logical_and(
+                            df_stat_slope['source'] == source#,
+                            # df_stat_slope['acc_train'] == acc_train
+                            # )
+        ]
     df_stat_slope_sub = df_stat_slope_sub.sort_values(['acc_test'])
     
     for (_condition,df_sub_plot_sub),(_,df_stat_features_sub_sub),(_,df_stat_slope_sub_sub),_color in zip(
-                            df_sub_plot.groupby(['acc_test']),
-                            df_stat_features_sub.groupby(['acc_test']),
-                            df_stat_slope_sub.groupby(['acc_test']),
+                            df_sub_plot.groupby(['acc_train']),
+                            df_stat_features_sub.groupby(['acc_train']),
+                            df_stat_slope_sub.groupby(['acc_train']),
                             xargs['palette']):
         x_vals = df_sub_plot_sub['x'].values
         xxx = np.linspace(0,6,1000)
@@ -173,9 +175,10 @@ for ax,((source,acc_train),df_sub_plot) in zip(axes.flatten(),_df_plot.groupby([
     ###########################################################################
     ax.set(xlabel = '',
            ylabel = 'Feature importance',
-           title = f'{source}, n_sample = {int(x_vals.shape[0])}',
+           title = f'{source},',
            xticklabels = [],
-           ylim = (-0.1,0.2,))
+           # ylim = (-0.1,0.2,),
+           )
     handles,labels = ax.get_legend_handles_labels()
     ax.get_legend().remove()
 ax.set(xlabel = 'Time Steps',xticklabels = [f'T-{7-ii}' for ii in range(7)])
@@ -184,16 +187,16 @@ fig.legend(handles[-2:],
            loc = (0.12,0.55),
            title = '',
            borderaxespad = 1.)
-fig.savefig(os.path.join(figure_dir,'features.jpg'),
-          bbox_inches = 'tight')
-
+# fig.savefig(os.path.join(figure_dir,'features.jpg'),
+#           bbox_inches = 'tight')
+asfd
 fig,axes = plt.subplots(figsize = (12,6 * 3),
                         nrows = 3,
                         sharey = False,)
 for ii,((source,df_stat_slope_sub),ax) in enumerate(zip(
                                         df_stat_slope.groupby(['source']),
                                         axes.flatten())):
-    ax = sns.stripplot(x = 'acc',
+    ax = sns.stripplot(x = 'acc_train',
                        y = 'slope',
                        data = df_stat_slope_sub,
                        ax = ax,

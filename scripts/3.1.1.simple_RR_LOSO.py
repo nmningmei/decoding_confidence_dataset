@@ -18,11 +18,13 @@ import pandas as pd
 from utils import check_column_type,scoring_func
 
 from sklearn.model_selection import LeaveOneGroupOut,StratifiedShuffleSplit
-from sklearn.preprocessing   import StandardScaler
-from sklearn.pipeline        import make_pipeline
 from sklearn.utils           import shuffle as util_shuffle
-from sklearn.linear_model    import SGDClassifier
+from sklearn.svm import LinearSVC
+from sklearn.calibration import CalibratedClassifierCV
+from sklearn.preprocessing import StandardScaler
+from sklearn.pipeline import make_pipeline
 from scipy.special           import softmax
+
 experiment          = ['confidence','LOO','regression']
 data_dir            = '../data'
 model_dir           = f'../models/{experiment[1]}_{experiment[2]}'
@@ -58,73 +60,64 @@ if not os.path.exists(saving_dir):
     os.makedirs(saving_dir)
 print(csv_name)
 
-if not os.path.exists(csv_name):
-    results             = dict(
-                               fold             = [],
-                               score            = [],
-                               n_sample         = [],
-                               source           = [],
-                               sub_name         = [],
-                               accuracy_train   = [],
-                               accuracy_test    = [],
-                               )
-    for ii in range(time_steps):
-        results[f'{property_name} T-{time_steps - ii}'] = []
-    get_folds = []
-else:
-    results = pd.read_csv(csv_name)
-    get_folds = pd.unique(results['fold'])
-    results = {col_name:list(results[col_name].values) for col_name in results.columns}
+results             = dict(
+                           fold             = [],
+                           score            = [],
+                           n_sample         = [],
+                           source           = [],
+                           sub_name         = [],
+                           accuracy_train   = [],
+                           accuracy_test    = [],
+                           )
+for ii in range(time_steps):
+    for jj in range(confidence_range):
+        results[f'{property_name} T-{time_steps - ii} C-{jj}'] = []
 
 for fold,(train_,test) in enumerate(cv.split(features,targets,groups=groups)):
-    model_name  = os.path.join(model_dir,f'LOO_{kk}_fold{fold + 1}.h5')
-    print(model_name)
-    if fold not in get_folds:
-        # leave out test data
-        X_,y_           = features[train_],targets[train_]
-        X_test, y_test  = features[test]  ,targets[test]
-        acc_test        = accuraies[test]
-        acc_train_      = accuraies[train_]
+    # leave out test data
+    X_,y_           = features[train_],targets[train_]
+    X_test, y_test  = features[test]  ,targets[test]
+    acc_test        = accuraies[test]
+    acc_train_      = accuraies[train_]
+    
+    # make sure processing the X_test and y_test only once
+    # X_test  = to_categorical(X_test  - 1, num_classes = confidence_range).reshape(-1,time_steps*confidence_range)
+    y_test  = to_categorical(y_test  - 1, num_classes = confidence_range)
+    
+    # split into train and validation data
+    np.random.seed(12345)
+    X_,y_ = util_shuffle(X_,y_)
+    for acc_trial_train in [0,1]:
+        _idx, = np.where(acc_train_ == acc_trial_train)
         
-        # make sure processing the X_test and y_test only once
-        # X_test  = to_categorical(X_test  - 1, num_classes = confidence_range).reshape(-1,time_steps*confidence_range)
-        y_test  = to_categorical(y_test  - 1, num_classes = confidence_range)
+        svc = LinearSVC(class_weight='balanced',random_state = 12345)
+        model = CalibratedClassifierCV(svc,cv = 5)
+        model = make_pipeline(StandardScaler(),model)
+        model.fit(X_,y_)
+        preds_test  = model.predict_proba(X_test)
         
-        # split into train and validation data
-        np.random.seed(12345)
-        X_,y_ = util_shuffle(X_,y_)
-        for acc_trial_train in [0,1]:
-            _idx, = np.where(acc_train_ == acc_trial_train)
-            
-            
-            model = SGDClassifier(loss = 'log',alpha = 1e-2,n_jobs = -1,random_state = 12345,class_weight = 'balanced')
-            model = make_pipeline(StandardScaler(),model)
-            model.fit(X_,y_)
-            preds_test  = softmax(model.predict_proba(X_test),1)
-            
-            print(f'get {property_name}')
-            properties = model.steps[-1][-1].coef_.mean(0)
-            
-            
-            print('on test')
-            for acc_trial_test in [0,1]:
-                _idx_test, = np.where(acc_test == acc_trial_test)
-                preds_test  = softmax(model.predict_proba(X_test[_idx_test]),1)
-                if len(_idx_test) > 1:
-                    score_test = scoring_func(y_test[_idx_test],preds_test[_idx_test],
-                                              confidence_range = confidence_range)
-                    
-                    print('{:.3f}_{:.3f}_{:.3f}_{:.3f}_{:.3f}_{:.3f}_{:.3f}_'.format(*list(properties)))
-                    print(score_test)
-                    results['fold'].append(fold)
-                    results['score'].append(np.mean(score_test))
-                    results['n_sample'].append(X_test[_idx_test].shape[0])
-                    results['source'].append('same')
-                    results['sub_name'].append(np.unique(groups[test])[0])
-                    results['accuracy_train'].append(acc_trial_train)
-                    results['accuracy_test'].append(acc_trial_test)
-                    [results[f'{property_name} T-{time_steps - ii}'].append(properties[ii]) for ii in range(time_steps)]
-                    
+        print(f'get {property_name}')
+        properties = np.concatenate([est.base_estimator.coef_[np.newaxis] for est in model.steps[-1][-1].calibrated_classifiers_]).mean(0)
+        
+        print('on test')
+        for acc_trial_test in [0,1]:
+            _idx_test, = np.where(acc_test == acc_trial_test)
+            if len(_idx_test) > 1:
+                score_test = scoring_func(y_test[_idx_test],preds_test[_idx_test],
+                                          confidence_range = confidence_range,
+                                          need_normalize=True)
+                
+                print(score_test)
+                results['fold'].append(fold)
+                results['score'].append(np.mean(score_test))
+                results['n_sample'].append(X_test[_idx_test].shape[0])
+                results['source'].append('same')
+                results['sub_name'].append(np.unique(groups[test])[0])
+                results['accuracy_train'].append(acc_trial_train)
+                results['accuracy_test'].append(acc_trial_test)
+                [results[f'{property_name} T-{time_steps - ii} C-{jj}'].append(
+                        properties[jj,ii]
+                        ) for ii in range(time_steps) for jj in range(confidence_range)]
         gc.collect()
         
         results_to_save = pd.DataFrame(results)
