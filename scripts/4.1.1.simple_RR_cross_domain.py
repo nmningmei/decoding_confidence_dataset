@@ -25,7 +25,7 @@ from utils import scoring_func
 from functools import partial
 from scipy.special import softmax
 
-experiment          = ['confidence','cross_domain','regression']
+experiment          = ['adequacy','cross_domain','regression']
 property_name       = 'weight' # or hidden states or weight
 data_dir            = '../data/'
 model_dir           = os.path.join('../models',experiment[0],experiment[1],)

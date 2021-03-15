@@ -34,8 +34,8 @@ for _key in ['confidence','adequacy']:
         copyfile('utils.py',os.path.join(bash_folder,'utils.py'))
     
     add = """from shutil import copyfile
-    copyfile('../utils.py','utils.py')
-    
+copyfile('../utils.py','utils.py')
+
     """
     
     collections = []
@@ -77,7 +77,7 @@ pwd
 echo {filename}
 
 python "{template.replace('.py',f'_{ii+1}.py')}"
-        """
+"""
         with open(new_batch_script_name,'w') as f:
             f.write(content)
             f.close()
