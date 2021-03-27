@@ -49,7 +49,7 @@ df = pd.concat(df)
 ylim    = {'confidence':(0.45,0.9),
            'adequacy':(0.3,0.9)}[experiment]
 confidence_range= 4
-time_steps      = [f'T-{7-ii}' for ii in range(7)]
+time_steps      = np.array([f'T-{7-ii}' for ii in range(7)])
 dict_rename     = {0:'Incorrect trials',1:'Correct trials'}
 xargs           = dict(hue          = 'accuracy_test',
                        hue_order    = ['Correct trials','Incorrect trials',],
@@ -146,39 +146,46 @@ g.savefig(os.path.join(figures_dir,'scores.jpg'),
           dpi = 300,
           bbox_inches = 'tight')
 
+fig,axes = plt.subplots(figsize = (10*2,6),
+                        ncols = 2,
+                        )
 # get the weights of the regression model
 df_reg = df_ave[df_ave['decoder'] == decoder]
-weights = df_reg[[col for col in df_reg.columns if ('weight' in col)]].values
-w = np.concatenate([[w.reshape(7,-1).T] for w in weights])
+for idx_ax,((acc_train),df_sub) in enumerate(df_reg.groupby(['accuracy_train'])):
+    ax = axes.flatten()[idx_ax]
+    weights = df_sub[[col for col in df_sub.columns if ('weight' in col)]].values
+    w = np.concatenate([[w.reshape(7,-1).T] for w in weights])
 
-# plot the weights
-fig,ax = plt.subplots(figsize = (10,6))
-colors = ['blue','orange','green','red']
-for ii in range(confidence_range):
-    weight_for_plot = w[:,ii,:]
-    w_mean = weight_for_plot.mean(0)
-    w_std = weight_for_plot.std(0)
-    ax.plot(time_steps,
-            w_mean,
-            color = colors[ii],
-            alpha = 1.,
-            )
-    ax.fill_between(time_steps,
-                    w_mean + w_std,
-                    w_mean - w_std,
-                    color = colors[ii],
-                    alpha = .5,
-                    label = f'confidence {ii+1}')
-ax.legend(loc = 'upper left')
-ax.set(title = '',
-       ylabel = 'Weight (A.U)',
-       xlabel = 'Trial')
+    # plot the weights
+
+    colors = ['blue','orange','green','red']
+    for ii in range(confidence_range):
+        weight_for_plot = w[:,ii,:]
+        w_mean = weight_for_plot.mean(0)
+        w_std = weight_for_plot.std(0)
+        ax.plot(time_steps,
+                w_mean,
+                color = colors[ii],
+                alpha = 1.,
+                )
+        ax.fill_between(time_steps,
+                        w_mean + w_std,
+                        w_mean - w_std,
+                        color = colors[ii],
+                        alpha = .5,
+                        label = f'confidence {ii+1}')
+    ax.legend(loc = 'upper left')
+    ax.set(title = f'train on {acc_train}',
+           ylabel = 'Weight (A.U)',
+           xlabel = 'Trial')
 fig.savefig(os.path.join(figures_dir,'features.jpg'),
             dpi = 300,
             bbox_inches = 'tight')
 
+x = np.vstack([np.arange(7) for _ in range(features.shape[0])])
 # fit a regression to show the linear trend of the weights
-
+for ii in range(confidence_range):
+    weight_for_fit = w[:,ii,:]
 
 
 
