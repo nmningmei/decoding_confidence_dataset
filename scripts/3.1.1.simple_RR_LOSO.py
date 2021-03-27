@@ -93,7 +93,7 @@ for fold,(train_,test) in enumerate(cv.split(features,targets,groups=groups)):
         svc = LinearSVC(class_weight='balanced',random_state = 12345)
         model = CalibratedClassifierCV(svc,cv = 5)
         model = make_pipeline(StandardScaler(),model)
-        model.fit(X_,y_)
+        model.fit(X_[_idx],y_[_idx])
         preds_test  = model.predict_proba(X_test)
         
         print(f'get {property_name}')

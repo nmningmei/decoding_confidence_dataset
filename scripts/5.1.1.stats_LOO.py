@@ -1,262 +1,183 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Created on Wed Jan  6 06:34:36 2021
+Created on Sat Mar 27 12:36:16 2021
 
-@author: nmei
+@author: ning
+
+statistics of the results
+
 """
 
 import os
+import re
 import gc
 import utils
 
-import numpy as np
-import pandas as pd
-
 from glob import glob
-from sklearn.preprocessing import MinMaxScaler as scaler
-from sklearn.preprocessing import RobustScaler
-from sklearn import linear_model
-from sklearn.pipeline import make_pipeline
-from sklearn.model_selection import (LeaveOneGroupOut,
-                                     permutation_test_score,
-                                     cross_validate)
-from itertools import combinations
 
+import numpy   as np
+import pandas  as pd
+import seaborn as sns
 
-experiment = 'adequacy' # confidence or adequacy
-_decoder = 'regression'
-working_dir = f'../results/{experiment}/LOO/'
-stats_dir = f'../stats/{experiment}/LOO_compare_RNN_RF/'
+from matplotlib import pyplot as plt
+
+sns.set_style('whitegrid')
+sns.set_context('poster')
+
+experiment  = 'confidence' # confidence or adequacy
+cv_type     = 'LOO' # LOO or cross_domain
+decoder     = 'regression' #
+working_dir = f'../results/{experiment}/{cv_type}/'
+stats_dir   = f'../stats/{experiment}/{cv_type}'
+figures_dir = f'../stats/{experiment}/{cv_type}'
 if not os.path.exists(stats_dir):
     os.makedirs(stats_dir)
-working_data = np.sort(glob(os.path.join(working_dir,'*.csv')))
+if not os.path.exists(figures_dir):
+    os.makedirs(figures_dir)
 
 df = []
-for f in working_data:
-    temp = pd.read_csv(f)
-    decoder = f.split('/')[-1].split(' ')[0]
-    experiment = f.split('/')[-1].split('(')[-1].split(')')[0]
-    temp['model'] = decoder
-    temp['experiment'] = experiment
-    col_to_rename = [item for item in temp.columns if ('T-' in item)]
-    rename_mapper = {item:f'{item.split(" ")[-1]}' for item in col_to_rename}
-    temp = temp.rename(columns = rename_mapper)
-    if True:#decoder == _decoder:
-    # normalize with each decoding
-#    temp_array = temp[[item for item in temp.columns if ('T-' in item)]].values
-#    if decoder == 'RNN':
-#        temp_array = np.abs(temp_array)
-#    temp_array = scaler().fit_transform(temp_array.T)
-#    temp[[item for item in temp.columns if ('T-' in item)]] = temp_array.T
-        df.append(temp)
+for f in glob(os.path.join(working_dir,'*csv')):
+    temp            = pd.read_csv(f)
+    study_name      = re.findall('\(([^)]+)',f)[0]
+    temp['study_name'] = study_name
+    temp['decoder'] = f.split('/')[-1].split(' ')[0]
+    df.append(temp)
 df = pd.concat(df)
 
-df_plot = df[df['source'] != 'train']
+# common settings
+ylim    = {'confidence':(0.45,0.9),
+           'adequacy':(0.3,0.9)}[experiment]
+confidence_range= 4
+time_steps      = [f'T-{7-ii}' for ii in range(7)]
+dict_rename     = {0:'Incorrect trials',1:'Correct trials'}
+xargs           = dict(hue          = 'accuracy_test',
+                       hue_order    = ['Correct trials','Incorrect trials',],
+                       split        = True,
+                       inner        = 'quartile',
+                       cut          = 0,
+                       scale        = 'width',
+                       palette      = ['deepskyblue','tomato'],
+                       )
 
-# further process the data for plotting
-df_plot['acc_train']  = df_plot['accuracy_train'].map({0:'incorrect',1:'correct'})
-df_plot['acc_test'] = df_plot['accuracy_test'].map({0:'incorrect',1:'correct'})
-df_plot['condition'] = df_plot['model'] + '_' + df_plot['acc_train'] + '_' + df_plot['acc_test']
+for col_name in ['accuracy_train','accuracy_test']:
+    df[col_name] = df[col_name].map(dict_rename)
 
-res_scores = dict(experiment = [],
-                  condition = [],
-                  score_mean = [],
-                  score_std = [],
-                  pval = [],
-                  )
-res_features = dict(experiment = [],
-                    condition = [],
-                    slope = [],
-                    intercept = [],
-#                    slope_mean = [],
-#                    slope_std = [],
-#                    intercept_mean = [],
-#                    intercept_std = [],
-                    cv_score = [],
-                    pval = [],
-#                    y_mean = [],
-#                    y_std = [],
-                    )
-res_slopes = dict(experiment = [],
-                  condition = [],
-                  slope = [],
-                  intercept = [],
-                  pval = [],)
-for (experiment,condition),df_sub in df_plot.groupby(['experiment','condition']):
-    # on the scores: compare against to theorectial chance level
+# averge within each study
+df_ave = df.groupby(['decoder',
+                     'study_name',
+                     'accuracy_train',
+                     'accuracy_test']).mean().reset_index()
+df_ave.to_csv(os.path.join(stats_dir,'scores.csv'),index = False)
+
+# significance of scores
+np.random.seed(12345)
+results = dict(accuracy_train   = [],
+               accuracy_test    = [],
+               score_mean       = [],
+               score_std        = [],
+               ps               = [],
+               decoder          = [],
+               )
+for (_decoder,acc_train,acc_test),df_sub in df_ave.groupby(['decoder','accuracy_train','accuracy_test']):
     scores = df_sub['score'].values
+    
     gc.collect()
     ps = utils.resample_ttest(scores,
-                              0.5,
-                              one_tail = True,
-                              n_permutation = int(1e5),
-                              n_jobs = -1,
-                              verbose = 0,)
+                              baseline      = .5,
+                              n_ps          = 100,
+                              n_permutation = int(1e4),
+                              n_jobs        = -1,
+                              verbose       = 1,
+                              )
     gc.collect()
-    res_scores['experiment'].append(experiment)
-    res_scores['condition'].append(condition)
-    res_scores['score_mean'].append(np.mean(scores))
-    res_scores['score_std'].append(np.std(scores))
-    res_scores['pval'].append(np.mean(ps))
     
-    # on the feature contributions
-    features = df_sub[[f'T-{7 - ii}' for ii in range(7)]].values
-#    features = np.abs(features)
-    xx = np.vstack([np.arange(7) for _ in range(features.shape[0])])
-    groups = np.repeat(np.arange(features.shape[0]),7)
-    cv = LeaveOneGroupOut()
+    results['accuracy_train'].append(acc_train)
+    results['accuracy_test' ].append(acc_test)
+    results['score_mean'    ].append(np.mean(scores))
+    results['score_std'     ].append(np.std(scores))
+    results['ps'            ].append(np.mean(ps))
+    results['decoder'       ].append(_decoder)
+results = pd.DataFrame(results)
+
+temp = []
+for (_decoder),df_sub in results.groupby(['decoder']):
+    df_sub                  = df_sub.sort_values(['ps'])
+    pvals                   = df_sub['ps'].values
+    converter               = utils.MCPConverter(pvals = pvals)
+    d                       = converter.adjust_many()
+    df_sub['ps_corrected']  = d['bonferroni'].values
+    temp.append(df_sub)
+results             = pd.concat(temp)
+results['stars']    = results['ps_corrected'].apply(utils.stars)
+
+# plot scores
+g = sns.catplot(x           = 'accuracy_train',
+                y           = 'score',
+                col         = 'decoder',
+                col_order   = ['regression','RNN'],
+                data        = df_ave,
+                kind        = 'violin',
+                aspect      = 1.5,
+                **xargs)
+(g.set_axis_labels("Training data","ROC AUC")
+  .set(ylim = ylim))
+[ax.set_title(title) for ax,title in zip(g.axes.flatten(),['Ridge regression','Recurrent neural network'])]
+[ax.axhline(0.5,linestyle = '--',alpha = .7,color = 'black') for ax in g.axes.flatten()]
+g._legend.set_title("Testing data")
+## add stars
+for ax,_decoder in zip(g.axes.flatten(),['regression','RNN']):
+    df_sub = results[results['decoder'] == _decoder]
+    df_sub = df_sub.sort_values(['accuracy_train','accuracy_test'])
+    xtick_order = list(ax.xaxis.get_majorticklabels())
     
-    # a regularized linear regression
-#    pipeline = linear_model.RidgeCV(alphas = np.logspace(-9,9,19),
-#                                    scoring = 'neg_mean_squared_error',
-#                                    cv = None,# set to None for efficient LOO algorithm
-#                                    )
-    pipeline = linear_model.BayesianRidge(fit_intercept = True)
-    # permutation test to get p values
-    _score,_,pval_slope = permutation_test_score(pipeline,xx.reshape(-1,1),features.reshape(-1,1).ravel(),
-                                          cv = cv,
-                                          groups = groups,
-                                          n_jobs = -1,
-                                          random_state = 12345,
-                                          n_permutations = int(1e4),
-                                          scoring = 'neg_mean_squared_error',
-                                          verbose = 1,
-                                          )
-    # cross validation to get the slopes and intercepts
-    gc.collect()
-    _res = cross_validate(pipeline,xx.reshape(-1,1),features.reshape(-1,1).ravel(),
-                          groups = groups,
-                          cv = cv,
-                          n_jobs = -1,
-                          verbose = 1,
-                          scoring = 'neg_mean_squared_error',
-                          return_estimator = True,
-                          )
-    gc.collect()
-    coefficients = np.array([est.coef_[0] for est in _res['estimator']])
-    intercepts = np.array([est.intercept_ for est in _res['estimator']])
-    # pval = utils.resample_ttest(coefficients,
-    #                             baseline = 0,
-    #                             n_ps = 10,
-    #                             n_permutation = int(1e5),
-    #                             one_tail = True,
-    #                             n_jobs = -1,
-    #                             verbose = 1,)
-    # save
-    for coef,interc in zip(coefficients,intercepts):
-        res_slopes['experiment'].append(experiment)
-        res_slopes['condition'].append(condition)
-        res_slopes['slope'].append(coef)
-        res_slopes['intercept'].append(interc)
-        res_slopes['pval'].append(pval_slope)
-    intercepts = np.array([est.intercept_ for est in _res['estimator']])
-#    xxx = np.linspace(0,6,1000)
-#    temp = np.array([est.predict(xxx.reshape(-1,1),) for est in _res['estimator']])
-#    y_mean = temp[:,0,:]
-#    y_std = temp[:,0,:]
-    res_features['experiment'].append(experiment)
-    res_features['condition'].append(condition)
-    res_features['slope'].append([item for item in coefficients])
-#    res_features['slope_std'].append(np.std(coefficients))
-    res_features['intercept'].append([item for item in intercepts])
-#    res_features['intercept_std'].append(np.std(intercepts))
-    res_features['pval'].append(pval_slope)
-    res_features['cv_score'].append(np.mean(_res['test_score']))
-#    res_features['y_mean'].append(y_mean.mean(0))
-#    res_features['y_std'].append(y_std.mean(0))
-res_scores = pd.DataFrame(res_scores)
-res_features = pd.DataFrame(res_features)
-res_slopes = pd.DataFrame(res_slopes)
+    for ii,text_obj in enumerate(xtick_order):
+        position        = text_obj.get_position()
+        xtick_label     = text_obj.get_text()
+        df_sub_stats    = df_sub[df_sub['accuracy_train'] == xtick_label].sort_values(['accuracy_test'])
+        for (jj,temp_row),adjustment in zip(df_sub_stats.iterrows(),[-0.125,0.125]):
+            if '*' in temp_row['stars']:
+                print(temp_row['stars'])
+                ax.annotate(temp_row['stars'],
+                            xy          = (ii + adjustment,.85),
+                            ha          = 'center',
+                            fontsize    = 14)
+g.savefig(os.path.join(figures_dir,'scores.jpg'),
+          dpi = 300,
+          bbox_inches = 'tight')
 
-temp = []
-for condition,df_sub in res_scores.groupby(['condition']):
-    df_sub = df_sub.sort_values(['pval'])
-    pvals = df_sub['pval'].values
-    converter = utils.MCPConverter(pvals = pvals)
-    d = converter.adjust_many()
-    df_sub['p_corrected'] = d['bonferroni'].values
-    temp.append(df_sub)
-res_scores = pd.concat(temp)
+# get the weights of the regression model
+df_reg = df_ave[df_ave['decoder'] == decoder]
+weights = df_reg[[col for col in df_reg.columns if ('weight' in col)]].values
+w = np.concatenate([[w.reshape(7,-1).T] for w in weights])
 
-temp = []
-for condition,df_sub in res_features.groupby(['condition']):
-    df_sub = df_sub.sort_values(['pval'])
-    pvals = df_sub['pval'].values
-    converter = utils.MCPConverter(pvals = pvals)
-    d = converter.adjust_many()
-    df_sub['p_corrected'] = d['bonferroni'].values
-    temp.append(df_sub)
-res_features = pd.concat(temp)
+# plot the weights
+fig,ax = plt.subplots(figsize = (10,6))
+colors = ['blue','orange','green','red']
+for ii in range(confidence_range):
+    weight_for_plot = w[:,ii,:]
+    w_mean = weight_for_plot.mean(0)
+    w_std = weight_for_plot.std(0)
+    ax.plot(time_steps,
+            w_mean,
+            color = colors[ii],
+            alpha = 1.,
+            )
+    ax.fill_between(time_steps,
+                    w_mean + w_std,
+                    w_mean - w_std,
+                    color = colors[ii],
+                    alpha = .5,
+                    label = f'confidence {ii+1}')
+ax.legend(loc = 'upper left')
+ax.set(title = '',
+       ylabel = 'Weight (A.U)',
+       xlabel = 'Trial')
+fig.savefig(os.path.join(figures_dir,'features.jpg'),
+            dpi = 300,
+            bbox_inches = 'tight')
 
-temp = np.concatenate(res_slopes['condition'].apply(lambda x:np.array(x.split('_'))).values).reshape(-1,3)
-res_slopes['model'] = temp[:,0]
-res_slopes['accuracy_train'] = temp[:,1]
-res_slopes['accuracy_test'] = temp[:,-1]
-
-temp = []
-for condition, df_sub in res_slopes.groupby(['condition']):
-    df_sub = df_sub.sort_values(['pval'])
-    pvals = df_sub['pval'].values
-    converter = utils.MCPConverter(pvals = pvals)
-    d = converter.adjust_many()
-    df_sub['p_corrected'] = d['bonferroni'].values
-    temp.append(df_sub)
-res_slopes = pd.concat(temp)
-
-# feature_comparison = dict(condition = [],
-#                           experiment = [],
-#                           pval = [],
-#                           slope_rf_mean = [],
-#                           slope_rf_std = [],
-#                           slope_rnn_mean = [],
-#                           slope_rnn_std = [],
-#                           )
-# for experiment,df_sub in res_slopes.groupby(['experiment']):
-#     for conditions in list(combinations(pd.unique(res_slopes['condition']),2)):
-#         a,b = conditions
-#         if a[:3] != b[:3]:
-#             for temp in conditions:
-#                 if 'RF' in temp:
-#                     rf = df_sub[df_sub['condition'] == temp]['slope'].values
-#                 else:
-#                     rnn = df_sub[df_sub['condition'] == temp]['slope'].values
-#             ps = utils.resample_ttest_2sample(rf,rnn,
-#                                               one_tail = False,
-#                                               match_sample_size = False,
-#                                               n_jobs = -1,
-#                                               n_ps = 2,
-#                                               n_permutation = int(1e5),
-#                                               verbose = 1)
-#             feature_comparison['experiment'].append(experiment)
-#             feature_comparison['condition'].append(f'{a}_{b}')
-#             feature_comparison['pval'].append(np.mean(ps))
-#             feature_comparison['slope_rf_mean'].append(rf.mean())
-#             feature_comparison['slope_rf_std'].append(rf.std())
-#             feature_comparison['slope_rnn_mean'].append(rf.mean())
-#             feature_comparison['slope_rnn_std'].append(rf.std())
-#             del rf
-#             del rnn
-# feature_comparison = pd.DataFrame(feature_comparison)
-
-res_scores['stars'] = res_scores['p_corrected'].apply(utils.stars)
-res_scores.to_csv(os.path.join(stats_dir,'scores.csv'),index = False)
-
-res_features['stars'] = res_features['p_corrected'].apply(utils.stars)
-res_features.to_csv(os.path.join(stats_dir,'features.csv'),index = False)
-
-res_slopes.to_csv(os.path.join(stats_dir,'slopes.csv'),index = False)
-
-# feature_comparison.to_csv(os.path.join(stats_dir,'slope_comparison.csv'),index = False)
-
-
-
-
-
-
-
-
-
+# fit a regression to show the linear trend of the weights
 
 
 
