@@ -9,8 +9,8 @@ import os
 import pandas as pd
 from shutil import copyfile
 
-template            = '3.1.1.simple_RR_LOSO.py'
-for _key in ['confidence','adequacy']:
+template            = '3.1.3.simple_SVM_LOSO_adequacy.py'
+for _key in ['adequacy']:
     experiment          = [_key,'LOO','regression']
     data_dir            = '../data'
     working_df_name     = os.path.join(data_dir,experiment[0],experiment[1],'all_data.csv')
