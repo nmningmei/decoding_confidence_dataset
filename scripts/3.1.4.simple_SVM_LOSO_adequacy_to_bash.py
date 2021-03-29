@@ -66,7 +66,7 @@ copyfile('../utils.py','utils.py')
 #PBS -l nodes={node}:ppn={core}
 #PBS -l mem={mem}gb
 #PBS -l cput={cput}:00:00
-#PBS -N LOSO_RF{ii+1}
+#PBS -N LOSO_{experiment}{ii+1}
 #PBS -o outputs/out_RF_{ii+1}.txt
 #PBS -e outputs/err_RF_{ii+1}.txt
 
