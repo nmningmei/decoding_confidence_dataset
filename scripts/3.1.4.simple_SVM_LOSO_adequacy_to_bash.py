@@ -66,9 +66,9 @@ copyfile('../utils.py','utils.py')
 #PBS -l nodes={node}:ppn={core}
 #PBS -l mem={mem}gb
 #PBS -l cput={cput}:00:00
-#PBS -N LOSO_{experiment}{ii+1}
-#PBS -o outputs/out_RF_{ii+1}.txt
-#PBS -e outputs/err_RF_{ii+1}.txt
+#PBS -N LOSO_{experiment[-1]}{ii+1}
+#PBS -o outputs/out_{experiment[-1]}_{ii+1}.txt
+#PBS -e outputs/err_{experiment[-1]}_{ii+1}.txt
 
 cd $PBS_O_WORKDIR
 export PATH="/scratch/ningmei/anaconda3/bin:/scratch/ningmei/anaconda3/condabin:$PATH"
