@@ -30,7 +30,7 @@ from sklearn.model_selection import (LeaveOneGroupOut,
 sns.set_style('whitegrid')
 sns.set_context('poster')
 
-experiment  = 'adequacy' # confidence or adequacy
+experiment  = 'confidence' # confidence or adequacy
 cv_type     = 'LOO' # LOO or cross_domain
 decoder     = 'regression' #
 working_dir = f'../results/{experiment}/{cv_type}/'
