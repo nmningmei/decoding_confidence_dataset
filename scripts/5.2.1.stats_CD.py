@@ -141,7 +141,7 @@ for ax_row,target_data in zip(g.axes,['cognitive','mem_4','mixed_4']):
 (g.set_axis_labels("Training data","ROC AUC")
   .set(ylim = ylim)
   .set_titles(''))
-# [ax.set_title(title) for ax,title in zip(g.axes.flatten(),['Ridge regression','Recurrent neural network'])]
+# [ax.set_title(title) for ax,title in zip(g.axes.flatten(),['Lnear support vector machine','Recurrent neural network'])]
 [ax.axhline(0.5,linestyle = '--',alpha = .7,color = 'black') for ax in g.axes.flatten()]
 g._legend.set_title("Testing data")
 

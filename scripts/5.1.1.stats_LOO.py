@@ -127,7 +127,7 @@ g = sns.catplot(x           = 'accuracy_train',
                 **xargs)
 (g.set_axis_labels("Training data","ROC AUC")
   .set(ylim = ylim))
-[ax.set_title(title) for ax,title in zip(g.axes.flatten(),['Ridge regression','Recurrent neural network'])]
+[ax.set_title(title) for ax,title in zip(g.axes.flatten(),['Lnear support vector machine','Recurrent neural network'])]
 [ax.axhline(0.5,linestyle = '--',alpha = .7,color = 'black') for ax in g.axes.flatten()]
 g._legend.set_title("Testing data")
 ## add stars
