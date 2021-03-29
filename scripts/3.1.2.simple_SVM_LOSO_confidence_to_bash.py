@@ -9,7 +9,7 @@ import os
 import pandas as pd
 from shutil import copyfile
 
-template            = '3.1.1.simple_RR_LOSO_confidence.py'
+template            = '3.1.1.simple_SVM_LOSO_confidence.py'
 for _key in ['confidence']:
     experiment          = [_key,'LOO','regression']
     data_dir            = '../data'
