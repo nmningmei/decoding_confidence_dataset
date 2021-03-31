@@ -62,15 +62,16 @@ for ii in range(time_steps):
 
 features    = df_source[[f"feature{ii + 1}" for ii in range(time_steps)]].values
 targets     = df_source["targets"].values.astype(int)
-groups      = df_source["sub"].values
+groups      = df_source["filename"].values
 accuracies  = df_source['accuracy'].values
+sec_groups  = df_source['sub'].values
 
 csv_saving_name     = os.path.join(result_dir,f'{experiment[-1]}_{experiment[0]} results.csv')
 
 csv_saving_name     = os.path.join(result_dir,f'{experiment[-1]}_{experiment[0]} results.csv')
 cv = LeaveOneGroupOut()
 for fold,(_,_train) in enumerate(cv.split(features,targets,groups = groups)):
-    X_,Y_,Z_ = features[_train],targets[_train],groups[_train]
+    X_,Y_,Z_ = features[_train],targets[_train],sec_groups[_train]
     # the for-loop does not mean any thing, we only take the last step/output of the for-loop
     for train,valid in StratifiedShuffleSplit(test_size = 0.2,random_state = 12345).split(X_,Y_,Z_):
         X_train,y_train,group_train,acc_train = X_[train],Y_[train],Z_[train],accuracies[train]
