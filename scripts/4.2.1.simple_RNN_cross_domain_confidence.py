@@ -48,7 +48,7 @@ df_target           = pd.read_csv(target_df_name)
 
 df_target['domain'] = df_target['filename'].apply(lambda x:x.split('/')[3].split('-')[0])
 
-results             = dict(
+results             = dict(fold             = [],
                            score            = [],
                            n_sample         = [],
                            source           = [],
@@ -126,6 +126,7 @@ for fold,(_,_train) in enumerate(cv.split(features,targets,groups = groups)):
                     score_test = scoring_func(y_test[_idx_test],preds_test,
                                               confidence_range = confidence_range)
                     print(score_test)
+                    results['fold'].append(fold)
                     results['score'].append(np.mean(score_test))
                     results['n_sample'].append(X_test[_idx_test].shape[0])
                     results['source'].append(target_domain)
