@@ -49,7 +49,7 @@ df = pd.concat(df)
 df_ave = df.groupby(['decoder','source','filename','fold','accuracy_train','accuracy_test']).mean().reset_index()
 
 # common settings
-ylim    = (0.1,1.1)
+ylim    = (0.35,.85)
 confidence_range= 4
 time_steps      = np.arange(7)
 dict_rename     = {0:'incorrect trials',1:'correct trials'}
@@ -138,7 +138,7 @@ for ax_row,target_data in zip(g.axes,['cognitive','mem_4','mixed_4']):
                 # print(temp_row['stars'])
                 if '*' in temp_row['stars']:
                     _ax.annotate(temp_row['stars'],
-                                xy          = (ii + adjustment,1.05),
+                                xy          = (ii + adjustment,0.83),
                                 ha          = 'center',
                                 fontsize    = 14)
 (g.set_axis_labels("Training data","ROC AUC")
