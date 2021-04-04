@@ -13,8 +13,8 @@
 - tensorflow:    2.0.0
 
 # Linear SVM
-<img src="https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Fimage.slideserve.com%2F867897%2Flinear-support-vector-machine-svm-l.jpg&f=1&nofb=1" width="50%" />
-source: https://www.kdnuggets.com
+<img src="https://image.slideserve.com/867897/linear-support-vector-machine-svm-l.jpg" width="50%" />
+source: https://image.slideserve.com/867897/linear-support-vector-machine-svm-l.jpg
 
 # RNN model - as an alternative model, but we do not perform model selection, so we would show the secondary statistics as we did for the random forest model
 <p float="left">
