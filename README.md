@@ -32,25 +32,15 @@ Confidence             |  Adequacy
 Confidence             |  Adequacy
 :-------------------------:|:-------------------------:
 ![cwf](https://github.com/nmningmei/decoding_confidence_dataset/blob/main/figures/confidence/LOO/features.jpg)  |  ![awf](https://github.com/nmningmei/decoding_confidence_dataset/blob/main/figures/adequacy/LOO/features.jpg)
-<!---
-## Trends of features (within domain)
-Confidence             |  Adequacy
-:-------------------------:|:-------------------------:
-![cwf](https://github.com/nmningmei/decoding_confidence_dataset/blob/main/figures/confidence/LOO_compare_RNN_RF/slopes.jpg)  |  ![awf](https://github.com/nmningmei/decoding_confidence_dataset/blob/main/figures/adequacy/LOO_compare_RNN_RF/slopes.jpg)
 
 ## Decoding scores (cross domain)
 Confidence             |  Adequacy
 :-------------------------:|:-------------------------:
-![ccs](https://github.com/nmningmei/decoding_confidence_dataset/blob/main/figures/confidence/CD/scores.jpg)  |  ![acs](https://github.com/nmningmei/decoding_confidence_dataset/blob/main/figures/adequacy/CD/scores.jpg)
+![ccs](https://github.com/nmningmei/decoding_confidence_dataset/blob/main/figures/confidence/cross_domain/scores.jpg)  |  ![acs](https://github.com/nmningmei/decoding_confidence_dataset/blob/main/figures/adequacy/cross_domain/scores.jpg)
 
 ## Feature attribution (cross domain)
 Confidence             |  Adequacy
 :-------------------------:|:-------------------------:
-![ccf](https://github.com/nmningmei/decoding_confidence_dataset/blob/main/figures/confidence/CD/features.jpg)  |  ![acf](https://github.com/nmningmei/decoding_confidence_dataset/blob/main/figures/adequacy/CD/features.jpg)
+![ccf](https://github.com/nmningmei/decoding_confidence_dataset/blob/main/figures/confidence/cross_domain/features.jpg)  |  ![acf](https://github.com/nmningmei/decoding_confidence_dataset/blob/main/figures/adequacy/cross_domain/features.jpg)
 
-## Trends of features (cross domain)
-Confidence             |  Adequacy
-:-------------------------:|:-------------------------:
-![cwf](https://github.com/nmningmei/decoding_confidence_dataset/blob/main/figures/confidence/CD/slopes.jpg)  |  ![awf](https://github.com/nmningmei/decoding_confidence_dataset/blob/main/figures/adequacy/CD/slopes.jpg)
 
--->
