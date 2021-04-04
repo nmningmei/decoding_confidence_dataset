@@ -16,23 +16,23 @@
 <img src="https://image.slideserve.com/867897/linear-support-vector-machine-svm-l.jpg" width="50%" />
 source: https://image.slideserve.com/867897/linear-support-vector-machine-svm-l.jpg
 
-# RNN model - as an alternative model, but we do not perform model selection, so we would show the secondary statistics as we did for the random forest model
+# RNN model - as an alternative model, but we do not perform model selection. An RNN model contains such prior: there exists temporal relationship between the features from consective time points and adding these relationships to the model would benefit the decoding. 
 <p float="left">
   <img src="https://github.com/nmningmei/decoding_confidence_dataset/blob/main/figures/RNN%20model%20confidence%20database.jpg" width="40%" /> <img src="https://github.com/nmningmei/decoding_confidence_dataset/blob/main/figures/external-content.duckduckgo.com.jpg" width="40%" />
 </p>
 
-<!---
-# Results - random forest model
+
+# Results
 ## Decoding scores (within domain)
 Confidence             |  Adequacy
 :-------------------------:|:-------------------------:
-![cws](https://github.com/nmningmei/decoding_confidence_dataset/blob/main/figures/confidence/LOO_compare_RNN_RF/scores.jpg)  |  ![aws](https://github.com/nmningmei/decoding_confidence_dataset/blob/main/figures/adequacy/LOO_compare_RNN_RF/scores.jpg)
+![cws](https://github.com/nmningmei/decoding_confidence_dataset/blob/main/figures/confidence/LOO/scores.jpg)  |  ![aws](https://github.com/nmningmei/decoding_confidence_dataset/blob/main/figures/adequacy/LOO/scores.jpg)
 
 ## Feature attribution (within domain)
 Confidence             |  Adequacy
 :-------------------------:|:-------------------------:
-![cwf](https://github.com/nmningmei/decoding_confidence_dataset/blob/main/figures/confidence/LOO_compare_RNN_RF/features.jpg)  |  ![awf](https://github.com/nmningmei/decoding_confidence_dataset/blob/main/figures/adequacy/LOO_compare_RNN_RF/features.jpg)
-
+![cwf](https://github.com/nmningmei/decoding_confidence_dataset/blob/main/figures/confidence/LOO/features.jpg)  |  ![awf](https://github.com/nmningmei/decoding_confidence_dataset/blob/main/figures/adequacy/LOO/features.jpg)
+<!---
 ## Trends of features (within domain)
 Confidence             |  Adequacy
 :-------------------------:|:-------------------------:
