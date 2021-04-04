@@ -11,11 +11,11 @@
 - sklearn:       0.23.2
 - pandas:        1.0.1
 - tensorflow:    2.0.0
-<!---
-# Random Forest model
-<img src="https://www.kdnuggets.com/wp-content/uploads/rand-forest-2.jpg" width="50%" />
+
+# Linear SVM
+<img src="https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Fimage.slideserve.com%2F867897%2Flinear-support-vector-machine-svm-l.jpg&f=1&nofb=1" width="50%" />
 source: https://www.kdnuggets.com
--->
+
 # RNN model - as an alternative model, but we do not perform model selection, so we would show the secondary statistics as we did for the random forest model
 <p float="left">
   <img src="https://github.com/nmningmei/decoding_confidence_dataset/blob/main/figures/RNN%20model%20confidence%20database.jpg" width="40%" /> <img src="https://github.com/nmningmei/decoding_confidence_dataset/blob/main/figures/external-content.duckduckgo.com.jpg" width="40%" />
