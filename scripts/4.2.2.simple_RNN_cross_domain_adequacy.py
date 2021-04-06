@@ -70,7 +70,7 @@ csv_saving_name     = os.path.join(result_dir,f'{experiment[-1]}_{experiment[0]}
 
 csv_saving_name     = os.path.join(result_dir,f'{experiment[-1]}_{experiment[0]} results.csv')
 cv = LeaveOneGroupOut()
-for fold,(_,_train) in enumerate(cv.split(features,targets,groups = groups)):
+for fold,(_train,_) in enumerate(cv.split(features,targets,groups = groups)):
     X_,Y_,Z_ = features[_train],targets[_train],sec_groups[_train]
     # the for-loop does not mean any thing, we only take the last step/output of the for-loop
     for train,valid in StratifiedShuffleSplit(test_size = 0.2,random_state = 12345).split(X_,Y_,Z_):
