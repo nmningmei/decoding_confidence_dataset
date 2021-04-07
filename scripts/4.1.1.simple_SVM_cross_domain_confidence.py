@@ -71,7 +71,7 @@ accuracies  = df_source['accuracy'].values
 
 csv_saving_name     = os.path.join(result_dir,f'{experiment[-1]}_{experiment[0]} results.csv')
 cv = LeaveOneGroupOut()
-for fold,(_,train) in enumerate(cv.split(features,targets,groups = groups)):
+for fold,(train,_) in enumerate(cv.split(features,targets,groups = groups)):
     for acc_trial_train in [0,1]:
         _idx_train, = np.where(accuracies[train] == acc_trial_train)
         X_,Y_,Z_ = features[train][_idx_train],targets[train][_idx_train],groups[train][_idx_train]
