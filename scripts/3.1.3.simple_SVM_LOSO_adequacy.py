@@ -15,17 +15,16 @@ from tensorflow.keras.utils import to_categorical
 import numpy  as np
 import pandas as pd
 
-from utils import check_column_type,scoring_func
+from utils import check_column_type,scoring_func,get_properties
 
-from sklearn.model_selection import LeaveOneGroupOut,StratifiedShuffleSplit
+from sklearn.model_selection import LeaveOneGroupOut
 from sklearn.utils           import shuffle as util_shuffle
-from sklearn.svm import LinearSVC
-from sklearn.calibration import CalibratedClassifierCV
-from sklearn.preprocessing import StandardScaler
-from sklearn.pipeline import make_pipeline
-from scipy.special           import softmax
+from sklearn.svm             import LinearSVC
+from sklearn.calibration     import CalibratedClassifierCV
+from sklearn.preprocessing   import StandardScaler
+from sklearn.pipeline        import make_pipeline
 
-experiment          = ['adequacy','LOO','regression']
+experiment          = ['adequacy','LOO','SVM']
 data_dir            = '../data'
 model_dir           = f'../models/{experiment[1]}_{experiment[2]}'
 working_dir         = '../data/4-point'
@@ -95,7 +94,7 @@ for fold,(train_,test) in enumerate(cv.split(features,targets,groups=groups)):
     preds_test  = model.predict_proba(X_test)
     
     print(f'get {property_name}')
-    properties = np.concatenate([est.base_estimator.coef_[np.newaxis] for est in model.steps[-1][-1].calibrated_classifiers_]).mean(0)
+    properties = get_properties(model,experiment[-1])
     
     print('on test')
     score_test = scoring_func(y_test,preds_test,

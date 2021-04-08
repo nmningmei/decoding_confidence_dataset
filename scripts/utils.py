@@ -248,7 +248,7 @@ def build_RF(n_jobs             = 1,
         return xgb
 
 
-def get_RF_feature_importance(randomforestclassifier,
+def _get_RF_feature_importance(randomforestclassifier,
                               features,
                               targets,
                               idx,
@@ -343,7 +343,7 @@ def label_high_low(df,n_jobs = 1):
 
     return df
 
-def build_Regression(time_steps = 7,confidence_range = 4,model_name = 'temp.h5'):
+def _build_Regression(time_steps = 7,confidence_range = 4,model_name = 'temp.h5'):
     # reset the GPU memory
     tf.keras.backend.clear_session()
     try:
@@ -409,8 +409,15 @@ def build_RNN(time_steps = 7,confidence_range = 4,model_name = 'temp.h5'):
                                   frequency     = 1,)
     return model,callbacks
 
-def scoring_func(y_true,y_pred,confidence_range = 4,need_normalize = False,one_hot_y_true = False,):
-    from tensorflow.keras.utils import to_categorical
+def scoring_func(y_true,
+                 y_pred,
+                 confidence_range = 4,
+                 need_normalize = False,
+                 one_hot_y_true = False,):
+    try:
+        to_categorical(y_true - 1, num_classes = confidence_range)
+    except:
+        from tensorflow.keras.utils import to_categorical
     """
     Customized scoring function
     
@@ -428,6 +435,7 @@ def scoring_func(y_true,y_pred,confidence_range = 4,need_normalize = False,one_h
         y_pred = softmax(np.array(y_pred),axis = 1)
     if one_hot_y_true:
         y_true = to_categorical(y_true - 1, num_classes = confidence_range)
+    # print(y_pred.shape)
     y_true = np.concatenate([y_true,np.eye(confidence_range)])
     # there is a logical problem but it works
     y_pred = np.concatenate([y_pred,np.ones((confidence_range,confidence_range))/confidence_range])
@@ -663,3 +671,9 @@ def get_array_from_dataframe(df,column_name):
                             ' ').split(' ') if len(item) > 0],
                     dtype = 'float32')
 
+def get_properties(model,decoder = 'SVM'):
+    if decoder == 'SVM':
+        properties = np.concatenate([est.base_estimator.coef_[np.newaxis] for est in model.steps[-1][-1].calibrated_classifiers_]).mean(0)
+    elif decoder == 'RF':
+        pass
+    return properties

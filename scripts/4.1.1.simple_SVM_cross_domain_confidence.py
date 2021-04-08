@@ -21,11 +21,9 @@ from sklearn.model_selection import LeaveOneGroupOut
 import numpy  as np
 import pandas as pd
 
-from utils import scoring_func
-from functools import partial
-from scipy.special import softmax
+from utils import scoring_func,get_properties
 
-experiment          = ['confidence','cross_domain','regression']
+experiment          = ['confidence','cross_domain','SVM']
 property_name       = 'weight' # or hidden states or weight
 data_dir            = '../data/'
 model_dir           = os.path.join('../models',experiment[0],experiment[1],)
@@ -83,7 +81,7 @@ for fold,(_,train) in enumerate(cv.split(features,targets,groups = groups)):
         model.fit(X_,Y_)
         
         print(f'get {property_name}')
-        properties = np.concatenate([est.base_estimator.coef_[np.newaxis] for est in model.steps[-1][-1].calibrated_classifiers_]).mean(0)
+        properties = get_properties(model,experiment[-1])
         
         # test phase
         for (filename,sub_name,target_domain),df_sub in df_target.groupby(['filename','sub','domain']):

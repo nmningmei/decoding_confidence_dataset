@@ -12,21 +12,18 @@ gc.collect() # clean garbage memory
 from glob import glob
 
 from tensorflow.keras.utils import to_categorical
-# from sklearn.svm import LinearSVC
-# from sklearn.calibration import CalibratedClassifierCV
-# from sklearn.preprocessing import StandardScaler
-# from sklearn.pipeline import make_pipeline
 from sklearn.model_selection import LeaveOneGroupOut
 
 import numpy  as np
 import pandas as pd
 
 from utils import scoring_func,build_RF
-from functools import partial
-from scipy.special import softmax
 
-experiment          = ['confidence','cross_domain','regression']
-property_name       = 'weight' # or hidden states or weight
+from sklearn.inspection      import permutation_importance
+from sklearn.metrics         import make_scorer
+
+experiment          = ['confidence','cross_domain','RF']
+property_name       = 'feature importance' # or hidden states or weight
 data_dir            = '../data/'
 model_dir           = os.path.join('../models',experiment[0],experiment[1],)
 source_dir          = '../data/4-point'
@@ -61,8 +58,7 @@ results             = dict(fold             = [],
                            accuracy_test    = [],
                            )
 for ii in range(time_steps):
-    for jj in range(confidence_range):
-        results[f'{property_name} T-{time_steps - ii} C-{jj}'] = []
+    results[f'{property_name} T-{time_steps - ii}'] = []
 
 features    = df_source[[f"feature{ii + 1}" for ii in range(time_steps)]].values
 targets     = df_source["targets"].values.astype(int)
@@ -77,9 +73,7 @@ for fold,(_,train) in enumerate(cv.split(features,targets,groups = groups)):
         X_,Y_,Z_ = features[train][_idx_train],targets[train][_idx_train],groups[train][_idx_train]
         
         print('fitting ...')
-        svc = LinearSVC(dual = False,class_weight = 'balanced',random_state = 12345)
-        model = CalibratedClassifierCV(svc,cv = 5)
-        model = make_pipeline(StandardScaler(),model)
+        model = build_RF(n_estimators = 500,n_jobs = -1)
         model.fit(X_,Y_)
         
         print(f'get {property_name}')
@@ -103,6 +97,19 @@ for fold,(_,train) in enumerate(cv.split(features,targets,groups = groups)):
                     score_test = scoring_func(y_test[_idx_test],preds_test[_idx_test],
                                               confidence_range = confidence_range,
                                               need_normalize = True,)
+                    scorer = make_scorer(scoring_func,needs_proba=True,
+                                         **{'confidence_range':confidence_range,
+                                            'need_normalize':True,
+                                            'one_hot_y_true':False})
+                    _feature_importance = permutation_importance(model,
+                                                                 X_test[_idx_test],
+                                                                 y_test[_idx_test],
+                                                                 scoring         = scorer,
+                                                                 n_repeats       = 10,
+                                                                 n_jobs          = -1,
+                                                                 random_state    = 12345,
+                                                                 )
+                    feature_importance = _feature_importance['importances_mean']
                     print(score_test)
                     results['fold'].append(fold)
                     results['score'].append(np.mean(score_test))
@@ -112,9 +119,7 @@ for fold,(_,train) in enumerate(cv.split(features,targets,groups = groups)):
                     results['accuracy_train'].append(acc_trial_train)
                     results['accuracy_test'].append(acc_trial_test)
                     results['filename'].append(filename)
-                    [results[f'{property_name} T-{time_steps - ii} C-{jj}'].append(
-                        properties[jj,ii]
-                        ) for ii in range(time_steps) for jj in range(confidence_range)]
+                    [results[f'{property_name} T-{time_steps - ii}'].append(item) for ii,item in enumerate(feature_importance)]
             results_to_save = pd.DataFrame(results)
             results_to_save.to_csv(csv_saving_name,index = False)
 

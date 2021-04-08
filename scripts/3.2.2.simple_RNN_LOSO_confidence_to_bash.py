@@ -10,7 +10,7 @@ import pandas as pd
 from shutil import copyfile
 
 template            = '3.2.1.simple_RNN_LOSO_confidence.py'
-experiment          = ['confidence','LOO','RNN']
+experiment          = ['confidence','LOO',template.split('_')[1]]
 data_dir            = '../data'
 working_df_name     = os.path.join(data_dir,experiment[0],experiment[1],'all_data.csv')
 df_def              = pd.read_csv(working_df_name,)

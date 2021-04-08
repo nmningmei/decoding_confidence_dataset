@@ -9,9 +9,9 @@ import os
 import pandas as pd
 from shutil import copyfile
 
-template            = '3.1.3.simple_SVM_LOSO_adequacy.py'
+template            = '3.3.3.simple_SVM_LOSO_adequacy.py'
 for _key in ['adequacy']:
-    experiment          = [_key,'LOO','regression']
+    experiment          = [_key,'LOO',template.split('_')[1]]
     data_dir            = '../data'
     working_df_name     = os.path.join(data_dir,experiment[0],experiment[1],'all_data.csv')
     df_def              = pd.read_csv(working_df_name,)

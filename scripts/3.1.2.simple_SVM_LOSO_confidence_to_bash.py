@@ -11,7 +11,7 @@ from shutil import copyfile
 
 template            = '3.1.1.simple_SVM_LOSO_confidence.py'
 for _key in ['confidence']:
-    experiment          = [_key,'LOO','regression']
+    experiment          = [_key,'LOO',template.split('_')[1]]
     data_dir            = '../data'
     working_df_name     = os.path.join(data_dir,experiment[0],experiment[1],'all_data.csv')
     df_def              = pd.read_csv(working_df_name,)
