@@ -71,17 +71,20 @@ accuracies  = df_source['accuracy'].values
 
 csv_saving_name     = os.path.join(result_dir,f'{experiment[-1]}_{experiment[0]} results.csv')
 cv = LeaveOneGroupOut()
-for fold,(train,_) in enumerate(cv.split(features,targets,groups = groups)):
+for fold,(_,train) in enumerate(cv.split(features,targets,groups = groups)):
     X_,Y_,Z_ = features[train],targets[train],groups[train]
-    
+    # from sklearn.linear_model import LogisticRegressionCV
     print('fitting ...')
-    svc = LinearSVC(random_state = 12345)
-    model = CalibratedClassifierCV(svc,cv = 5)
-    model = make_pipeline(StandardScaler(),model)
+    clf = LinearSVC(dual = False,class_weight = 'balanced',random_state = 12345)
+    # clf = LogisticRegressionCV(Cs = np.logspace(-3,3,7),class_weight = 'balanced',random_state = 12345,n_jobs = -1,)
+    model = CalibratedClassifierCV(clf,cv = 5)
+    model = make_pipeline(StandardScaler(),
+                          model)
     model.fit(X_,Y_)
     
     print(f'get {property_name}')
     properties = np.concatenate([est.base_estimator.coef_[np.newaxis] for est in model.steps[-1][-1].calibrated_classifiers_]).mean(0)
+    # properties = model.steps[-1][-1].coef_
     
     # test phase
     for (filename,sub_name,target_domain),df_sub in df_target.groupby(['filename','sub','domain']):

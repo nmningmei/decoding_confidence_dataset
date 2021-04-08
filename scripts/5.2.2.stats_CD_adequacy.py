@@ -49,7 +49,7 @@ df = pd.concat(df)
 df_ave = df.groupby(['decoder','source','filename']).mean().reset_index()
 
 # common settings
-ylim    = (0.1,1.1)
+ylim    = (0.4,0.7)
 confidence_range= 4
 time_steps      = np.arange(7)
 xargs           = dict(#hue          = 'accuracy_test',
@@ -71,7 +71,7 @@ results = dict(#accuracy_train   = [],
                decoder          = [],
                target_data      = [],
                )
-for (_decoder,target_data),df_sub in df.groupby(
+for (_decoder,target_data),df_sub in df_ave.groupby(
         ['decoder','source']):
     scores = df_sub['score'].values
     
@@ -112,7 +112,7 @@ g = sns.catplot(x           = 'source',
                 hue         = 'decoder',
                 hue_order   = ['regression','RNN'],
                 order       = ['cognitive','mem_4','mixed_4'],
-                data        = df,
+                data        = df_ave,
                 kind        = 'violin',
                 aspect      = 1.5,
                 **xargs)
@@ -128,7 +128,7 @@ for ii,(text_obj,target_data) in enumerate(zip(xtick_order,['cognitive','mem_4',
         # print(temp_row['stars'])
         if '*' in temp_row['stars']:
             ax.annotate(temp_row['stars'],
-                        xy          = (ii + adjustment,1.05),
+                        xy          = (ii + adjustment,0.65),
                         ha          = 'center',
                         fontsize    = 14)
 (g.set_axis_labels("Target study","ROC AUC")
@@ -142,7 +142,7 @@ g._legend.get_texts()[0].set_text('Linear SVM')
 g.savefig(os.path.join(figures_dir,'scores.jpg'),
           dpi = 300,
           bbox_inches = 'tight')
-
+ads
 ##############################################################################
 # get the weights of the regression model
 df_reg = df_ave[df_ave['decoder'] == decoder]
