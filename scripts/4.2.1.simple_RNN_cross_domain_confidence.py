@@ -70,7 +70,7 @@ csv_saving_name     = os.path.join(result_dir,f'{experiment[-1]}_{experiment[0]}
 
 csv_saving_name     = os.path.join(result_dir,f'{experiment[-1]}_{experiment[0]} results.csv')
 cv = LeaveOneGroupOut()
-for fold,(_,_train) in enumerate(cv.split(features,targets,groups = groups)):
+for fold,(_train,_) in enumerate(cv.split(features,targets,groups = groups)):
     for acc_trial_train in [0,1]:
         _idx_train, = np.where(accuracies[_train] == acc_trial_train)
         X_,Y_,Z_ = features[_train][_idx_train],targets[_train][_idx_train],sec_groups[_train][_idx_train]

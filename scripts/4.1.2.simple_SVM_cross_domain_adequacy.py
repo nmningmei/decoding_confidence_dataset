@@ -71,7 +71,7 @@ accuracies  = df_source['accuracy'].values
 
 csv_saving_name     = os.path.join(result_dir,f'{experiment[-1]}_{experiment[0]} results.csv')
 cv = LeaveOneGroupOut()
-for fold,(_,train) in enumerate(cv.split(features,targets,groups = groups)):
+for fold,(train,_) in enumerate(cv.split(features,targets,groups = groups)):
     X_,Y_,Z_ = features[train],targets[train],groups[train]
     
     print('fitting ...')
