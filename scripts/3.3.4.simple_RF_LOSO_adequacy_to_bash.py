@@ -9,7 +9,7 @@ import os
 import pandas as pd
 from shutil import copyfile
 
-template            = '3.3.4.simple_RF_LOSO_adequacy.py'
+template            = '3.3.3.simple_RF_LOSO_adequacy.py'
 for _key in ['adequacy']:
     experiment          = [_key,'LOO',template.split('_')[1]]
     data_dir            = '../data'
