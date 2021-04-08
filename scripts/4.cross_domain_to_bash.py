@@ -56,9 +56,9 @@ for ii,script in enumerate(scripts):
 #PBS -l nodes={node}:ppn={core}
 #PBS -l mem={mem}gb
 #PBS -l cput={cput}:00:00
-#PBS -N {decoder}_experiment
-#PBS -o outputs/out_{experiment[-1]}_{ii+1}.txt
-#PBS -e outputs/err_{experiment[-1]}_{ii+1}.txt
+#PBS -N {decoder}_{experiment}
+#PBS -o outputs/out_{experiment}_{ii+1}.txt
+#PBS -e outputs/err_{experiment}_{ii+1}.txt
 
 cd $PBS_O_WORKDIR
 export PATH="/scratch/ningmei/anaconda3/bin:/scratch/ningmei/anaconda3/condabin:$PATH"
