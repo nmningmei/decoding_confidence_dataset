@@ -144,3 +144,7 @@ CD_bash/
 
 
 cross_domain_bash/
+confidence_LOO_SVM/
+adequacy_LOO_SVM/
+confidence_LOO_RF/
+adequacy_LOO_RF/
