@@ -16,6 +16,10 @@
 <img src="https://image.slideserve.com/867897/linear-support-vector-machine-svm-l.jpg" width="50%" />
 source: https://image.slideserve.com/867897/linear-support-vector-machine-svm-l.jpg
 
+# Random forest classifier
+<img src="https://cdn-images-1.medium.com/max/1600/1*i0o8mjFfCn-uD79-F1Cqkw.png>
+source: https://cdn-images-1.medium.com/max/1600/1*i0o8mjFfCn-uD79-F1Cqkw.png
+
 # RNN model - as an alternative model, but we do not perform model selection. An RNN model contains such prior: there exists temporal relationship between the features from consective time points and adding these relationships to the model would benefit the decoding. 
 <p float="left">
   <img src="https://github.com/nmningmei/decoding_confidence_dataset/blob/main/figures/RNN%20model%20confidence%20database.jpg" width="40%" /> <img src="https://github.com/nmningmei/decoding_confidence_dataset/blob/main/figures/external-content.duckduckgo.com.jpg" width="40%" />
