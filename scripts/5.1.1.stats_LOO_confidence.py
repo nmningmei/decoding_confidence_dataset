@@ -32,7 +32,7 @@ sns.set_context('poster')
 
 experiment  = 'confidence' # confidence or adequacy
 cv_type     = 'LOO' # LOO or cross_domain
-decoder     = 'regression' #
+decoder     = 'SVM' #
 working_dir = f'../results/{experiment}/{cv_type}/'
 stats_dir   = f'../stats/{experiment}/{cv_type}'
 figures_dir = f'../figures/{experiment}/{cv_type}'
@@ -63,6 +63,7 @@ xargs           = dict(hue          = 'accuracy_test',
                        cut          = 0,
                        scale        = 'width',
                        palette      = ['deepskyblue','tomato'],
+                       col_order    = ['SVM','RF','RNN'],
                        )
 
 for col_name in ['accuracy_train','accuracy_test']:
@@ -120,18 +121,17 @@ results['stars']    = results['ps_corrected'].apply(utils.stars)
 g = sns.catplot(x           = 'accuracy_train',
                 y           = 'score',
                 col         = 'decoder',
-                col_order   = ['regression','RNN'],
                 data        = df_ave,
                 kind        = 'violin',
                 aspect      = 1.5,
                 **xargs)
 (g.set_axis_labels("Training data","ROC AUC")
   .set(ylim = ylim))
-[ax.set_title(title) for ax,title in zip(g.axes.flatten(),['Lnear support vector machine','Recurrent neural network'])]
+[ax.set_title(title) for ax,title in zip(g.axes.flatten(),['Lnear support vector machine','Random forest','Recurrent neural network'])]
 [ax.axhline(0.5,linestyle = '--',alpha = .7,color = 'black') for ax in g.axes.flatten()]
 g._legend.set_title("Testing data")
 ## add stars
-for ax,_decoder in zip(g.axes.flatten(),['regression','RNN']):
+for ax,_decoder in zip(g.axes.flatten(),xargs['col_order']):
     df_sub = results[results['decoder'] == _decoder]
     df_sub = df_sub.sort_values(['accuracy_train','accuracy_test'])
     xtick_order = list(ax.xaxis.get_majorticklabels())

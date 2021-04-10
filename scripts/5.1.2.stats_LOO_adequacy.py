@@ -32,7 +32,7 @@ sns.set_context('poster')
 
 experiment  = 'adequacy' # confidence or adequacy
 cv_type     = 'LOO' # LOO or cross_domain
-decoder     = 'regression' #
+decoder     = 'SVM' #
 working_dir = f'../results/{experiment}/{cv_type}/'
 stats_dir   = f'../stats/{experiment}/{cv_type}'
 figures_dir = f'../figures/{experiment}/{cv_type}'
@@ -56,13 +56,13 @@ ylim    = {'confidence':(0.45,0.9),
 confidence_range= 4
 time_steps      = np.array([f'T-{7-ii}' for ii in range(7)])
 dict_rename     = {0:'incorrect trials',1:'correct trials'}
-xargs           = dict(#hue          = 'accuracy_test',
-                       #hue_order    = ['correct trials','incorrect trials',],
+xargs           = dict(hue          = 'decoder',
+                       hue_order    = ['SVM','RF','RNN'],
                        split        = True,
                        inner        = 'quartile',
                        cut          = 0,
                        scale        = 'width',
-                       palette      = ['deepskyblue','tomato'],
+                       palette      = ['gold','deepskyblue','tomato'],
                        )
 
 
@@ -116,8 +116,6 @@ results['stars']    = results['ps_corrected'].apply(utils.stars)
 df_ave['x'] = 0
 g = sns.catplot(x           = 'x',
                 y           = 'score',
-                hue         = 'decoder',
-                hue_order   = ['regression','RNN'],
                 data        = df_ave,
                 kind        = 'violin',
                 aspect      = 1.5,
@@ -140,7 +138,7 @@ for (jj,temp_row),adjustment in zip(results.iterrows(),[-0.125,0.125]):
 g.savefig(os.path.join(figures_dir,'scores.jpg'),
           dpi = 300,
           bbox_inches = 'tight')
-
+asd
 
 # get the weights of the regression model
 df_reg = df_ave[df_ave['decoder'] == decoder]
