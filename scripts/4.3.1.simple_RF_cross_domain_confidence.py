@@ -76,9 +76,6 @@ for fold,(_,train) in enumerate(cv.split(features,targets,groups = groups)):
         model = build_RF(n_estimators = 500,n_jobs = -1)
         model.fit(X_,Y_)
         
-        print(f'get {property_name}')
-        properties = np.concatenate([est.base_estimator.coef_[np.newaxis] for est in model.steps[-1][-1].calibrated_classifiers_]).mean(0)
-        
         # test phase
         for (filename,sub_name,target_domain),df_sub in df_target.groupby(['filename','sub','domain']):
             df_sub

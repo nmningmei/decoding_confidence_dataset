@@ -52,16 +52,17 @@ df = pd.concat(df)
 
 # common settings
 ylim    = {'confidence':(0.45,0.9),
-           'adequacy':(0.45,0.9)}[experiment]
+           'adequacy':(0.45,0.8)}[experiment]
+star_h          = 0.75
 confidence_range= 4
 time_steps      = np.array([f'T-{7-ii}' for ii in range(7)])
 dict_rename     = {0:'incorrect trials',1:'correct trials'}
 xargs           = dict(hue          = 'decoder',
                        hue_order    = ['SVM','RF','RNN'],
-                       split        = True,
+                       # split        = True,
                        inner        = 'quartile',
                        cut          = 0,
-                       scale        = 'width',
+                       # scale        = 'width',
                        palette      = ['gold','deepskyblue','tomato'],
                        )
 
@@ -69,7 +70,6 @@ xargs           = dict(hue          = 'decoder',
 # averge within each study
 df_ave = df.groupby(['decoder',
                      'study_name',]).mean().reset_index()
-df_ave.to_csv(os.path.join(stats_dir,'scores.csv'),index = False)
 
 # significance of scores
 np.random.seed(12345)
@@ -101,16 +101,13 @@ for (_decoder),df_sub in df_ave.groupby(['decoder',]):
     results['decoder'       ].append(_decoder)
 results = pd.DataFrame(results)
 
-temp = []
-for (_decoder),df_sub in results.groupby(['decoder']):
-    df_sub                  = df_sub.sort_values(['ps'])
-    pvals                   = df_sub['ps'].values
-    converter               = utils.MCPConverter(pvals = pvals)
-    d                       = converter.adjust_many()
-    df_sub['ps_corrected']  = d['bonferroni'].values
-    temp.append(df_sub)
-results             = pd.concat(temp)
-results['stars']    = results['ps_corrected'].apply(utils.stars)
+results                 = results.sort_values(['ps'])
+pvals                   = results['ps'].values
+converter               = utils.MCPConverter(pvals = pvals)
+d                       = converter.adjust_many()
+results['ps_corrected'] = d['bonferroni'].values
+results['stars']        = results['ps_corrected'].apply(utils.stars)
+results.to_csv(os.path.join(stats_dir,'scores.csv'),index = False)
 
 # plot scores
 df_ave['x'] = 0
@@ -124,21 +121,21 @@ g = sns.catplot(x           = 'x',
   .set(ylim = ylim,
        xticklabels = [],))
 [ax.axhline(0.5,linestyle = '--',alpha = .7,color = 'black') for ax in g.axes.flatten()]
+# g._legend.remove()
 g._legend.set_title("Models")
-g._legend.get_texts()[0].set_text('Linear SVM')
+
 ## add stars
 ax = g.axes.flatten()[0]
-for (jj,temp_row),adjustment in zip(results.iterrows(),[-0.125,0.125]):
+for (jj,temp_row),adjustment in zip(results.iterrows(),[-0.25,0,0.25]):
     if '*' in temp_row['stars']:
         ax.annotate(temp_row['stars'],
-                    xy = (adjustment, .85),
+                    xy = (adjustment, star_h),
                     ha = 'center',
                     fontsize = 14,
                     )
 g.savefig(os.path.join(figures_dir,'scores.jpg'),
           dpi = 300,
           bbox_inches = 'tight')
-asd
 
 # get the weights of the regression model
 df_reg = df_ave[df_ave['decoder'] == decoder]

@@ -29,7 +29,7 @@ sns.set_context('poster')
 
 experiment  = 'confidence' # confidence or adequacy
 cv_type     = 'cross_domain' # LOO or cross_domain
-decoder     = 'regression' #
+decoder     = 'SVM' #
 working_dir = f'../results/{experiment}/{cv_type}/'
 stats_dir   = f'../stats/{experiment}/{cv_type}'
 figures_dir = f'../figures/{experiment}/{cv_type}'
@@ -49,16 +49,19 @@ df = pd.concat(df)
 df_ave = df.groupby(['decoder','source','filename','fold','accuracy_train','accuracy_test']).mean().reset_index()
 
 # common settings
-ylim    = (0.35,.85)
+ylim            = (0.35,.85)
+star_h          = 0.82
 confidence_range= 4
 time_steps      = np.arange(7)
 dict_rename     = {0:'incorrect trials',1:'correct trials'}
 xargs           = dict(hue          = 'accuracy_test',
                        hue_order    = ['correct trials','incorrect trials',],
-                       split        = True,
+                       col_order    = ['SVM','RF','RNN'],
+                       row_order    = ['cognitive','mem_4','mixed_4'],
+                        split        = True,
                        inner        = 'quartile',
                        cut          = 0,
-                       scale        = 'width',
+                        scale        = 'width',
                        palette      = ['deepskyblue','tomato'],
                        )
 
@@ -98,33 +101,28 @@ for (_decoder,acc_train,acc_test,target_data),df_sub in df_ave.groupby(
     results['target_data'   ].append(target_data)
 results = pd.DataFrame(results)
 
-temp = []
-for (_decoder),df_sub in results.groupby(['decoder']):
-    df_sub                  = df_sub.sort_values(['ps'])
-    pvals                   = df_sub['ps'].values
-    converter               = utils.MCPConverter(pvals = pvals)
-    d                       = converter.adjust_many()
-    df_sub['ps_corrected']  = d['bonferroni'].values
-    temp.append(df_sub)
-results             = pd.concat(temp)
-results['stars']    = results['ps_corrected'].apply(utils.stars)
+results                 = results.sort_values(['ps'])
+pvals                   = results['ps'].values
+converter               = utils.MCPConverter(pvals = pvals)
+d                       = converter.adjust_many()
+results['ps_corrected'] = d['bonferroni'].values
+results['stars']        = results['ps_corrected'].apply(utils.stars)
 results.to_csv(os.path.join(stats_dir,'scores.csv'),index = False)
+
 # plot scores
 g = sns.catplot(x           = 'accuracy_train',
                 y           = 'score',
-                order       = ['correct trials','incorrect trials'],
+                order       = xargs['hue_order'],
                 col         = 'decoder',
-                col_order   = ['regression','RNN'],
                 row         = 'source',
-                row_order   = ['cognitive','mem_4','mixed_4'],
                 data        = df_ave,
                 kind        = 'violin',
                 aspect      = 1.5,
                 **xargs)
 xtick_order = list(g.axes[-1][-1].xaxis.get_majorticklabels())
 ## add stars
-for ax_row,target_data in zip(g.axes,['cognitive','mem_4','mixed_4']):
-    for _ax,_decoder in zip(ax_row,['regression','RNN']):
+for ax_row,target_data in zip(g.axes,xargs['row_order']):
+    for _ax,_decoder in zip(ax_row,xargs['hue_order']):
         df_sub = results[np.logical_and(results['decoder'] == _decoder,
                                         results['target_data'] == target_data)]
         df_sub = df_sub.sort_values(['accuracy_train','accuracy_test'])
@@ -134,11 +132,11 @@ for ax_row,target_data in zip(g.axes,['cognitive','mem_4','mixed_4']):
             position        = text_obj.get_position()
             xtick_label     = text_obj.get_text()
             df_sub_stats    = df_sub[df_sub['accuracy_train'] == xtick_label].sort_values(['accuracy_test'])
-            for (jj,temp_row),adjustment in zip(df_sub_stats.iterrows(),[-0.125,0.125]):
+            for (jj,temp_row),adjustment in zip(df_sub_stats.iterrows(),[-0.25,0,0.25]):
                 # print(temp_row['stars'])
                 if '*' in temp_row['stars']:
                     _ax.annotate(temp_row['stars'],
-                                xy          = (ii + adjustment,0.83),
+                                xy          = (ii + adjustment,star_h),
                                 ha          = 'center',
                                 fontsize    = 14)
 (g.set_axis_labels("Training data","ROC AUC")
@@ -147,7 +145,7 @@ for ax_row,target_data in zip(g.axes,['cognitive','mem_4','mixed_4']):
 # [ax.set_title(title) for ax,title in zip(g.axes.flatten(),['Lnear support vector machine','Recurrent neural network'])]
 [ax.axhline(0.5,linestyle = '--',alpha = .7,color = 'black') for ax in g.axes.flatten()]
 g._legend.set_title("Testing data")
-
+fds
 g.savefig(os.path.join(figures_dir,'scores.jpg'),
           dpi = 300,
           bbox_inches = 'tight')

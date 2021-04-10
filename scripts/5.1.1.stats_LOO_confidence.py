@@ -74,7 +74,6 @@ df_ave = df.groupby(['decoder',
                      'study_name',
                      'accuracy_train',
                      'accuracy_test']).mean().reset_index()
-df_ave.to_csv(os.path.join(stats_dir,'scores.csv'),index = False)
 
 # significance of scores
 np.random.seed(12345)
@@ -106,16 +105,14 @@ for (_decoder,acc_train,acc_test),df_sub in df_ave.groupby(['decoder','accuracy_
     results['decoder'       ].append(_decoder)
 results = pd.DataFrame(results)
 
-temp = []
-for (_decoder),df_sub in results.groupby(['decoder']):
-    df_sub                  = df_sub.sort_values(['ps'])
-    pvals                   = df_sub['ps'].values
-    converter               = utils.MCPConverter(pvals = pvals)
-    d                       = converter.adjust_many()
-    df_sub['ps_corrected']  = d['bonferroni'].values
-    temp.append(df_sub)
-results             = pd.concat(temp)
-results['stars']    = results['ps_corrected'].apply(utils.stars)
+
+results                 = results.sort_values(['ps'])
+pvals                   = results['ps'].values
+converter               = utils.MCPConverter(pvals = pvals)
+d                       = converter.adjust_many()
+results['ps_corrected'] = d['bonferroni'].values
+results['stars']        = results['ps_corrected'].apply(utils.stars)
+results.to_csv(os.path.join(stats_dir,'scores.csv'),index = False)
 
 # plot scores
 g = sns.catplot(x           = 'accuracy_train',
