@@ -29,7 +29,7 @@ sns.set_context('poster')
 
 experiment  = 'adequacy' # confidence or adequacy
 cv_type     = 'cross_domain' # LOO or cross_domain
-decoder     = 'regression' #
+decoder     = 'SVM' #
 working_dir = f'../results/{experiment}/{cv_type}/'
 stats_dir   = f'../stats/{experiment}/{cv_type}'
 figures_dir = f'../figures/{experiment}/{cv_type}'
@@ -49,17 +49,21 @@ df = pd.concat(df)
 df_ave = df.groupby(['decoder','source','filename']).mean().reset_index()
 
 # common settings
-ylim    = (0.4,0.7)
+ylim            = (0.4,0.7)
+star_h          = 0.65
 confidence_range= 4
 time_steps      = np.arange(7)
-xargs           = dict(#hue          = 'accuracy_test',
-                       #hue_order    = ['correct trials','incorrect trials',],
-                       split        = True,
+domains         = ['Cognitive','Memory','Mixed']
+xargs           = dict(hue          = 'decoder',
+                       hue_order    = ['SVM','RF','RNN'],
+                       row_order    = ['cognitive','mem_4','mixed_4'],
+                       # split        = True,
                        inner        = 'quartile',
                        cut          = 0,
-                       scale        = 'width',
-                       palette      = ['deepskyblue','tomato'],
+                        scale        = 'width',
+                       palette      = ['gold','deepskyblue','tomato'],
                        )
+
 
 # significance of scores
 np.random.seed(12345)
@@ -95,54 +99,47 @@ for (_decoder,target_data),df_sub in df_ave.groupby(
 results = pd.DataFrame(results)
 
 temp = []
-for (_decoder),df_sub in results.groupby(['decoder']):
+for target_data,df_sub in results.groupby(['target_data']):
     df_sub                  = df_sub.sort_values(['ps'])
     pvals                   = df_sub['ps'].values
     converter               = utils.MCPConverter(pvals = pvals)
     d                       = converter.adjust_many()
     df_sub['ps_corrected']  = d['bonferroni'].values
     temp.append(df_sub)
-results             = pd.concat(temp)
-results['stars']    = results['ps_corrected'].apply(utils.stars)
+results = pd.concat(temp)
+results['stars']        = results['ps_corrected'].apply(utils.stars)
 results.to_csv(os.path.join(stats_dir,'scores.csv'),index = False)
 
 # plot scores
-g = sns.catplot(x           = 'source',
+df_ave['x'] = 0
+g = sns.catplot(x           = 'x',
                 y           = 'score',
-                hue         = 'decoder',
-                hue_order   = ['regression','RNN'],
-                order       = ['cognitive','mem_4','mixed_4'],
+                row         = 'source',
                 data        = df_ave,
                 kind        = 'violin',
                 aspect      = 1.5,
                 **xargs)
-xtick_order = list(g.axes[-1][-1].xaxis.get_majorticklabels())
 ## add stars
-ax = g.axes.flatten()[0]
-for ii,(text_obj,target_data) in enumerate(zip(xtick_order,['cognitive','mem_4','mixed_4'])):
+for ax,target_data,title in zip(g.axes.flatten(),xargs['row_order'],domains):
     df_sub = results[results['target_data'] == target_data]
-    position        = text_obj.get_position()
-    xtick_label     = text_obj.get_text()
     df_sub_stats    = df_sub.sort_values(['decoder'],ascending = False)
-    for (jj,temp_row),adjustment in zip(df_sub_stats.iterrows(),[-0.125,0.125]):
+    for (jj,temp_row),adjustment in zip(df_sub_stats.iterrows(),[-0.25,0,0.25]):
         # print(temp_row['stars'])
         if '*' in temp_row['stars']:
             ax.annotate(temp_row['stars'],
-                        xy          = (ii + adjustment,0.65),
+                        xy          = (adjustment,star_h),
                         ha          = 'center',
                         fontsize    = 14)
+    ax.set(title = title)
 (g.set_axis_labels("Target study","ROC AUC")
-  .set(ylim = ylim,
-       xticklabels = ['Cognitive','Memory','Mixed'])
-  .set_titles(''))
+  .set(ylim = ylim,))
 # [ax.set_title(title) for ax,title in zip(g.axes.flatten(),['Lnear support vector machine','Recurrent neural network'])]
 [ax.axhline(0.5,linestyle = '--',alpha = .7,color = 'black') for ax in g.axes.flatten()]
 g._legend.set_title("Models")
-g._legend.get_texts()[0].set_text('Linear SVM')
 g.savefig(os.path.join(figures_dir,'scores.jpg'),
           dpi = 300,
           bbox_inches = 'tight')
-ads
+
 ##############################################################################
 # get the weights of the regression model
 df_reg = df_ave[df_ave['decoder'] == decoder]

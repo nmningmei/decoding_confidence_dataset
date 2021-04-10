@@ -54,6 +54,7 @@ star_h          = 0.82
 confidence_range= 4
 time_steps      = np.arange(7)
 dict_rename     = {0:'incorrect trials',1:'correct trials'}
+domains         = ['Cognitive','Memory','Mixed']
 xargs           = dict(hue          = 'accuracy_test',
                        hue_order    = ['correct trials','incorrect trials',],
                        col_order    = ['SVM','RF','RNN'],
@@ -101,11 +102,15 @@ for (_decoder,acc_train,acc_test,target_data),df_sub in df_ave.groupby(
     results['target_data'   ].append(target_data)
 results = pd.DataFrame(results)
 
-results                 = results.sort_values(['ps'])
-pvals                   = results['ps'].values
-converter               = utils.MCPConverter(pvals = pvals)
-d                       = converter.adjust_many()
-results['ps_corrected'] = d['bonferroni'].values
+temp = []
+for target_data,df_sub in results.groupby(['target_data']):
+    df_sub                  = df_sub.sort_values(['ps'])
+    pvals                   = df_sub['ps'].values
+    converter               = utils.MCPConverter(pvals = pvals)
+    d                       = converter.adjust_many()
+    df_sub['ps_corrected']  = d['bonferroni'].values
+    temp.append(df_sub)
+results = pd.concat(temp)
 results['stars']        = results['ps_corrected'].apply(utils.stars)
 results.to_csv(os.path.join(stats_dir,'scores.csv'),index = False)
 
@@ -122,7 +127,7 @@ g = sns.catplot(x           = 'accuracy_train',
 xtick_order = list(g.axes[-1][-1].xaxis.get_majorticklabels())
 ## add stars
 for ax_row,target_data in zip(g.axes,xargs['row_order']):
-    for _ax,_decoder in zip(ax_row,xargs['hue_order']):
+    for _ax,_decoder in zip(ax_row,xargs['col_order']):
         df_sub = results[np.logical_and(results['decoder'] == _decoder,
                                         results['target_data'] == target_data)]
         df_sub = df_sub.sort_values(['accuracy_train','accuracy_test'])
@@ -132,7 +137,7 @@ for ax_row,target_data in zip(g.axes,xargs['row_order']):
             position        = text_obj.get_position()
             xtick_label     = text_obj.get_text()
             df_sub_stats    = df_sub[df_sub['accuracy_train'] == xtick_label].sort_values(['accuracy_test'])
-            for (jj,temp_row),adjustment in zip(df_sub_stats.iterrows(),[-0.25,0,0.25]):
+            for (jj,temp_row),adjustment in zip(df_sub_stats.iterrows(),[-0.125,0.125]):
                 # print(temp_row['stars'])
                 if '*' in temp_row['stars']:
                     _ax.annotate(temp_row['stars'],
@@ -142,10 +147,12 @@ for ax_row,target_data in zip(g.axes,xargs['row_order']):
 (g.set_axis_labels("Training data","ROC AUC")
   .set(ylim = ylim)
   .set_titles(''))
-# [ax.set_title(title) for ax,title in zip(g.axes.flatten(),['Lnear support vector machine','Recurrent neural network'])]
+[ax.set_title(title) for ax,title in zip(g.axes.flatten(),
+                                         ['Linear support vector machine\n','Random forest\nCognitive','Recurrent neural network\n'])]
+[g.axes.flatten()[ii].set_title(title) for ii,title in zip([4,7],['Memory','Mixed'])]
 [ax.axhline(0.5,linestyle = '--',alpha = .7,color = 'black') for ax in g.axes.flatten()]
 g._legend.set_title("Testing data")
-fds
+
 g.savefig(os.path.join(figures_dir,'scores.jpg'),
           dpi = 300,
           bbox_inches = 'tight')
