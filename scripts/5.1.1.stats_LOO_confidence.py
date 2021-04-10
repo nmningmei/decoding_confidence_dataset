@@ -222,7 +222,7 @@ for acc_train in ['correct trials','incorrect trials']:
         weight_for_plot = w[:,ii,:]
         temp = pd.DataFrame(weight_for_plot,columns = [f'T-{len(time_steps)-ii}' for ii in range(len(time_steps))])
         temp['accuracy_train'] = acc_train
-        temp[experiment] = ii
+        temp[experiment] = ii + 1
         df_weights.append(temp)
 df_weights = pd.concat(df_weights)
 df_weights_plot = pd.melt(df_weights,
