@@ -20,19 +20,21 @@ df_perception = pd.read_csv(perception)
 df_others = pd.read_csv(others)
 df_others['domain'] = df_others['filename'].apply(lambda x:x.split('/')[3].split('-')[0])
 
-temp = df_perception.groupby(['filename','sub']).count().reset_index()[['filename','sub']]
+temp = df_perception.groupby(['filename','sub']).count().reset_index()[['filename','sub','targets']]
+trials = temp.groupby(['filename']).sum().reset_index()['targets'].values
 temp = temp.groupby(['filename']).count().reset_index()
+temp['trials'] = trials
 temp['domain'] = 'Perceptual domain'
-temp = [temp,(df_others.groupby(['domain','filename','sub'])
-.count()
-.reset_index()[['domain','filename','sub']]
-.groupby(['domain','filename',])
-.count()
-.reset_index()
-)]
-temp = pd.concat(temp)
+df_percept = temp.copy()
 
-temp['study'] = temp['filename'].apply(lambda x:x.split('/')[-1].replace('.csv',''))
+temp = df_others.groupby(['domain','filename','sub']).count().reset_index()[['domain','filename','sub','targets']]
+trials = temp.groupby(['filename']).sum().reset_index()['targets'].values
+temp = temp.groupby(['domain','filename',]).count().reset_index()
+temp['trials'] = trials
+
+df = pd.concat([df_percept,temp])
+
+df['study'] = df['filename'].apply(lambda x:x.split('/')[-1].replace('.csv',''))
 
 def _process(x):
     temp = x.split('_')
@@ -40,6 +42,6 @@ def _process(x):
         return f'{temp[1]},{temp[2]}'
     elif len(temp) == 4:
         return f'{temp[1]}, {temp[2]}, {temp[3]}'
-temp['study'] = temp['study'].apply(_process)
+df['study'] = df['study'].apply(_process)
 
-temp.to_csv('../results/study counts.csv',index = False)
+df.to_csv('../results/study counts.csv',index = False)
