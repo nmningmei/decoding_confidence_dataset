@@ -1,0 +1,2 @@
+fold,score,n_sample,source,sub_name,feature_importance T-3,feature_importance T-2,feature_importance T-1
+0,0.5599001486248998,3493,same,1,0.004517900895161009,0.018550893343962604,0.038407310435218465
