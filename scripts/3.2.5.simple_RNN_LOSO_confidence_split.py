@@ -198,7 +198,7 @@ for fold,(train_,test) in enumerate(cv.split(features,targets,groups=groups)):
                     hidden_state_test,h_state_test,c_state_test = hidden_model.predict(X_test[_idx_test],
                                                                                    batch_size = batch_size,
                                                                                    verbose = 1)
-                    print('{:.3f}_{:.3f}_{:.3f}_{:.3f}_{:.3f}_{:.3f}_{:.3f}_'.format(*list(hidden_state_test.mean(0).reshape(7,))))
+                    print('{:.3f}_{:.3f}_{:.3f}'.format(*list(hidden_state_test.mean(0).reshape(time_steps,))))
                     
                     results['fold'].append(fold)
                     results['score'].append(np.mean(score_test))
