@@ -78,7 +78,7 @@ source activate keras-2.1.6_tensorflow-2.0.0
 pwd
 echo {filename}
 
-python "{template.replace('.py',f'_{_key}{ii+1}.py')}"
+python "{template.replace('.py',f'_{_key}_{ii+1}.py')}"
 """
         with open(new_batch_script_name,'w') as f:
             f.write(content)
