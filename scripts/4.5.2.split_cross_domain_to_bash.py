@@ -69,7 +69,7 @@ export PATH="/scratch/ningmei/anaconda3/bin:/scratch/ningmei/anaconda3/condabin:
 source activate keras-2.1.6_tensorflow-2.0.0
 pwd
 
-python "{script}"
+python "{new_script_name}"
 """
         print(new_batch_script_name,content)
         with open(new_batch_script_name,'w') as f:
