@@ -148,3 +148,4 @@ confidence_LOO_SVM/
 adequacy_LOO_SVM/
 confidence_LOO_RF/
 adequacy_LOO_RF/
+split_cross_domain_bash/
