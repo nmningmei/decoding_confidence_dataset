@@ -54,8 +54,8 @@ results             = dict(fold             = [],
                            source           = [],
                            sub_name         = [],
                            filename         = [],
-                           accuracy_train   = [],
-                           accuracy_test    = [],
+                           # accuracy_train   = [],
+                           # accuracy_test    = [],
                            )
 for ii in range(time_steps):
     results[f'{property_name} T-{time_steps - ii}'] = []
