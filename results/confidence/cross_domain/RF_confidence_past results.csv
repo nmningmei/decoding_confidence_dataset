@@ -1,0 +1,3 @@
+fold,score,n_sample,source,sub_name,filename,accuracy_train,accuracy_test,feature importance T-3,feature importance T-2,feature importance T-1
+0,0.6595065008554126,1648,cognitive,1,../data/targets/cognitive-4-rating/data_Adler_2018_Expt1.csv,0,0,0.014261745783655189,0.01119106922314197,0.021724460350053466
+0,0.6643855256672128,2665,cognitive,1,../data/targets/cognitive-4-rating/data_Adler_2018_Expt1.csv,0,1,0.018855571733969335,0.02376875113300365,0.025556029879768804
