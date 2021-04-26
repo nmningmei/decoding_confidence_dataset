@@ -68,7 +68,7 @@ sec_groups  = df_source['sub'].values
 
 csv_saving_name     = os.path.join(result_dir,f'{experiment[2]}_{experiment[0]}_{experiment[3]} results.csv')
 cv = LeaveOneGroupOut()
-for fold,(_train,_) in enumerate(cv.split(features,targets,groups = groups)):
+for fold,(_,_train) in enumerate(cv.split(features,targets,groups = groups)):
     X_,Y_,Z_ = features[_train],targets[_train],sec_groups[_train]
     # the for-loop does not mean any thing, we only take the last step/output of the for-loop
     for train,valid in StratifiedShuffleSplit(test_size = 0.2,random_state = 12345).split(X_,Y_,Z_):
@@ -119,6 +119,7 @@ for fold,(_train,_) in enumerate(cv.split(features,targets,groups = groups)):
         score_test = scoring_func(y_test,preds_test,
                                   confidence_range = confidence_range)
         print(score_test)
+        results['fold'].append(fold)
         results['score'].append(np.mean(score_test))
         results['n_sample'].append(X_test.shape[0])
         results['source'].append(target_domain)
