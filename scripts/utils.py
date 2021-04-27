@@ -677,3 +677,12 @@ def get_properties(model,decoder = 'SVM'):
     elif decoder == 'RF':
         pass
     return properties
+
+def set_line_lims(dict_condition,ylims = [(-0.325,0.325),(-0.675,0.675)]):
+    lims = {list(dict_condition.values())[1]:dict(xticks = np.arange(-3,0),
+                     xticklabels = np.arange(-7,-4),
+                     ylim = ylims[0]),
+        list(dict_condition.values())[0]:dict(xticks = np.arange(-3,0),
+                      xticklabels = np.arange(-3,0),
+                      ylim = ylims[1])}
+    return lims
