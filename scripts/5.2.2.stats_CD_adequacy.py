@@ -133,6 +133,7 @@ for ax,target_data,title in zip(g.axes.flatten(),xargs['row_order'],domains):
     ax.set(title = title)
 (g.set_axis_labels("Target study","ROC AUC")
   .set(ylim = ylim,))
+g.axes.flatten()[-1].set(xticklabels = [])
 # [ax.set_title(title) for ax,title in zip(g.axes.flatten(),['Lnear support vector machine','Recurrent neural network'])]
 [ax.axhline(0.5,linestyle = '--',alpha = .7,color = 'black') for ax in g.axes.flatten()]
 g._legend.set_title("Models")

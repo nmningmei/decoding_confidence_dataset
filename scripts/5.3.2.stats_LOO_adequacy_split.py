@@ -129,7 +129,7 @@ g = sns.catplot(x           = 'decoder',
   .set(ylim = ylim,))
 [ax.axhline(0.5,linestyle = '--',alpha = .7,color = 'black') for ax in g.axes.flatten()]
 # g._legend.remove()
-g._legend.set_title("Trained on Trials")
+g._legend.set_title("")
 
 ## add stars
 ax = g.axes.flatten()[0]

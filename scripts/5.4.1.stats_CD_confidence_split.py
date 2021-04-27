@@ -45,7 +45,7 @@ working_data = [item for item in working_data if ('past' in item) or ('recent' i
 ylim            = (0.35,.85)
 star_h          = 0.82
 confidence_range= 4
-time_steps      = 7
+time_steps      = 3
 dict_rename     = {0:'incorrect trials',1:'correct trials'}
 dict_condition  = {'past':'T-7,T-6,T-5','recent':'T-3,T-2,T-1'}
 dict_source     = {'cognitive':'Cognitive',
@@ -139,37 +139,44 @@ g = sns.catplot(x           = 'decoder',
                 data        = df_ave,
                 kind        = 'violin',
                 aspect      = 1.5,
+                hight       = 6,
                 **xargs)
 xtick_order = list(g.axes[-1][-1].xaxis.get_majorticklabels())
 (g.set_axis_labels("","ROC AUC")
-  .set_titles("Trained on {row_name} -> {col_name}")
+   .set_titles("{row_name} -> {col_name}")
   .set(ylim = ylim)
-  .set_titles(''))
+  )
 [ax.axhline(0.5,linestyle = '--',alpha = .7,color = 'black') for ax in g.axes.flatten()]
-g._legend.set_title("Trained on Trials")
-    ## add stars
-    for ((acc_test,acc_train),results_sub),ax in zip(results_source.groupby(['accuracy_test','accuracy_train']),
-                                                g.axes.flatten()):
-        print(acc_test,acc_train,ax.title)
-        results_sub = results_sub.sort_values(['condition'],ascending = False)
-        
-        for ii,text_obj in enumerate(xtick_order):
-            # print(target_data,_decoder)
-            position        = text_obj.get_position()
-            xtick_label     = text_obj.get_text()
-            results_sub_stats = results_sub[results_sub['decoder'] == xtick_label].sort_values(['condition'],ascending = False)
-            for (jj,temp_row),adjustment in zip(results_sub_stats.iterrows(),[-0.125,0.125]):
-                # print(temp_row['stars'])
-                if '*' in temp_row['stars']:
-                    ax.annotate(temp_row['stars'],
-                                xy          = (position[0] + adjustment,star_h),
-                                ha          = 'center',
-                                fontsize    = 14)
+g._legend.set_title("")
+## add stars
+for ((row,col),df_sub),ax in zip(df_ave.groupby(['accuracy_train','col']),g.axes.flatten()):
+    print(row,col,ax.title)
+    new_title = ax.get_title().split('_')[0]
+    target_data = ax.get_title().split('_')[1]
+    ax.set(title=new_title)
+    results_sub = results[np.logical_and(results['accuracy_train'] == row,
+                                         results['accuracy_test'] == col.split('_')[0])]
+    results_sub = results_sub[results_sub['target_data'] == target_data]
+    for ii,text_obj in enumerate(xtick_order):
+        # print(target_data,_decoder)
+        position        = text_obj.get_position()
+        xtick_label     = text_obj.get_text()
+        results_sub_stats = results_sub[results_sub['decoder'] == xtick_label].sort_values(['condition'],ascending = False)
+        for (jj,temp_row),adjustment in zip(results_sub_stats.iterrows(),[-0.125,0.125]):
+            # print(temp_row['stars'])
+            if '*' in temp_row['stars']:
+                ax.annotate(temp_row['stars'],
+                            xy          = (position[0] + adjustment,star_h),
+                            ha          = 'center',
+                            fontsize    = 14)
     
-    g.fig.suptitle(target_data,)
-    g.savefig(os.path.join(figures_dir,f'scores_split_{target_data}.jpg'),
-              dpi = 300,
-              bbox_inches = 'tight')
+plt.suptitle(f'{" "*100}'.join(
+    domains),x = 0.4,y = 1.15)
+plt.subplots_adjust(top = 1.)
+
+g.savefig(os.path.join(figures_dir,'scores_split.jpg'),
+          dpi = 300,
+          bbox_inches = 'tight')
 
 ##############################################################################
 # get the weights of the regression model
@@ -188,7 +195,7 @@ slopes = dict(accuracy_train = [],
               )
 slopes[experiment] = []
 # fit a regression to show the linear trend of the weights
-for (acc_train,condition),df_sub in df_reg.groupby(['accuracy_train',condition]):
+for (acc_train,condition),df_sub in df_reg.groupby(['accuracy_train','condition']):
     for idx_confidence in range(confidence_range):
         weight_for_fit = df_sub[[f'weight T-{time_steps-ii} C-{idx_confidence}' for ii in range(time_steps)]].values
         xx = np.vstack([np.arange(time_steps) for _ in range(weight_for_fit.shape[0])])
@@ -241,20 +248,20 @@ results.to_csv(os.path.join(stats_dir,'features_split.csv'),index = False)
 slopes.to_csv(os.path.join(stats_dir,'slopes_split.csv'),index = False)
 
 df_weights = []
-for acc_train in ['correct trials','incorrect trials']:
-    df_sub = df_reg[df_reg['accuracy_train'] == acc_train]
+for (acc_train,condition),df_sub in df_reg.groupby(['accuracy_train','condition']):
     weights = df_sub[[col for col in df_sub.columns if ('weight' in col)]].values
-    w = np.concatenate([[w.reshape(7,-1).T] for w in weights])
+    w = np.concatenate([[w.reshape(time_steps,-1).T] for w in weights])
     for ii in range(confidence_range):
         weight_for_plot = w[:,ii,:]
         temp = pd.DataFrame(weight_for_plot,columns = [f'T-{time_steps-ii}' for ii in range(time_steps)])
         temp['accuracy_train'] = acc_train
+        temp['condition'] = condition
         temp[experiment] = ii + 1
         df_weights.append(temp)
 df_weights = pd.concat(df_weights)
 df_weights_plot = pd.melt(df_weights,
-                          id_vars = ['accuracy_train',experiment],
-                          value_vars = [f'T-{len(time_steps)-ii}' for ii in range(len(time_steps))],
+                          id_vars = ['accuracy_train','condition',experiment],
+                          value_vars = [f'T-{time_steps-ii}' for ii in range(time_steps)],
                           var_name = ['Time'],
                           value_name = 'Weights')
 
@@ -262,24 +269,31 @@ colors = ['blue','orange','green','red']
 df_weights_plot['x'] = df_weights_plot['Time'].apply(lambda x:-int(x[-1]))
 
 g = sns.lmplot(x = 'x',
-               y = 'Weights',
-               hue = experiment,
-               col = 'accuracy_train',
-               col_order = ['correct trials','incorrect trials'],
-               data = df_weights_plot,
-               palette = colors,
-               markers = '.',
-               # robust = True, # this  takes forever
-               seed = 12345,
-               aspect = 1.5,
-               )
+                y = 'Weights',
+                hue = experiment,
+                col = 'accuracy_train',
+                col_order = xargs['row_order'],
+                row = 'condition',
+                row_order = xargs['hue_order'],
+                data = df_weights_plot,
+                palette = colors,
+                markers = '.',
+                robust = False, # this takes all the time to run
+                sharex = False,
+                sharey = False,
+                seed = 12345,
+                aspect = 1.5,
+                )
 (g.set_titles("train on {col_name}")
-  .set_axis_labels('Trial','Weights (A.U.)')
-  .set(xlim = (-7.5,-0.5),
-       xticks = np.arange(-7,0),
-       xticklabels = [f'T-{len(time_steps)-ii}' for ii in range(len(time_steps))])
+  .set_axis_labels('Trials back','Weights (A.U.)')
+  .set(xlim = (-time_steps - 0.5,-0.5),)
   )
-g.savefig(os.path.join(figures_dir,'features.jpg'),
+for ((acc_train,condition), df_sub),ax in zip(df_reg.groupby(['accuracy_train','condition']),g.axes.T.flatten()):
+    ax.set(**utils.set_line_lims(dict_condition,
+                                 [(-0.25,0.25),
+                                  (-0.65,0.65)])[condition])
+
+g.savefig(os.path.join(figures_dir,'features_split.jpg'),
           dpi = 300,
           bbox_inches = 'tight')
 
