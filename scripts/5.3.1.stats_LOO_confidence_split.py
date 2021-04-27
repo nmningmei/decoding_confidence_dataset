@@ -280,7 +280,7 @@ g = sns.lmplot(x = 'x',
                 aspect = 1.5,
                 )
 (g.set_titles("train on {col_name}")
-  .set_axis_labels('Trial','Weights (A.U.)')
+  .set_axis_labels('Trials back','Weights (A.U.)')
   .set(xlim = (-time_steps - 0.5,-0.5),)
   )
 for ((acc_train,condition), df_sub),ax in zip(df_reg.groupby(['accuracy_train','condition']),g.axes.T.flatten()):

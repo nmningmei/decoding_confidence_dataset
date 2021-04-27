@@ -52,19 +52,21 @@ dict_source     = {'cognitive':'Cognitive',
                    'mem_4':'Memory',
                    'mixed_4':'Mixed'}
 domains         = ['Cognitive','Memory','Mixed']
-xargs           = dict(row          = 'accuracy_test',
+xargs           = dict(row          = 'accuracy_train',
                        row_order    = ['correct trials','incorrect trials',],
                        hue          = 'condition',
                        hue_order    = list(dict_condition.values()),
                        order        = ['SVM','RF','RNN'],
-                       col          = 'accuracy_train',
-                       col_order    = ['correct trials','incorrect trials',],
+                       # col          = 'accuracy_test',
+                       # col_order    = ['correct trials','incorrect trials',],
                        split        = True,
                        inner        = 'quartile',
                        cut          = 0,
                        scale        = 'width',
                        palette      = ['deepskyblue','tomato'],
                        )
+col_order = [f'{cor}_{src}'for src in domains for cor in xargs['row_order'] ]
+xargs['col_order'] = col_order
 
 df = []
 for f in working_data:
@@ -129,17 +131,22 @@ results = pd.concat(temp)
 results['stars']        = results['ps_corrected'].apply(utils.stars)
 results.to_csv(os.path.join(stats_dir,'scores_split.csv'),index = False)
 
-df_ave['col'] = df_ave[xargs['col']] + '_' + df_ave['source']
 # plot scores
-for target_data,df_source in df_ave.groupby(['source']):
-    results_source = results[results['target_data'] == target_data]
-    g = sns.catplot(x           = 'decoder',
-                    y           = 'score',
-                    data        = df_source,
-                    kind        = 'violin',
-                    aspect      = 1.5,
-                    **xargs)
-    xtick_order = list(g.axes[-1][-1].xaxis.get_majorticklabels())
+df_ave['col'] = df_ave['accuracy_test'] + '_' + df_ave['source']
+g = sns.catplot(x           = 'decoder',
+                y           = 'score',
+                col         = 'col',
+                data        = df_ave,
+                kind        = 'violin',
+                aspect      = 1.5,
+                **xargs)
+xtick_order = list(g.axes[-1][-1].xaxis.get_majorticklabels())
+(g.set_axis_labels("","ROC AUC")
+  .set_titles("Trained on {row_name} -> {col_name}")
+  .set(ylim = ylim)
+  .set_titles(''))
+[ax.axhline(0.5,linestyle = '--',alpha = .7,color = 'black') for ax in g.axes.flatten()]
+g._legend.set_title("Trained on Trials")
     ## add stars
     for ((acc_test,acc_train),results_sub),ax in zip(results_source.groupby(['accuracy_test','accuracy_train']),
                                                 g.axes.flatten()):
@@ -158,12 +165,7 @@ for target_data,df_source in df_ave.groupby(['source']):
                                 xy          = (position[0] + adjustment,star_h),
                                 ha          = 'center',
                                 fontsize    = 14)
-    (g.set_axis_labels("","ROC AUC")
-      .set_titles("{col_name} -> {row_name}")
-      .set(ylim = ylim)
-      .set_titles(''))
-    [ax.axhline(0.5,linestyle = '--',alpha = .7,color = 'black') for ax in g.axes.flatten()]
-    g._legend.set_title("Trained on Trials")
+    
     g.fig.suptitle(target_data,)
     g.savefig(os.path.join(figures_dir,f'scores_split_{target_data}.jpg'),
               dpi = 300,
