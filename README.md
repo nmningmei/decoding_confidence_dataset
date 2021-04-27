@@ -43,10 +43,12 @@ Confidence             |  Adequacy
 Confidence             |  Adequacy
 :-------------------------:|:-------------------------:
 ![ccs](https://github.com/nmningmei/decoding_confidence_dataset/blob/main/figures/confidence/cross_domain/scores.jpg)  |  ![acs](https://github.com/nmningmei/decoding_confidence_dataset/blob/main/figures/adequacy/cross_domain/scores.jpg)
+![ccss](https://github.com/nmningmei/decoding_confidence_dataset/blob/main/figures/confidence/cross_domain/scores_split.jpg)  |  ![acss](https://github.com/nmningmei/decoding_confidence_dataset/blob/main/figures/adequacy/cross_domain/scores_split.jpg)
 
 ## Feature attribution (cross domain)
 Confidence             |  Adequacy
 :-------------------------:|:-------------------------:
 ![ccf](https://github.com/nmningmei/decoding_confidence_dataset/blob/main/figures/confidence/cross_domain/features.jpg)  |  ![acf](https://github.com/nmningmei/decoding_confidence_dataset/blob/main/figures/adequacy/cross_domain/features.jpg)
+![ccfs](https://github.com/nmningmei/decoding_confidence_dataset/blob/main/figures/confidence/cross_domain/features_split.jpg)  |  ![acfs](https://github.com/nmningmei/decoding_confidence_dataset/blob/main/figures/adequacy/cross_domain/features_split.jpg)
 
 
