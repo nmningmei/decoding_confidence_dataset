@@ -34,3 +34,4 @@ for data_type in data_types:
                                     dict_condition = dict_condition,
                                     )
         print(data_type,within_cross,df_ave.shape,df_ave.columns)
+        df_ave.to_csv(f'{working_dir}/for_anova/{data_type}_{within_cross}.csv',index = False)
