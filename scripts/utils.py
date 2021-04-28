@@ -686,3 +686,100 @@ def set_line_lims(dict_condition,ylims = [(-0.325,0.325),(-0.675,0.675)]):
                       xticklabels = np.arange(-3,0),
                       ylim = ylims[1])}
     return lims
+
+def get_groupby_average():
+    groupby_average = {'confidence':{'LOO':['study_name','decoder','accuracy_train','accuracy_test'],
+                                     'cross_domain':['filename','decoder','source','accuracy_train','accuracy_test']},
+                       'adequacy':  {'LOO':['study_name','decoder'],
+                                     'cross_domain':['filename','decoder','source']}
+                       }
+    return groupby_average
+
+def load_results(data_type      = 'confidence', # confidence or adequacy
+                 within_cross   = 'LOO', # LOO or cross_domain
+                 working_data   = [],
+                 dict_rename    = {0:'incorrect trials',1:'correct trials'},
+                 dict_condition = {'past':'T-7,T-6,T-5','recent':'T-3,T-2,T-1'}):
+    # measure: confidence, within perceptual domain decoding
+    if (data_type == 'confidence') and (within_cross == 'LOO'):
+        df                      = []
+        for f in working_data:
+            temp                    = pd.read_csv(f)
+            study_name              = re.findall('\(([^)]+)',f)[0]
+            temp['study_name']      = study_name
+            temp['decoder']         = f.split('/')[-1].split(' ')[0]
+            condition               = f.split(' ')[1]
+            if dict_condition is not None:
+                temp['condition']   = dict_condition[condition]
+            df.append(temp)
+        df                      = pd.concat(df)
+        
+        for col_name in ['accuracy_train','accuracy_test']:
+            df[col_name]        = df[col_name].map(dict_rename)
+        groupby                 = get_groupby_average()[data_type][within_cross]
+        
+        if dict_condition is not None:
+            groupby.append('condition')
+        
+        # averge within each study
+        df_ave                  = df.groupby(groupby).mean().reset_index()
+        return df_ave
+    # measure: adequacy, within perceptual domain decoding
+    elif (data_type == 'adequacy') and (within_cross == 'LOO'):
+        df                      = []
+        for f in working_data:
+            temp                    = pd.read_csv(f)
+            study_name              = re.findall('\(([^)]+)',f)[0]
+            temp['study_name']      = study_name
+            temp['decoder']         = f.split('/')[-1].split(' ')[0]
+            condition               = f.split(' ')[1]
+            if dict_condition is not None:
+                temp['condition']   = dict_condition[condition]
+            df.append(temp)
+        df                      = pd.concat(df)
+        
+        groupby                 = get_groupby_average()[data_type][within_cross]
+        if dict_condition is not None:
+            groupby.append('condition')
+        # averge within each study
+        df_ave                  = df.groupby(groupby).mean().reset_index()
+        return df_ave
+    # measure: confidence, cross domain decoding
+    elif (data_type == 'confidence') and (within_cross == 'cross_domain'):
+        df                      = []
+        for f in working_data:
+            temp                    = pd.read_csv(f)
+            temp['decoder']         = f.split('/')[-1].split('_')[0]
+            condition               = f.split('_')[-1].split(' ')[0]
+            if dict_condition is not None:
+                temp['condition']   = dict_condition[condition]
+            df.append(temp)
+        df                          = pd.concat(df)
+        
+        for col_name in ['accuracy_train','accuracy_test']:
+            df[col_name]        = df[col_name].map(dict_rename)
+        
+        groupby                 = get_groupby_average()[data_type][within_cross]
+        if dict_condition is not None:
+            groupby.append('condition')
+        # averge within each study
+        df_ave                  = df.groupby(groupby).mean().reset_index()
+        return df_ave
+    # measure: adequacy, cross domain decoding
+    elif (data_type == 'adequacy') and (within_cross == 'cross_domain'):
+        df                      = []
+        for f in working_data:
+            temp                    = pd.read_csv(f)
+            temp['decoder']         = f.split('/')[-1].split('_')[0]
+            condition               = f.split('_')[-1].split(' ')[0]
+            if dict_condition is not None:
+                temp['condition']   = dict_condition[condition]
+            df.append(temp)
+        df                          = pd.concat(df)
+        
+        groupby                     = get_groupby_average()[data_type][within_cross]
+        if dict_condition is not None:
+            groupby.append('condition')
+        # averge within each study
+        df_ave                      = df.groupby(groupby).mean().reset_index()
+        return df_ave
