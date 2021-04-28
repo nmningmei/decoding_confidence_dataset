@@ -11,6 +11,7 @@
 - sklearn:       0.23.2
 - pandas:        1.0.1
 - tensorflow:    2.0.0
+- pingouin:      0.3.11
 
 # Linear SVM
 <img src="https://image.slideserve.com/867897/linear-support-vector-machine-svm-l.jpg" width="50%" />
