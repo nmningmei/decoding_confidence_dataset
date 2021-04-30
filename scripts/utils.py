@@ -59,6 +59,7 @@ def preprocess(working_data,
     for f in t:
         # print(f)
         df_temp             = pd.read_csv(f,header = 0)
+        # some data was not standardized
         if "Siedlecka_2018" in f:
             df_temp = df_temp[df_temp['Session'] != 9]
         if not pd.api.types.is_object_dtype(df_temp['Stimulus']) and pd.api.types.is_object_dtype(df_temp['Response']):
@@ -66,7 +67,7 @@ def preprocess(working_data,
             df_temp['Response'] = df_temp['Response'].apply(str2int)
         if ("Siedlecka" in f) and ('Exp' in f):
             df_temp['Response'] = df_temp['Response'].values - 1
-        if 'Koculak_unpub' in f:
+        if 'Koculak_unpub' in f: # this one is super strange
             df_temp['accuracy'] = df_temp['Accuracy'].values.copy()
         else:
             df_temp['accuracy'] = np.array(df_temp['Stimulus'].values == df_temp['Response'].values,dtype = int)
