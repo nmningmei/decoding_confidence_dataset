@@ -45,3 +45,12 @@ def _process(x):
 df['study'] = df['study'].apply(_process)
 
 df.to_csv('../results/study counts.csv',index = False)
+
+
+df_perception['domain'] = 'perceptual'
+df = pd.concat([df_perception,df_others])
+
+temp = df.groupby(['filename','domain','accuracy']).count().reset_index()[['filename','domain','accuracy','targets']]
+counts = temp['targets'].values
+temp['proportion'] = temp['targets'].values / np.repeat(counts.reshape(-1,2).sum(1),2)
+

@@ -57,8 +57,19 @@ def preprocess(working_data,
     # define iterator
     t = tqdm(working_data,)
     for f in t:
+        # print(f)
         df_temp             = pd.read_csv(f,header = 0)
-        df_temp['accuracy'] = np.array(df_temp['Stimulus'] == df_temp['Response']).astype(int)
+        if "Siedlecka_2018" in f:
+            df_temp = df_temp[df_temp['Session'] != 9]
+        if not pd.api.types.is_object_dtype(df_temp['Stimulus']) and pd.api.types.is_object_dtype(df_temp['Response']):
+            df_temp['Stimulus'] = df_temp['Stimulus'].apply(str2int)
+            df_temp['Response'] = df_temp['Response'].apply(str2int)
+        if ("Siedlecka" in f) and ('Exp' in f):
+            df_temp['Response'] = df_temp['Response'].values - 1
+        if 'Koculak_unpub' in f:
+            df_temp['accuracy'] = df_temp['Accuracy'].values.copy()
+        else:
+            df_temp['accuracy'] = np.array(df_temp['Stimulus'].values == df_temp['Response'].values,dtype = int)
         df_temp['filename'] = f
         if target_columns[0] == 'metaAdequacy':
             t.set_description('add metaAdequacy,concatinating')
@@ -78,8 +89,10 @@ def preprocess(working_data,
     for ii in range(time_steps):
         df[f'feature{ii + 1}'] = []
     
-    for (sub,filename), df_sub in tqdm(df_concat.groupby(['Subj_idx','filename']),desc = 'feature generating'):
+    t = tqdm(df_concat.groupby(['Subj_idx','filename']),)
+    for (sub,filename), df_sub in t:
     #    print(sub,filename)
+        
         values      = df_sub[target_columns].values
         accuracy    = df_sub['accuracy'].values
         # tensorflow.keras.preprocessing.TimeseriesGenerator
@@ -89,7 +102,7 @@ def preprocess(working_data,
                                           sampling_rate = 1,
                                           batch_size    = 1,
                                           )
-        
+        t.set_description(f'{filename} sub-{sub} {np.mean(accuracy[time_steps:]):.2f}')
         for (features_,targets_),accuracy_ in zip(list(data_gen),accuracy[time_steps:]):
             df["sub"        ].append(sub)
             df["filename"   ].append(filename)
@@ -123,6 +136,13 @@ def preprocess(working_data,
     idx     = np.sum(idx_within_range,axis = 1) == (time_steps + 1)
     df_def  = df_temp.loc[idx,:]
     return df_def
+
+def str2int(x):
+    try:
+        x = int(x)
+    except:
+        x = np.nan
+    return x
 
 def meta_adequacy(x):
     """
