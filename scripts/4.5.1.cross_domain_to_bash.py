@@ -10,7 +10,7 @@ import os
 from glob import glob
 from shutil import copyfile,rmtree
 
-scripts = [item for item in glob('4.*cross_domain*py') if "bash" not in item]
+scripts = [item for item in glob('4.*cross_domain*py') if ("bash" not in item) and ("_split" not in item)]
 
 node                = 1
 core                = 16
