@@ -55,7 +55,7 @@ ylim    = {'confidence':(0.45,0.9),
            'adequacy':(0.45,0.8)}[experiment]
 star_h          = 0.75
 confidence_range= 4
-time_steps      = np.array([f'T-{7-ii}' for ii in range(7)])
+time_steps      = 7
 dict_rename     = {0:'incorrect trials',1:'correct trials'}
 xargs           = dict(hue          = 'decoder',
                        hue_order    = ['SVM','RF','RNN'],
@@ -152,10 +152,10 @@ slopes = dict(#accuracy_train = [],
 slopes[experiment] = []
 # fit a regression to show the linear trend of the weights
 for idx_confidence in range(confidence_range):
-    weight_for_fit = df_reg[[f'weight T-{7-ii} C-{idx_confidence}' for ii in range(len(time_steps))]].values
-    xx = np.vstack([np.arange(7) for _ in range(weight_for_fit.shape[0])])
+    weight_for_fit = df_reg[[f'weight T-{time_steps-ii} C-{idx_confidence}' for ii in range(time_steps)]].values
+    xx = np.vstack([np.arange(time_steps) for _ in range(weight_for_fit.shape[0])])
     groups = df_reg['fold'].values
-    groups = np.vstack([groups for _ in range(len(time_steps))]).T
+    groups = np.vstack([groups for _ in range(time_steps)]).T
     cv = LeaveOneGroupOut()
     pipeline = linear_model.BayesianRidge(fit_intercept = True)
     # permutation test to get p values
@@ -201,19 +201,19 @@ results.to_csv(os.path.join(stats_dir,'features.csv'),index = False)
 slopes.to_csv(os.path.join(stats_dir,'slopes.csv'),index = False)
 
 df_weights = []
-# df_sub = df_reg[df_reg['accuracy_train'] == acc_train]
-weights = df_reg[[col for col in df_reg.columns if ('weight' in col)]].values
-w = np.concatenate([[w.reshape(7,-1).T] for w in weights])
+    # df_sub = df_reg[df_reg['accuracy_train'] == acc_train]
+weights = df_reg[[f'weight T-{time_steps-ii} C-{jj}' for ii in range(time_steps) for jj in range(confidence_range)]]
+w = weights.values.reshape((-1,time_steps,confidence_range))
 for ii in range(confidence_range):
-    weight_for_plot = w[:,ii,:]
-    temp = pd.DataFrame(weight_for_plot,columns = [f'T-{len(time_steps)-ii}' for ii in range(len(time_steps))])
+    weight_for_plot = w[:,:,ii]
+    temp = pd.DataFrame(weight_for_plot,columns = [f'T-{time_steps-ii}' for ii in range(time_steps)])
     # temp['accuracy_train'] = acc_train
     temp[experiment] = ii + 1
     df_weights.append(temp)
 df_weights = pd.concat(df_weights)
 df_weights_plot = pd.melt(df_weights,
                           id_vars = [experiment],
-                          value_vars = [f'T-{len(time_steps)-ii}' for ii in range(len(time_steps))],
+                          value_vars = [f'T-{time_steps-ii}' for ii in range(time_steps)],
                           var_name = ['Time'],
                           value_name = 'Weights')
 
@@ -228,7 +228,7 @@ g = sns.lmplot(x = 'x',
                data = df_weights_plot,
                palette = colors,
                markers = '.',
-               robust = True, # this takes all the time to run
+               robust = False, # this takes all the time to run
                seed = 12345,
                aspect = 1.5,
                )
