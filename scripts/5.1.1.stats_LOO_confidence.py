@@ -250,7 +250,7 @@ g = sns.lmplot(x = 'x',
   .set_axis_labels('Trial','Weights (A.U.)')
   .set(xlim = (-7.5,-0.5),
        xticks = np.arange(-7,0),
-       xticklabels = [f'T-{len(time_steps)-ii}' for ii in range(len(time_steps))])
+       xticklabels = [f'T-{time_steps-ii}' for ii in range(time_steps)])
   )
 g.savefig(os.path.join(figures_dir,'features.jpg'),
           dpi = 300,
@@ -259,5 +259,3 @@ g.savefig(os.path.join(figures_dir,'features.jpg'),
 
 
 
-
-df_reg[[f'weight T-{time_steps-ii} C-{jj}' for ii in range(time_steps) for jj in range(confidence_range)]]
