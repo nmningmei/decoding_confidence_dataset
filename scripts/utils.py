@@ -710,7 +710,7 @@ def set_line_lims(dict_condition,ylims = [(-0.325,0.325),(-0.675,0.675)]):
 
 def get_groupby_average():
     groupby_average = {'confidence':{'LOO':['study_name','decoder','accuracy_train','accuracy_test'],
-                                     'cross_domain':['filename','decoder','source','accuracy_train','accuracy_test']},
+                                     'cross_domain':['fold','decoder','source','accuracy_train','accuracy_test']},
                        'adequacy':  {'LOO':['study_name','decoder'],
                                      'cross_domain':['filename','decoder','source']}
                        }
