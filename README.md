@@ -32,24 +32,24 @@ source: https://cdn-images-1.medium.com/max/1600/1*i0o8mjFfCn-uD79-F1Cqkw.png
 Confidence             |  Adequacy
 :-------------------------:|:-------------------------:
 ![cws](https://github.com/nmningmei/decoding_confidence_dataset/blob/main/figures/confidence/LOO/scores.jpg)  |  ![aws](https://github.com/nmningmei/decoding_confidence_dataset/blob/main/figures/adequacy/LOO/scores.jpg)
-![cwss](https://github.com/nmningmei/decoding_confidence_dataset/blob/main/figures/confidence/LOO/scores_split.jpg)  |  ![awss](https://github.com/nmningmei/decoding_confidence_dataset/blob/main/figures/adequacy/LOO/scores_split.jpg)
+
 
 ## Feature attribution (within domain)
 Confidence             |  Adequacy
 :-------------------------:|:-------------------------:
 ![cwf](https://github.com/nmningmei/decoding_confidence_dataset/blob/main/figures/confidence/LOO/features.jpg)  |  ![awf](https://github.com/nmningmei/decoding_confidence_dataset/blob/main/figures/adequacy/LOO/features.jpg)
-![cwfs](https://github.com/nmningmei/decoding_confidence_dataset/blob/main/figures/confidence/LOO/features_split.jpg)  |  ![awfs](https://github.com/nmningmei/decoding_confidence_dataset/blob/main/figures/adequacy/LOO/features_split.jpg)
+
 
 ## Decoding scores (cross domain)
 Confidence             |  Adequacy
 :-------------------------:|:-------------------------:
 ![ccs](https://github.com/nmningmei/decoding_confidence_dataset/blob/main/figures/confidence/cross_domain/scores.jpg)  |  ![acs](https://github.com/nmningmei/decoding_confidence_dataset/blob/main/figures/adequacy/cross_domain/scores.jpg)
-![ccss](https://github.com/nmningmei/decoding_confidence_dataset/blob/main/figures/confidence/cross_domain/scores_split.jpg)  |  ![acss](https://github.com/nmningmei/decoding_confidence_dataset/blob/main/figures/adequacy/cross_domain/scores_split.jpg)
+
 
 ## Feature attribution (cross domain)
 Confidence             |  Adequacy
 :-------------------------:|:-------------------------:
 ![ccf](https://github.com/nmningmei/decoding_confidence_dataset/blob/main/figures/confidence/cross_domain/features.jpg)  |  ![acf](https://github.com/nmningmei/decoding_confidence_dataset/blob/main/figures/adequacy/cross_domain/features.jpg)
-![ccfs](https://github.com/nmningmei/decoding_confidence_dataset/blob/main/figures/confidence/cross_domain/features_split.jpg)  |  ![acfs](https://github.com/nmningmei/decoding_confidence_dataset/blob/main/figures/adequacy/cross_domain/features_split.jpg)
+
 
 
