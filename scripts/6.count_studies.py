@@ -27,6 +27,7 @@ temp['trials'] = trials
 temp['domain'] = 'Perceptual domain'
 df_percept = temp.copy()
 
+# count trials
 temp = df_others.groupby(['domain','filename','sub']).count().reset_index()[['domain','filename','sub','targets']]
 trials = temp.groupby(['filename']).sum().reset_index()['targets'].values
 temp = temp.groupby(['domain','filename',]).count().reset_index()
@@ -50,7 +51,15 @@ df.to_csv('../results/study counts.csv',index = False)
 df_perception['domain'] = 'perceptual'
 df = pd.concat([df_perception,df_others])
 
+# count proportions
 temp = df.groupby(['filename','domain','accuracy']).count().reset_index()[['filename','domain','accuracy','targets']]
 counts = temp['targets'].values
 temp['proportion'] = temp['targets'].values / np.repeat(counts.reshape(-1,2).sum(1),2)
 
+# count # of subjects
+temp = (df.groupby(['sub','domain','accuracy','filename'])
+          .count()
+          .reset_index()
+          .groupby(['filename','domain','accuracy'])
+          .count()
+          .reset_index()['sub'].sum())
