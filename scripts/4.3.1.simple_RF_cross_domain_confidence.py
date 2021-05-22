@@ -9,7 +9,7 @@ Created on Wed Dec  4 11:10:54 2019
 import os
 import gc
 gc.collect() # clean garbage memory
-from glob import glob
+from tqdm import tqdm
 
 from tensorflow.keras.utils import to_categorical
 from sklearn.model_selection import LeaveOneGroupOut
@@ -65,60 +65,65 @@ targets     = df_source["targets"].values.astype(int)
 groups      = df_source["filename"].values#.apply(lambda x:x.split('/')[-1].split('.')[0]) + "_" + df_source['sub'].astype(str)
 accuracies  = df_source['accuracy'].values
 
-csv_saving_name     = os.path.join(result_dir,f'{experiment[-1]}_{experiment[0]} results.csv')
+target_fold = 0 # bash change
+csv_saving_name = os.path.join(result_dir,f'{experiment[-1]}_{experiment[0]} fold {target_fold} results.csv')
 cv = LeaveOneGroupOut()
+
 for fold,(_,train) in enumerate(cv.split(features,targets,groups = groups)):
-    for acc_trial_train in [0,1]:
-        _idx_train, = np.where(accuracies[train] == acc_trial_train)
-        X_,Y_,Z_ = features[train][_idx_train],targets[train][_idx_train],groups[train][_idx_train]
+    if fold == target_fold:
+        break
+for acc_trial_train in [0,1]:
+    _idx_train, = np.where(accuracies[train] == acc_trial_train)
+    X_,Y_,Z_ = features[train][_idx_train],targets[train][_idx_train],groups[train][_idx_train]
+    
+    print('fitting ...')
+    model = build_RF(n_estimators = 500,n_jobs = -1)
+    model.fit(X_,Y_)
+    
+    # test phase
+    iterator = tqdm(df_target.groupby(['filename','sub','domain']))
+    for (filename,sub_name,target_domain),df_sub in iterator:
+        df_sub
+        features_        = df_sub[[f"feature{ii + 1}" for ii in range(7)]].values
+        targets_         = df_sub["targets"].values.astype(int)
+        X_test,y_test    = features_.copy(),targets_.copy()
+        acc_test         = df_sub['accuracy'].values
+        # X_test           = to_categorical(X_test - 1, num_classes = confidence_range).reshape(-1,time_steps*confidence_range)
+        y_test           = to_categorical(y_test - 1, num_classes = confidence_range)
         
-        print('fitting ...')
-        model = build_RF(n_estimators = 500,n_jobs = -1)
-        model.fit(X_,Y_)
+        preds_test  = model.predict_proba(X_test)
         
-        # test phase
-        for (filename,sub_name,target_domain),df_sub in df_target.groupby(['filename','sub','domain']):
-            df_sub
-            features_        = df_sub[[f"feature{ii + 1}" for ii in range(7)]].values
-            targets_         = df_sub["targets"].values.astype(int)
-            X_test,y_test    = features_.copy(),targets_.copy()
-            acc_test         = df_sub['accuracy'].values
-            # X_test           = to_categorical(X_test - 1, num_classes = confidence_range).reshape(-1,time_steps*confidence_range)
-            y_test           = to_categorical(y_test - 1, num_classes = confidence_range)
-            
-            preds_test  = model.predict_proba(X_test)
-            
-            for acc_trial_test in [0,1]:
-                _idx_test, = np.where(acc_test == acc_trial_test)
-                if len(_idx_test) > 1:
-                    score_test = scoring_func(y_test[_idx_test],preds_test[_idx_test],
-                                              confidence_range = confidence_range,
-                                              need_normalize = True,)
-                    scorer = make_scorer(scoring_func,needs_proba=True,
-                                         **{'confidence_range':confidence_range,
-                                            'need_normalize':True,
-                                            'one_hot_y_true':False})
-                    _feature_importance = permutation_importance(model,
-                                                                 X_test[_idx_test],
-                                                                 y_test[_idx_test],
-                                                                 scoring         = scorer,
-                                                                 n_repeats       = 10,
-                                                                 n_jobs          = -1,
-                                                                 random_state    = 12345,
-                                                                 )
-                    feature_importance = _feature_importance['importances_mean']
-                    print(score_test)
-                    results['fold'].append(fold)
-                    results['score'].append(np.mean(score_test))
-                    results['n_sample'].append(X_test[_idx_test].shape[0])
-                    results['source'].append(target_domain)
-                    results['sub_name'].append(sub_name)
-                    results['accuracy_train'].append(acc_trial_train)
-                    results['accuracy_test'].append(acc_trial_test)
-                    results['filename'].append(filename)
-                    [results[f'{property_name} T-{time_steps - ii}'].append(item) for ii,item in enumerate(feature_importance)]
-            results_to_save = pd.DataFrame(results)
-            results_to_save.to_csv(csv_saving_name,index = False)
+        for acc_trial_test in [0,1]:
+            _idx_test, = np.where(acc_test == acc_trial_test)
+            if len(_idx_test) > 1:
+                score_test = scoring_func(y_test[_idx_test],preds_test[_idx_test],
+                                          confidence_range = confidence_range,
+                                          need_normalize = True,)
+                scorer = make_scorer(scoring_func,needs_proba=True,
+                                     **{'confidence_range':confidence_range,
+                                        'need_normalize':True,
+                                        'one_hot_y_true':False})
+                _feature_importance = permutation_importance(model,
+                                                             X_test[_idx_test],
+                                                             y_test[_idx_test],
+                                                             scoring         = scorer,
+                                                             n_repeats       = 10,
+                                                             n_jobs          = -1,
+                                                             random_state    = 12345,
+                                                             )
+                feature_importance = _feature_importance['importances_mean']
+                iterator.set_description(f'{target_domain} {filename.split("/")[-1]} {sub_name} test score = {score_test:4f}')
+                results['fold'].append(fold)
+                results['score'].append(np.mean(score_test))
+                results['n_sample'].append(X_test[_idx_test].shape[0])
+                results['source'].append(target_domain)
+                results['sub_name'].append(sub_name)
+                results['accuracy_train'].append(acc_trial_train)
+                results['accuracy_test'].append(acc_trial_test)
+                results['filename'].append(filename)
+                [results[f'{property_name} T-{time_steps - ii}'].append(item) for ii,item in enumerate(feature_importance)]
+        results_to_save = pd.DataFrame(results)
+        results_to_save.to_csv(csv_saving_name,index = False)
 
 
 
