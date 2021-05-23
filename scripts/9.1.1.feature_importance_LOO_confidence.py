@@ -132,8 +132,8 @@ for (acc_train,acc_test),df_sub in df_rf.groupby(['accuracy_train','accuracy_tes
 results = pd.DataFrame(results)
 slopes = pd.DataFrame(slopes)
 
-# results.to_csv(os.path.join(stats_dir,'feature_importance.csv'),index = False)
-# slopes.to_csv(os.path.join(stats_dir,'feature_importance_slopes.csv'),index = False)
+results.to_csv(os.path.join(stats_dir,'feature_importance.csv'),index = False)
+slopes.to_csv(os.path.join(stats_dir,'feature_importance_slopes.csv'),index = False)
 
 g = sns.catplot(x = 'x',
                 y = 'feature importance',
@@ -163,10 +163,10 @@ for acc_train, ax in zip(xargs['hue_order'],g.axes.flatten()):
  .set_axis_labels('Trial','Feature importance'))
 g._legend.set_title("Testing data")
 
-# g.savefit(os.path.join(figures_dir,
-#                        'feature_importance.jpg'),
-#           dpi = 300,
-#           bbox_inches = 'tight')
+g.savefig(os.path.join(figures_dir,
+                        'feature_importance.jpg'),
+          dpi = 300,
+          bbox_inches = 'tight')
 
 
 

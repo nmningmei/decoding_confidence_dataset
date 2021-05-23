@@ -98,7 +98,7 @@ for (target_data,acc_train,acc_test),df_sub in df_plot.groupby(['source','accura
     # feature_importance = df_sub[[f'feature importance T-{7-ii}' for ii in range(time_steps)]].values
     xx = df_sub['xx'].values
     feature_importance = df_sub['feature importance'].values
-    groups = np.vstack([[ii] * xx.shape[1]] for ii in range(xx.shape[0]))
+    groups = df_sub['fold'].values
     cv = LeaveOneGroupOut()
     pipeline = linear_model.BayesianRidge(fit_intercept = True)
     # permutation test to get p values
@@ -142,8 +142,8 @@ for (target_data,acc_train,acc_test),df_sub in df_plot.groupby(['source','accura
 results = pd.DataFrame(results)
 slopes = pd.DataFrame(slopes)
 
-# results.to_csv(os.path.join(stats_dir,'feature_importance.csv'),index = False)
-# slopes.to_csv(os.path.join(stats_dir,'feature_importance_slopes.csv'),index = False)
+results.to_csv(os.path.join(stats_dir,'feature_importance.csv'),index = False)
+slopes.to_csv(os.path.join(stats_dir,'feature_importance_slopes.csv'),index = False)
 
 g = sns.catplot(x = 'x',
                 y = 'feature importance',
@@ -170,10 +170,10 @@ for ax,((target_data,acc_train),df_sub) in zip(g.axes.flatten(),df_plot.groupby(
 (g.set_titles('Trained on {col_name} - {row_name}')
  .set_axis_labels('Trial','Feature importance'))
 g._legend.set_title("Testing data")
-# g.savefit(os.path.join(figures_dir,
-#                        'feature_importance.jpg'),
-#                       dpi = 300,
-#                       bbox_inches = 'tight')
+g.savefig(os.path.join(figures_dir,
+                        'feature_importance.jpg'),
+                      dpi = 300,
+                      bbox_inches = 'tight')
 
 
 
