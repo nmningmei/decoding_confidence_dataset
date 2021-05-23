@@ -51,7 +51,7 @@ Confidence             |  Adequacy
 Confidence             |  Adequacy
 :-------------------------:|:-------------------------:
 ![ccf](https://github.com/nmningmei/decoding_confidence_dataset/blob/main/figures/confidence/cross_domain/features.jpg)  |  ![acf](https://github.com/nmningmei/decoding_confidence_dataset/blob/main/figures/adequacy/cross_domain/features.jpg)
-![ccff](https://github.com/nmningmei/decoding_confidence_dataset/blob/main/figures/confidence/LOO/feature_importance.jpg) |
+![ccff](https://github.com/nmningmei/decoding_confidence_dataset/blob/main/figures/confidence/cross_domain/feature_importance.jpg) |
 
 
 
