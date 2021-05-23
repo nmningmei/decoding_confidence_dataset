@@ -38,6 +38,7 @@ Confidence             |  Adequacy
 Confidence             |  Adequacy
 :-------------------------:|:-------------------------:
 ![cwf](https://github.com/nmningmei/decoding_confidence_dataset/blob/main/figures/confidence/LOO/features.jpg)  |  ![awf](https://github.com/nmningmei/decoding_confidence_dataset/blob/main/figures/adequacy/LOO/features.jpg)
+![cwff](https://github.com/nmningmei/decoding_confidence_dataset/blob/main/figures/confidence/LOO/feature_importance.jpg) |
 
 
 ## Decoding scores (cross domain)
@@ -50,6 +51,7 @@ Confidence             |  Adequacy
 Confidence             |  Adequacy
 :-------------------------:|:-------------------------:
 ![ccf](https://github.com/nmningmei/decoding_confidence_dataset/blob/main/figures/confidence/cross_domain/features.jpg)  |  ![acf](https://github.com/nmningmei/decoding_confidence_dataset/blob/main/figures/adequacy/cross_domain/features.jpg)
+![ccff](https://github.com/nmningmei/decoding_confidence_dataset/blob/main/figures/confidence/LOO/feature_importance.jpg) |
 
 
 
