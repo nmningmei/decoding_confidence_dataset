@@ -27,28 +27,16 @@ from sklearn.model_selection import (LeaveOneGroupOut,
 sns.set_style('whitegrid')
 sns.set_context('poster')
 
+# common settings
 experiment  = 'confidence' # confidence or adequacy
 cv_type     = 'cross_domain' # LOO or cross_domain
 decoder     = 'SVM' #
 working_dir = f'../results/{experiment}/{cv_type}/'
 stats_dir   = f'../stats/{experiment}/{cv_type}'
 figures_dir = f'../figures/{experiment}/{cv_type}'
-if not os.path.exists(stats_dir):
-    os.makedirs(stats_dir)
-if not os.path.exists(figures_dir):
-    os.makedirs(figures_dir)
-
-df = []
-for f in glob(os.path.join(working_dir,'*csv')):
-    temp            = pd.read_csv(f)
-    temp['decoder'] = f.split('/')[-1].split('_')[0]
-    df.append(temp)
-df = pd.concat(df)
-
-# average over folds
-df_ave = df.groupby(['decoder','source','filename','fold','accuracy_train','accuracy_test']).mean().reset_index()
-
-# common settings
+domains         = {a:b for a,b in zip(['cognitive','mem_4','mixed_4'],
+                                      ['Cognitive','Memory','Mixed'])
+                       }
 ylim            = (0.35,.85)
 star_h          = 0.82
 confidence_range= 4
@@ -58,16 +46,31 @@ domains         = ['Cognitive','Memory','Mixed']
 xargs           = dict(hue          = 'accuracy_test',
                        hue_order    = ['correct trials','incorrect trials',],
                        col_order    = ['SVM','RF','RNN'],
-                       row_order    = ['cognitive','mem_4','mixed_4'],
-                        split        = True,
+                       row_order    = ['Cognitive','Memory','Mixed'],
+                       split        = True,
                        inner        = 'quartile',
                        cut          = 0,
-                        scale        = 'width',
+                       scale        = 'width',
                        palette      = ['deepskyblue','tomato'],
                        )
+if not os.path.exists(stats_dir):
+    os.makedirs(stats_dir)
+if not os.path.exists(figures_dir):
+    os.makedirs(figures_dir)
 
-for col_name in ['accuracy_train','accuracy_test']:
-    df_ave[col_name] = df_ave[col_name].map(dict_rename)
+working_data = glob(os.path.join(working_dir,
+                                 '*.csv'))
+working_data = [item for item in working_data if ('past' not in item) and ('recent' not in item)]
+df_ave = utils.load_results(
+    data_type      = experiment, # confidence or adequacy
+    within_cross   = cv_type, # LOO or cross_domain
+    working_data   = working_data,
+    dict_rename    = {0:'incorrect trials',1:'correct trials'},
+    dict_condition = None,
+    )
+df_ave['source'] = df_ave['source'].map(domains)
+
+
 
 # significance of scores
 np.random.seed(12345)
