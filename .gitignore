@@ -136,6 +136,9 @@ dmypy.json
 # reports
 *.txt
 
+# r history
+.Rhistory
+
 confidence_LOO_regression/
 confidence_LOO_RNN/
 adequacy_LOO_regression/

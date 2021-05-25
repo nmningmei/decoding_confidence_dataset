@@ -34,11 +34,11 @@ decoder     = 'SVM' #
 working_dir = f'../results/{experiment}/{cv_type}/'
 stats_dir   = f'../stats/{experiment}/{cv_type}'
 figures_dir = f'../figures/{experiment}/{cv_type}'
-domains         = {a:b for a,b in zip(['cognitive','mem_4','mixed_4'],
+dict_domains         = {a:b for a,b in zip(['cognitive','mem_4','mixed_4'],
                                       ['Cognitive','Memory','Mixed'])
                        }
-ylim            = (0.35,.85)
-star_h          = 0.82
+ylim            = (0.4,.75)
+star_h          = 0.72
 confidence_range= 4
 time_steps      = 7
 dict_rename     = {0:'incorrect trials',1:'correct trials'}
@@ -68,9 +68,7 @@ df_ave = utils.load_results(
     dict_rename    = {0:'incorrect trials',1:'correct trials'},
     dict_condition = None,
     )
-df_ave['source'] = df_ave['source'].map(domains)
-
-
+df_ave['source'] = df_ave['source'].map(dict_domains)
 
 # significance of scores
 np.random.seed(12345)
