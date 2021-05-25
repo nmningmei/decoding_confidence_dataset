@@ -76,4 +76,9 @@ for cv_type in ['LOO','cross_domain']:
             temp.append(df_sub)
         results = pd.concat(temp)
     results = results.sort_values(list(results.columns[:-3]))
-    res[cv_type] = results
+    results['star'] = results['ps_corrected'].apply(utils.stars)
+    results.to_csv(os.path.join('../stats',
+                                data_type,
+                                cv_type,
+                                'feature_importance_secondary.csv'),
+                   index = False)
