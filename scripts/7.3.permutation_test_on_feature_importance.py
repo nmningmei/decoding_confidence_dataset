@@ -52,7 +52,7 @@ for cv_type in ['LOO','cross_domain']:
                                   baseline = 0,
                                   n_ps = 10,
                                   n_permutation = n_permutation,
-                                  one_tail = False,
+                                  one_tail = True,
                                   n_jobs = -1,
                                   verbose = 1,)
         for name,_name in zip(groupby,_factors):
