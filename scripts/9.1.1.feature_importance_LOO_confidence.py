@@ -135,6 +135,32 @@ slopes = pd.DataFrame(slopes)
 results.to_csv(os.path.join(stats_dir,'feature_importance.csv'),index = False)
 slopes.to_csv(os.path.join(stats_dir,'feature_importance_slopes.csv'),index = False)
 
+groupby = ['accuracy_train', 'accuracy_test','Time']
+permutations = {name:[] for name in groupby}
+permutations['ps_mean'] = []
+permutations['diff_mean'] = []
+for _factors,df_sub in df_plot.groupby(groupby):
+    x = df_sub['feature importance'].values
+    ps = utils.resample_ttest(x,
+                              baseline = 0,
+                              n_ps = 10,
+                              n_permutation = int(1e5),
+                              one_tail = True,
+                              n_jobs = -1,
+                              verbose = 1,)
+    for name,_name in zip(groupby,_factors):
+        permutations[name].append(_name)
+    permutations['ps_mean'].append(np.mean(ps))
+    permutations['diff_mean'].append(np.mean(x))
+permutations = pd.DataFrame(permutations)
+permutations = permutations.sort_values('ps_mean')
+ps = permutations['ps_mean'].values
+converter = utils.MCPConverter(pvals = ps)
+d = converter.adjust_many()
+permutations['ps_corrected'] = d['bonferroni'].values
+permutations['stars'] = permutations['ps_corrected'].apply(utils.stars)
+permutations['Time'] = permutations['Time'].apply(lambda x:x.split(' ')[-1])
+
 g = sns.catplot(x = 'x',
                 y = 'feature importance',
                 data = df_plot,
@@ -158,17 +184,31 @@ for acc_train, ax in zip(xargs['hue_order'],g.axes.flatten()):
                          marker = None,
                          scatter = False,
                          ax = ax,)
-
+# add significance level
+for ax,acc_train in zip(g.axes.flatten(),xargs['col_order']):
+    df_sub = permutations[permutations['accuracy_train'] == acc_train]
+    df_sub = df_sub.sort_values(['accuracy_train','accuracy_test'])
+    xtick_order = list(ax.xaxis.get_majorticklabels())
+    
+    for ii,text_obj in enumerate(xtick_order):
+        position        = text_obj.get_position()
+        xtick_label     = text_obj.get_text()
+        df_sub_stats    = df_sub[df_sub['Time'] == xtick_label].sort_values(['accuracy_test'])
+        for (jj,temp_row),adjustment in zip(df_sub_stats.iterrows(),[-0.1275,0.125]):
+            print(temp_row['stars'])
+            ax.annotate(temp_row['stars'],
+                        xy          = (ii + adjustment,.081),
+                        ha          = 'center',va = 'center',
+                        fontsize    = 10)
 (g.set_titles('Trained on {col_name}')
- .set_axis_labels('Trial','Feature importance'))
+ .set_axis_labels('Trial','Feature importance')
+ .set(ylim = (-0.005,0.083)))
 g._legend.set_title("Testing data")
 
 g.savefig(os.path.join(figures_dir,
                         'feature_importance.jpg'),
           dpi = 300,
           bbox_inches = 'tight')
-
-
 
 
 
