@@ -27,31 +27,29 @@ source: https://cdn-images-1.medium.com/max/1600/1*i0o8mjFfCn-uD79-F1Cqkw.png
 </p>
 
 
-# Results
+# Results - confidence
 ## Decoding scores (within domain)
-Confidence             |  Adequacy
+Using 7 trials back             |  Split to past and recent
 :-------------------------:|:-------------------------:
-![cws](https://github.com/nmningmei/decoding_confidence_dataset/blob/main/figures/confidence/LOO/scores.jpg)  |  ![aws](https://github.com/nmningmei/decoding_confidence_dataset/blob/main/figures/adequacy/LOO/scores.jpg)
+![t7s](https://github.com/nmningmei/decoding_confidence_dataset/blob/main/figures/confidence/LOO/scores.jpg)  |  ![prs](https://github.com/nmningmei/decoding_confidence_dataset/blob/main/figures/confidence/LOO/scores_split.jpg)
 
 
 ## Feature attribution (within domain)
-Confidence             |  Adequacy
+Using 7 trials back - SVM             |  Using 7 trials back - RF
 :-------------------------:|:-------------------------:
-![cwf](https://github.com/nmningmei/decoding_confidence_dataset/blob/main/figures/confidence/LOO/features.jpg)  |  ![awf](https://github.com/nmningmei/decoding_confidence_dataset/blob/main/figures/adequacy/LOO/features.jpg)
-![cwff](https://github.com/nmningmei/decoding_confidence_dataset/blob/main/figures/confidence/LOO/feature_importance.jpg) |
+![t7w](https://github.com/nmningmei/decoding_confidence_dataset/blob/main/figures/confidence/LOO/features.jpg)  |  ![t7f](https://github.com/nmningmei/decoding_confidence_dataset/blob/main/figures/confidence/LOO/feature_importance.jpg)
 
 
 ## Decoding scores (cross domain)
-Confidence             |  Adequacy
+Using 7 trials back             |  Split to past and recent
 :-------------------------:|:-------------------------:
-![ccs](https://github.com/nmningmei/decoding_confidence_dataset/blob/main/figures/confidence/cross_domain/scores.jpg)  |  ![acs](https://github.com/nmningmei/decoding_confidence_dataset/blob/main/figures/adequacy/cross_domain/scores.jpg)
+![t7sc](https://github.com/nmningmei/decoding_confidence_dataset/blob/main/figures/confidence/cross_domain/scores.jpg)  |  ![prsc](https://github.com/nmningmei/decoding_confidence_dataset/blob/main/figures/confidence/cross_domain/scores_split.jpg)
 
 
 ## Feature attribution (cross domain)
-Confidence             |  Adequacy
+Using 7 trials back - SVM             |  Using 7 trials back - RF
 :-------------------------:|:-------------------------:
-![ccf](https://github.com/nmningmei/decoding_confidence_dataset/blob/main/figures/confidence/cross_domain/features.jpg)  |  ![acf](https://github.com/nmningmei/decoding_confidence_dataset/blob/main/figures/adequacy/cross_domain/features.jpg)
-![ccff](https://github.com/nmningmei/decoding_confidence_dataset/blob/main/figures/confidence/cross_domain/feature_importance.jpg) |
+![t7wc](https://github.com/nmningmei/decoding_confidence_dataset/blob/main/figures/confidence/cross_domain/features.jpg)  |  ![t7fc](https://github.com/nmningmei/decoding_confidence_dataset/blob/main/figures/confidence/cross_domain/feature_importance.jpg)
 
 
 
