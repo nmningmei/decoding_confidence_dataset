@@ -42,8 +42,8 @@ working_data = glob(os.path.join(working_dir,'*csv'))
 working_data = [item for item in working_data if ('past' in item) or ('recent' in item)]
 
 # common settings
-ylim            = (0.35,.85)
-star_h          = 0.82
+ylim            = (0.36,.88)
+star_h          = 0.85
 confidence_range= 4
 time_steps      = 3
 dict_rename     = {0:'incorrect trials',1:'correct trials'}
@@ -71,7 +71,7 @@ xargs['col_order'] = col_order
 df = []
 for f in working_data:
     temp            = pd.read_csv(f)
-    temp['decoder'] = f.split('/')[-1].split('_')[0]
+    temp['decoder'] = f.replace('\\','/').split('/')[-1].split('_')[0]
     condition = f.split('_')[-1].split(' ')[0]
     temp['condition'] = dict_condition[condition]
     df.append(temp)
@@ -131,32 +131,52 @@ results = pd.concat(temp)
 results['stars']        = results['ps_corrected'].apply(utils.stars)
 results.to_csv(os.path.join(stats_dir,'scores_split.csv'),index = False)
 
+paired = pd.read_csv(os.path.join(stats_dir,'scores_split.csv'))
+
+specs = {name:xargs[name] for name in [
+        'hue',
+        'hue_order',
+        'split',
+        'inner',
+        'cut',
+        'scale',
+        'order',
+        'palette',]}
+xtick_order = [plt.text(0, 0, 'SVM'),
+               plt.text(1, 0, 'RF'),
+               plt.text(2, 0, 'RNN')]
 # plot scores
-df_ave['col'] = df_ave['accuracy_test'] + '_' + df_ave['source']
-g = sns.catplot(x           = 'decoder',
-                y           = 'score',
-                col         = 'col',
-                data        = df_ave,
-                kind        = 'violin',
-                aspect      = 1.5,
-                hight       = 6,
-                **xargs)
-xtick_order = list(g.axes[-1][-1].xaxis.get_majorticklabels())
-(g.set_axis_labels("","ROC AUC")
-   .set_titles("{row_name} -> {col_name}")
-  .set(ylim = ylim)
-  )
-[ax.axhline(0.5,linestyle = '--',alpha = .7,color = 'black') for ax in g.axes.flatten()]
-g._legend.set_title("")
-## add stars
-for ((row,col),df_sub),ax in zip(df_ave.groupby(['accuracy_train','col']),g.axes.flatten()):
-    print(row,col,ax.title)
-    new_title = ax.get_title().split('_')[0]
-    target_data = ax.get_title().split('_')[1]
-    ax.set(title=new_title)
-    results_sub = results[np.logical_and(results['accuracy_train'] == row,
-                                         results['accuracy_test'] == col.split('_')[0])]
-    results_sub = results_sub[results_sub['target_data'] == target_data]
+fig,axes = plt.subplots(figsize = (18,36),
+                        nrows = 6,
+                        ncols = 2,
+                        sharex = True,
+                        sharey = True,
+                        )
+for idx_ax,(((target_data,acc_train,acc_test,),df_sub),ax) in enumerate(zip(df_ave.groupby([
+        'source',
+        'accuracy_train',
+        'accuracy_test',
+        ]),axes.flatten())):
+    ax = sns.violinplot(x = 'decoder',
+                        y = 'score',
+                        data = df_sub,
+                        ax = ax,
+                        **specs,)
+    handles, labels = ax.get_legend_handles_labels()
+    ax.get_legend().set_title('')
+    if idx_ax != 0:
+        ax.get_legend().remove()
+    idx_stats = np.logical_and.reduce([
+            results['accuracy_train'] == acc_train,
+            results['accuracy_test' ] == acc_test,
+            results['target_data'   ] == target_data,])
+    results_sub = results[idx_stats]
+    idx_pairs = np.logical_and.reduce([
+            paired['accuracy_train'] == acc_train,
+            paired['accuracy_test' ] == acc_test,
+            paired['target_data'   ] == target_data,])
+    pair_sub = paired[idx_pairs]
+    
     for ii,text_obj in enumerate(xtick_order):
         # print(target_data,_decoder)
         position        = text_obj.get_position()
@@ -169,14 +189,29 @@ for ((row,col),df_sub),ax in zip(df_ave.groupby(['accuracy_train','col']),g.axes
                             xy          = (position[0] + adjustment,star_h),
                             ha          = 'center',
                             fontsize    = 14)
-    
-plt.suptitle(f'{" "*100}'.join(
-    domains),x = 0.4,y = 1.15)
+        pair_sub_sub = pair_sub[pair_sub['decoder'] == xtick_label]
+        if "*" in pair_sub_sub['stars'].values[0]:
+            ax.plot([ii-adjustment,ii-adjustment,
+                     ii+adjustment,ii+adjustment],
+                    [0.78,0.80,0.80,0.78],
+                    color = 'black')
+            ax.annotate(pair_sub_sub['stars'].values[0],
+                        xy = (ii,0.81),
+                        ha = 'center',
+                        va = 'center',
+                        fontsize = 14,
+                        )
+    ax.set(ylim = ylim,
+           xlabel = "",
+           ylabel = "ROC AUC",
+           title = f'{acc_train} -> {acc_test} | {target_data}',
+           )
+    ax.axhline(0.5,linestyle = '--',alpha = .7,color = 'black')
 plt.subplots_adjust(top = 1.)
 
-g.savefig(os.path.join(figures_dir,'scores_split.jpg'),
-          dpi = 300,
-          bbox_inches = 'tight')
+fig.savefig(os.path.join(figures_dir,'scores_split.jpg'),
+            dpi = 300,
+            bbox_inches = 'tight')
 
 ##############################################################################
 # get the weights of the regression model
