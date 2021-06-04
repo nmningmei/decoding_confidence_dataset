@@ -97,6 +97,7 @@ for _,df_sub in results.groupby(['source']):
 results = pd.concat(temp)
 results['stars'] = results['ps_corrected'].apply(utils.stars)
 results = results.sort_values(factors)
+results.to_csv(os.path.join(stats_dir,'scores_paired.csv'),index = False)
 
 one_sample = pd.read_csv(os.path.join(stats_dir,'scores_split.csv'))
 

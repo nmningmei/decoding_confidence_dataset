@@ -78,6 +78,7 @@ d = converter.adjust_many()
 results['ps_corrected'] = d['bonferroni'].values
 results['stars'] = results['ps_corrected'].apply(utils.stars)
 results = results.sort_values(factors)
+results.to_csv(os.path.join(stats_dir,'scores_paired.csv'),index=False)
 
 one_sample = pd.read_csv(os.path.join(stats_dir,'scores_split.csv'))
 
@@ -134,7 +135,7 @@ for axes,_accuracy_test in zip(g.axes,xargs['row_order']):
                          ii+adjustment,ii+adjustment],
                         [0.88,0.9,0.9,0.88],
                         color = 'black')
-                ax.annotate(df_sub_stats['stars'].values[0],
+                ax.annotate(df_sub_stats['stars'].values[0].replace('*','o'),
                             xy = (ii,0.92),
                             ha = 'center',
                             va = 'center',

@@ -43,7 +43,7 @@ working_data = [item for item in working_data if ('past' in item) or ('recent' i
 
 # common settings
 ylim            = (0.36,.88)
-star_h          = 0.85
+star_h          = 0.78
 confidence_range= 4
 time_steps      = 3
 dict_rename     = {0:'incorrect trials',1:'correct trials'}
@@ -131,7 +131,8 @@ results = pd.concat(temp)
 results['stars']        = results['ps_corrected'].apply(utils.stars)
 results.to_csv(os.path.join(stats_dir,'scores_split.csv'),index = False)
 
-paired = pd.read_csv(os.path.join(stats_dir,'scores_split.csv'))
+paired = pd.read_csv(os.path.join(stats_dir,'scores_paired.csv'))
+paired['target_data'] = paired['source'].values
 
 specs = {name:xargs[name] for name in [
         'hue',
@@ -184,23 +185,21 @@ for idx_ax,(((target_data,acc_train,acc_test,),df_sub),ax) in enumerate(zip(df_a
         results_sub_stats = results_sub[results_sub['decoder'] == xtick_label].sort_values(['condition'],ascending = False)
         for (jj,temp_row),adjustment in zip(results_sub_stats.iterrows(),[-0.125,0.125]):
             # print(temp_row['stars'])
-            if '*' in temp_row['stars']:
-                ax.annotate(temp_row['stars'],
-                            xy          = (position[0] + adjustment,star_h),
-                            ha          = 'center',
-                            fontsize    = 14)
+            ax.annotate(temp_row['stars'],
+                        xy          = (position[0] + adjustment,star_h),
+                        ha          = 'center',
+                        fontsize    = 14)
         pair_sub_sub = pair_sub[pair_sub['decoder'] == xtick_label]
-        if "*" in pair_sub_sub['stars'].values[0]:
-            ax.plot([ii-adjustment,ii-adjustment,
-                     ii+adjustment,ii+adjustment],
-                    [0.78,0.80,0.80,0.78],
-                    color = 'black')
-            ax.annotate(pair_sub_sub['stars'].values[0],
-                        xy = (ii,0.81),
-                        ha = 'center',
-                        va = 'center',
-                        fontsize = 14,
-                        )
+        ax.plot([ii-adjustment,ii-adjustment,
+                 ii+adjustment,ii+adjustment],
+                [0.80,0.82,0.82,0.80],
+                color = 'black')
+        ax.annotate(pair_sub_sub['stars'].values[0].replace('*','o'),
+                    xy = (ii,0.84),
+                    ha = 'center',
+                    va = 'center',
+                    fontsize = 14,
+                    )
     ax.set(ylim = ylim,
            xlabel = "",
            ylabel = "ROC AUC",
