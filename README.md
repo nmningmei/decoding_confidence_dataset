@@ -1,4 +1,4 @@
-# Decoding analyses of the confidence dataset via recurrent neural network and random forest models
+# Decoding analyses of the confidence dataset via linear support vector machine, random forest classifier and recurrent neural network models.
 
 # System Information
 - Platform:      Linux-3.10.0-514.el7.x86_64-x86_64-with-centos-7.3.1611-Core
@@ -11,6 +11,7 @@
 - sklearn:       0.23.2
 - pandas:        1.0.1
 - tensorflow:    2.0.0
+- pytorch:       1.7.1
 - R:             4.0.3 # for 3-way repeated measure ANOVAs
 
 # Linear SVM
